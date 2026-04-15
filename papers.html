@@ -103,11 +103,17 @@
                         <label class="form-label">自定义摘要（可选）</label>
                         <textarea class="form-textarea" id="customAbstract" placeholder="粘贴文献摘要或关键段落，AI将自动解析生成卡片..."></textarea>
                     </div>
-                    <button class="btn btn-primary" id="generateCardBtn">
-                        <span>🤖</span> AI 生成卡片
-                    </button>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+                        <button class="btn btn-primary" id="generateCardBtn">
+                            <span>🤖</span> AI 生成卡片
+                        </button>
+                        <button class="btn btn-secondary" id="importCardBtn">
+                            <span>📥</span> 导入JSON卡片
+                        </button>
+                        <input type="file" id="cardFileInput" accept=".json" style="display: none;">
+                    </div>
                     <div id="generatingHint" class="text-muted" style="margin-top: 8px; font-size: 0.85rem;">
-                        配置API后可以使用AI解析功能
+                        配置API后可以使用AI解析功能，或导入已制作好的JSON卡片文件
                     </div>
                 </div>
 
