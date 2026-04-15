@@ -25,13 +25,40 @@
                 <h3 class="section-title">📝 生词学习</h3>
                 
                 <div class="vocab-tabs">
-                    <button class="tab-btn active" data-tab="study">学习区</button>
+                    <button class="tab-btn active" data-tab="study">生词本</button>
+                    <button class="tab-btn" data-tab="wrong">错词本</button>
                     <button class="tab-btn" data-tab="mastered">已掌握</button>
                     <button class="tab-btn" data-tab="all">全部单词</button>
                 </div>
 
-                <!-- 学习模式 -->
+                <!-- 生词本（学习区） -->
                 <div id="studyMode" class="vocab-content">
+                    <div class="study-stats-bar">
+                        <div class="stat-item">
+                            <span class="stat-num" id="newCount">0</span>
+                            <span class="stat-label">生词</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-num" id="wrongCount">0</span>
+                            <span class="stat-label">错词</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-num" id="masteredCount">0</span>
+                            <span class="stat-label">已掌握</span>
+                        </div>
+                    </div>
+                    
+                    <div class="study-buttons" id="studyButtons">
+                        <button class="btn btn-primary study-btn" id="newStudyBtn">
+                            📚 新学 (<span id="newStudyCount">0</span>)
+                        </button>
+                        <button class="btn btn-secondary study-btn" id="reviewBtn">
+                            🔄 复习 (<span id="reviewCount">0</span>)
+                        </button>
+                    </div>
+                    
+                    <div class="queue-info hidden" id="queueInfo"></div>
+                    
                     <div class="study-header">
                         <div class="progress-info">
                             <span id="progressText">进度: 0/12</span>
@@ -40,22 +67,31 @@
                             </div>
                         </div>
                         <div class="study-stats">
-                            <span>当前正确: <span id="currentStreak">0</span></span>
-                            <span>今日学习: <span id="todayCount">0</span></span>
+                            <span>当前连续正确: <span id="currentStreak">0</span></span>
+                            <span>今日已学: <span id="todayCount">0</span></span>
                         </div>
                     </div>
 
                     <div class="study-area" id="studyArea">
-                        <!-- 学习卡片将动态插入 -->
+                        <p class="empty-message">🎯 点击上方按钮开始学习！</p>
                     </div>
 
                     <div class="study-hint" id="studyHint">
-                        <p>🎯 选择正确释义，继续加油！</p>
+                        <p>选择「新学」学习新单词，或选择「复习」巩固已学内容</p>
+                    </div>
+                </div>
+
+                <!-- 错词本 -->
+                <div id="wrongMode" class="vocab-content hidden">
+                    <p class="section-desc">累计错误3次及以上的单词</p>
+                    <div class="wrong-list" id="wrongList">
+                        <p class="empty-message">暂无错词本中的单词，太棒了！</p>
                     </div>
                 </div>
 
                 <!-- 已掌握列表 -->
                 <div id="masteredMode" class="vocab-content hidden">
+                    <p class="section-desc">连续答对12次的单词</p>
                     <div class="mastered-list" id="masteredList">
                         <p class="empty-message">暂无已掌握的单词，继续学习吧！</p>
                     </div>
@@ -121,6 +157,7 @@
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">添加单词</button>
+                    <p class="form-hint">提示：本地添加的单词需要联系小科同步到云端</p>
                 </form>
             </section>
         </div>
