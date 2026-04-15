@@ -681,11 +681,19 @@ function confirmComplete() {
 
     try {
         // 处理可能被代码块包裹的JSON
-        let data = JSON.parse(jsonStr);
-        if (typeof data === 'string') {
-            const jsonMatch = data.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (jsonMatch) data = JSON.parse(jsonMatch[1]);
+        let cleanJson = jsonStr;
+        
+        // 检查是否被 ```json ... ``` 或 ``` ... ``` 包裹
+        const codeBlockMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (codeBlockMatch) {
+            cleanJson = codeBlockMatch[1].trim();
         }
+        
+        // 移除可能的前后空白和换行
+        cleanJson = cleanJson.trim();
+        
+        // 解析JSON
+        const data = JSON.parse(cleanJson);
         
         // 保存原始DOI（不被覆盖）
         const originalDoi = editingPaper.doi;
@@ -703,7 +711,8 @@ function confirmComplete() {
         alert('✅ 卡片补全成功！');
 
     } catch (e) {
-        alert('JSON格式错误: ' + e.message);
+        console.error('JSON解析错误:', e);
+        alert('JSON格式错误: ' + e.message + '\n\n请检查JSON是否完整，是否有多余的逗号或缺失的括号。');
     }
 }
 
