@@ -150,62 +150,48 @@ function checkUrlParams() {
 
 /**
  * 加载文献数据
- * 核心原则：localStorage中有数据（即使是空数组）就只用localStorage，不再从文件读取
+ * 原则：localStorage有就用localStorage的（即使是空数组），没有才从文件读取
  */
 async function loadPapers() {
-    try {
-        // 检查是否已初始化（区分"从未有数据"和"数据被清空"）
-        const initialized = localStorage.getItem('papersData_initialized');
-        
-        if (initialized === 'true') {
-            // 用户已有数据（包括空数组），只用localStorage
-            const stored = localStorage.getItem('papersData');
-            if (stored) {
-                try {
-                    const parsed = JSON.parse(stored);
-                    papers = Array.isArray(parsed) ? parsed : [];
-                } catch (e) {
-                    console.error('localStorage数据解析失败，重置数据:', e);
-                    papers = [];
-                    // 重置无效数据
-                    localStorage.setItem('papersData', '[]');
-                }
-            } else {
-                papers = [];
+    const stored = localStorage.getItem('papersData');
+    
+    // localStorage有数据（包括空数组[]）就用它
+    if (stored !== null) {
+        try {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) {
+                papers = parsed;
+                console.log('从localStorage加载文献:', papers.length, '篇');
             }
-        } else {
-            // 首次使用：尝试从文件读取，然后标记已初始化
-            try {
-                const response = await fetch(CONFIG.papersUrl);
-                if (response.ok) {
-                    const data = await response.json();
-                    papers = Array.isArray(data) ? data : [];
-                }
-            } catch (error) {
-                console.error('加载文献文件失败:', error);
-                papers = [];
+        } catch (e) {
+            console.error('localStorage数据解析失败:', e);
+            // 解析失败也不覆盖，保持原有数据
+        }
+    } else {
+        // localStorage完全没有数据（null），才从文件读取
+        try {
+            const response = await fetch(CONFIG.papersUrl);
+            if (response.ok) {
+                const data = await response.json();
+                papers = Array.isArray(data) ? data : [];
             }
-
-            // 如果还是没有数据，使用示例数据
-            if (papers.length === 0) {
-                papers = getSamplePapers();
-            }
-            
-            // 保存并标记已初始化
-            localStorage.setItem('papersData', JSON.stringify(papers));
-            localStorage.setItem('papersData_initialized', 'true');
+        } catch (error) {
+            console.error('加载文献文件失败:', error);
+            papers = [];
         }
 
-        console.log('加载文献数据成功，共', papers.length, '篇');
-        updateJournalFilter();
-        filterPapers();
+        if (papers.length === 0) {
+            papers = getSamplePapers();
+        }
         
-    } catch (error) {
-        console.error('loadPapers发生错误:', error);
-        papers = [];
-        filteredPapers = [];
-        renderPapers();
+        // 首次加载，保存到localStorage
+        localStorage.setItem('papersData', JSON.stringify(papers));
+        console.log('首次加载文献:', papers.length, '篇');
     }
+
+    filteredPapers = [...papers];
+    updateJournalFilter();
+    renderPapers();
 }
 
 function getSamplePapers() {
@@ -1107,3 +1093,34 @@ function deletePaper() {
 
     papers = papers.filter(p => p.id !== editingPaper.id);
     savePapers();
+    closeDetailModal();
+    closeEditModal();
+    filterPapers();
+    alert('文献已删除');
+}
+
+function savePapers() {
+    localStorage.setItem('papersData', JSON.stringify(papers));
+}
+
+/**
+ * 工具函数
+ */
+function generateId() {
+    return 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function debounce(fn, delay) {
+    let timer = null;
+    return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
