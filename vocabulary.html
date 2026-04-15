@@ -27,6 +27,7 @@
                 <div class="vocab-tabs">
                     <button class="tab-btn active" data-tab="study">生词本</button>
                     <button class="tab-btn" data-tab="wrong">错词本</button>
+                    <button class="tab-btn" data-tab="learned">已学</button>
                     <button class="tab-btn" data-tab="mastered">已掌握</button>
                     <button class="tab-btn" data-tab="all">全部单词</button>
                 </div>
@@ -41,6 +42,10 @@
                         <div class="stat-item">
                             <span class="stat-num" id="wrongCount">0</span>
                             <span class="stat-label">错词</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-num" id="learnedCount">0</span>
+                            <span class="stat-label">已学</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-num" id="masteredCount">0</span>
@@ -86,6 +91,14 @@
                     <p class="section-desc">累计错误3次及以上的单词</p>
                     <div class="wrong-list" id="wrongList">
                         <p class="empty-message">暂无错词本中的单词，太棒了！</p>
+                    </div>
+                </div>
+
+                <!-- 已学列表 -->
+                <div id="learnedMode" class="vocab-content hidden">
+                    <p class="section-desc">已练习过但未掌握的单词（可复习）</p>
+                    <div class="learned-list" id="learnedList">
+                        <p class="empty-message">暂无已学的单词，继续学习新词吧！</p>
                     </div>
                 </div>
 
