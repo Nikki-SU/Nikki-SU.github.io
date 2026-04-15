@@ -87,6 +87,7 @@ function initEventListeners() {
 
     // PDF上传
     document.getElementById('importPdf')?.addEventListener('change', handlePdfUpload);
+    document.getElementById('parsePdfBtn')?.addEventListener('click', parsePdfContent);
 
     // 确认导入
     document.getElementById('confirmImport')?.addEventListener('click', confirmImport);
@@ -758,12 +759,143 @@ async function fetchDoiPaper() {
     btn.textContent = '获取文献信息';
 }
 
-function handlePdfUpload(e) {
+async function handlePdfUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
 
     const resultDiv = document.getElementById('pdfResult');
-    resultDiv.innerHTML = '<p class="text-muted">PDF解析功能需要后端支持，请使用DOI导入或手动添加。</p>';
+    const textArea = document.getElementById('pdfTextContent');
+    
+    resultDiv.innerHTML = '<p class="text-muted">📖 正在读取PDF...</p>';
+    
+    try {
+        // 使用PDF.js读取PDF
+        const pdfjsLib = window.pdfjsLib;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        
+        let fullText = '';
+        
+        // 读取所有页面
+        for (let i = 1; i <= Math.min(pdf.numPages, 20); i++) { // 最多读取20页
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map(item => item.str).join(' ');
+            fullText += pageText + '\n\n';
+        }
+        
+        // 填充到文本框
+        textArea.value = fullText.trim();
+        
+        resultDiv.innerHTML = `<p class="text-success">✅ 已提取 ${pdf.numPages} 页内容，可点击"解析PDF"进行AI分析</p>`;
+        
+    } catch (error) {
+        console.error('PDF读取错误:', error);
+        resultDiv.innerHTML = `<p class="text-danger">❌ PDF读取失败: ${error.message}。请手动复制文本内容。</p>`;
+    }
+}
+
+async function parsePdfContent() {
+    const textContent = document.getElementById('pdfTextContent')?.value || '';
+    const category = document.getElementById('pdfCategory')?.value || 'custom';
+    const useAI = document.getElementById('useAIParsePdf')?.checked;
+    const resultDiv = document.getElementById('pdfResult');
+    
+    if (!textContent.trim()) {
+        resultDiv.innerHTML = '<p class="text-danger">请先上传PDF或粘贴文本内容</p>';
+        return;
+    }
+    
+    resultDiv.innerHTML = '<p class="text-muted">🔄 正在解析...</p>';
+    
+    if (useAI) {
+        // 使用AI解析
+        if (typeof parsePaperWithAI !== 'function') {
+            resultDiv.innerHTML = '<p class="text-danger">❌ AI解析模块未加载，请刷新页面重试</p>';
+            return;
+        }
+        
+        try {
+            const aiResult = await parsePaperWithAI(textContent, 'pdf');
+            
+            if (aiResult.error) {
+                resultDiv.innerHTML = `<p class="text-danger">❌ ${aiResult.error}</p>`;
+                return;
+            }
+            
+            // 保存解析结果
+            importData = {
+                title: aiResult.title || '',
+                title_cn: aiResult.title_cn || aiResult.title || '',
+                abstract: aiResult.abstract || textContent.substring(0, 500),
+                abstract_cn: aiResult.abstract_cn || '',
+                authors: aiResult.authors || '',
+                journal: aiResult.journal || '',
+                keywords: aiResult.keywords || [],
+                summary: aiResult.summary || '',
+                summary_cn: aiResult.summary_cn || '',
+                innovation: aiResult.innovation || '',
+                innovation_cn: aiResult.innovation_cn || '',
+                application: aiResult.application || '',
+                application_cn: aiResult.application_cn || '',
+                structure: aiResult.structure || '',
+                structure_cn: aiResult.structure_cn || '',
+                methods: aiResult.methods || '',
+                methods_cn: aiResult.methods_cn || '',
+                vocabulary: aiResult.vocabulary || [],
+                category: category,
+                source: 'pdf'
+            };
+            
+            // 显示预览
+            resultDiv.innerHTML = `
+                <div class="import-preview">
+                    <h4>📄 解析结果预览</h4>
+                    <p><strong>标题:</strong> ${importData.title}</p>
+                    <p><strong>作者:</strong> ${importData.authors || '未提取'}</p>
+                    <p><strong>关键词:</strong> ${(importData.keywords || []).join(', ') || '未提取'}</p>
+                    <p><strong>创新点:</strong> ${(importData.innovation || '未提取').substring(0, 100)}...</p>
+                    <p><strong>提取词汇:</strong> ${(importData.vocabulary || []).map(v => v.word).join(', ') || '无'}</p>
+                    <p class="text-success mt-4">✅ 解析完成，可点击"确认导入"</p>
+                </div>
+            `;
+            
+            document.getElementById('confirmImport').disabled = false;
+            
+        } catch (error) {
+            console.error('AI解析错误:', error);
+            resultDiv.innerHTML = `<p class="text-danger">❌ 解析失败: ${error.message}</p>`;
+        }
+    } else {
+        // 不使用AI，简单提取
+        const lines = textContent.split('\n').filter(l => l.trim());
+        const title = lines[0] || '未知标题';
+        
+        importData = {
+            title: title,
+            title_cn: '',
+            abstract: textContent.substring(0, 2000),
+            abstract_cn: '',
+            authors: '',
+            journal: '',
+            keywords: [],
+            category: category,
+            source: 'pdf'
+        };
+        
+        resultDiv.innerHTML = `
+            <div class="import-preview">
+                <h4>📄 内容预览</h4>
+                <p><strong>标题:</strong> ${title}</p>
+                <p class="text-muted">未使用AI解析，仅保存原文内容。如需提取详细信息，请勾选"使用AI深度解析"。</p>
+                <p class="text-success mt-4">✅ 可点击"确认导入"</p>
+            </div>
+        `;
+        
+        document.getElementById('confirmImport').disabled = false;
+    }
 }
 
 async function confirmImport() {
