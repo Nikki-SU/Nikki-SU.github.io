@@ -34,7 +34,8 @@
                         <option value="custom">自定义</option>
                     </select>
                     <input type="text" id="searchPapers" class="search-input" placeholder="搜索标题、作者或关键词...">
-                    <button id="uploadBtn" class="btn btn-secondary">📤 上传PDF</button>
+                    <button id="importBtn" class="btn btn-primary">📥 传入文献</button>
+                    <button id="uploadBtn" class="btn btn-secondary">✏️ 手动添加</button>
                 </div>
 
                 <div id="papersGrid" class="papers-grid">
@@ -46,7 +47,7 @@
 
             <!-- 文献详情弹窗 -->
             <div id="paperModal" class="modal hidden">
-                <div class="modal-content">
+                <div class="modal-content modal-lg">
                     <div class="modal-header">
                         <h3 id="modalTitle">文献标题</h3>
                         <button class="modal-close" id="closeModal">×</button>
@@ -57,11 +58,56 @@
                 </div>
             </div>
 
-            <!-- 上传弹窗 -->
+            <!-- 传入文献弹窗 -->
+            <div id="importModal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>传入文献</h3>
+                        <button class="modal-close" id="closeImport">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="importForm" class="import-form">
+                            <div class="import-type-selector">
+                                <label class="radio-label">
+                                    <input type="radio" name="importType" id="importTypeDoi" value="doi" checked>
+                                    <span>DOI链接</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="importType" id="importTypePdf" value="pdf">
+                                    <span>上传PDF</span>
+                                </label>
+                            </div>
+                            
+                            <div id="importDoiField" class="import-field">
+                                <div class="form-group">
+                                    <label for="importDoi">DOI</label>
+                                    <input type="text" id="importDoi" placeholder="输入DOI，如: 10.1038/s41560-023-xxxxx 或 https://doi.org/10.1038/...">
+                                    <p class="field-hint">支持 https://doi.org/xxx 和纯DOI格式</p>
+                                </div>
+                            </div>
+                            
+                            <div id="importPdfField" class="import-field hidden">
+                                <div class="form-group">
+                                    <label for="importPdf">选择PDF文件</label>
+                                    <input type="file" id="importPdf" accept=".pdf">
+                                    <p class="field-hint">上传后请发送给"小科"进行解析</p>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="cancelImport">取消</button>
+                                <button type="submit" class="btn btn-primary">确认传入</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 上传弹窗（手动添加） -->
             <div id="uploadModal" class="modal hidden">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h3>上传文献</h3>
+                        <h3>手动添加文献</h3>
                         <button class="modal-close" id="closeUpload">×</button>
                     </div>
                     <div class="modal-body">
@@ -108,15 +154,114 @@
                                 <label for="paperKeywords">关键词（用逗号分隔）</label>
                                 <input type="text" id="paperKeywords" placeholder="如: perovskite, solar cell, efficiency">
                             </div>
-                            <div class="form-group">
-                                <label for="paperPdf">PDF文件（可选）</label>
-                                <input type="file" id="paperPdf" accept=".pdf">
-                            </div>
                             <div class="form-actions">
                                 <button type="button" class="btn btn-secondary" id="cancelUpload">取消</button>
                                 <button type="submit" class="btn btn-primary">保存</button>
                             </div>
                         </form>
+                        <p class="form-hint">提示：本地添加的文献需要联系小科同步到云端</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 编辑文献弹窗 -->
+            <div id="editModal" class="modal hidden">
+                <div class="modal-content modal-xl">
+                    <div class="modal-header">
+                        <h3>编辑文献</h3>
+                        <button class="modal-close" id="closeEdit">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editForm" class="edit-form">
+                            <input type="hidden" id="editId">
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editTitle">文献标题 *</label>
+                                    <input type="text" id="editTitle" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editTitleCn">中文标题</label>
+                                    <input type="text" id="editTitleCn">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editAuthors">作者</label>
+                                    <input type="text" id="editAuthors">
+                                </div>
+                                <div class="form-group">
+                                    <label for="editJournal">期刊</label>
+                                    <input type="text" id="editJournal">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editDate">发表日期</label>
+                                    <input type="date" id="editDate">
+                                </div>
+                                <div class="form-group">
+                                    <label for="editDoi">DOI</label>
+                                    <input type="text" id="editDoi">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editAbstract">摘要</label>
+                                <textarea id="editAbstract" rows="3"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editMainWork">主要工作</label>
+                                <textarea id="editMainWork" rows="2" placeholder="这篇文献的主要研究内容"></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editSynthesisMethod">合成方法</label>
+                                    <input type="text" id="editSynthesisMethod" placeholder="如: 一步法、两步法、刮刀涂布等">
+                                </div>
+                                <div class="form-group">
+                                    <label for="editCharacterization">表征手段</label>
+                                    <input type="text" id="editCharacterization" placeholder="如: XRD、SEM、PL等">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editResults">主要结果</label>
+                                <textarea id="editResults" rows="2" placeholder="主要实验结果和发现"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="editConclusion">结论</label>
+                                <textarea id="editResults" rows="2" placeholder="研究结论"></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="editKeywords">关键词</label>
+                                    <input type="text" id="editKeywords">
+                                </div>
+                                <div class="form-group">
+                                    <label for="editCategory">分类</label>
+                                    <select id="editCategory">
+                                        <option value="synthesis">合成</option>
+                                        <option value="characterization">表征</option>
+                                        <option value="mechanism">机理</option>
+                                        <option value="application">应用</option>
+                                        <option value="custom">自定义</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="cancelEdit">取消</button>
+                                <button type="submit" class="btn btn-primary">保存</button>
+                            </div>
+                        </form>
+                        <p class="form-hint">提示：编辑后的内容需要联系小科同步到云端</p>
                     </div>
                 </div>
             </div>
@@ -130,5 +275,23 @@
     </footer>
 
     <script src="js/papers.js"></script>
+    <script>
+        // 传入类型切换
+        document.querySelectorAll('input[name="importType"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const type = e.target.value;
+                const doiField = document.getElementById('importDoiField');
+                const pdfField = document.getElementById('importPdfField');
+                
+                if (type === 'doi') {
+                    doiField.classList.remove('hidden');
+                    pdfField.classList.add('hidden');
+                } else {
+                    doiField.classList.add('hidden');
+                    pdfField.classList.remove('hidden');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
