@@ -360,9 +360,11 @@ function isRoughCard(paper) {
                            'methods', 'methods_cn'];
     
     for (const field of requiredFields) {
-        if (!paper[field] || paper[field].trim() === '') {
-            return true;
-        }
+        const value = paper[field];
+        if (!value) return true;
+        // 支持字符串和数组
+        if (Array.isArray(value) && value.length === 0) return true;
+        if (typeof value === 'string' && value.trim() === '') return true;
     }
     return false;
 }
@@ -1081,6 +1083,12 @@ function generateId() {
 
 function escapeHtml(text) {
     if (!text) return '';
+    // 如果是数组，转换为列表
+    if (Array.isArray(text)) {
+        if (text.length === 0) return '';
+        // 如果是innovation等，显示为列表
+        return text.map(item => `<div class="list-item">• ${escapeHtml(item)}</div>`).join('');
+    }
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
