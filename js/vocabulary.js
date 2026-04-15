@@ -19,7 +19,7 @@ let settings = {
     masterCount: 12,
     speak: true,
     allowZhan: false,
-    types: [1, 2, 3, 4, 5, 6]  // 1英选中 2中选英 3英选义 4义选英 5句选英 6句选义
+    types: [1, 2, 3, 4, 5, 6]  // 1英选中 2中选英 3英选义 4义选英 5句选中 6句选义
 };
 
 const GROUP_SIZE = 10;
@@ -430,11 +430,11 @@ function renderQuestion(word, type, typeName) {
             correct = word.en;
             break;
             
-        case 5: // 句选英
+        case 5: // 句选中：给出例句（词标粗），选出该词的中文
             const ex5 = formatExample(word.ex, word.en);
             question = ex5 ? ex5 : `<span class="question-word">${escapeHtml(word.en)}</span> <span class="text-muted">(无例句)</span>`;
-            options = [word.en, ...others.map(o => o.en)].sort(() => Math.random() - 0.5);
-            correct = word.en;
+            options = [word.cn, ...others.map(o => o.cn)].sort(() => Math.random() - 0.5);
+            correct = word.cn;
             if (word.ex) speak(word.ex.replace(/\*\*/g, '').replace(/<[^>]*>/g, ''));
             break;
             
