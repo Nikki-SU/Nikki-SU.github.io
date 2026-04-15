@@ -9,7 +9,9 @@ const StudyPhase = {
     EN_CN: 'en_cn',         // 英文 -> 选中文
     CN_EN: 'cn_en',         // 中文 -> 选英文
     EN_DEF: 'en_def',       // 英文 -> 选释义
-    DEF_EN: 'def_en'        // 释义 -> 选英文
+    DEF_EN: 'def_en',       // 释义 -> 选英文
+    SENT_EN: 'sent_en',     // 例句 -> 选英文（选出例句中标粗的词）
+    SENT_DEF: 'sent_def'    // 例句 -> 选释义（选出例句中标粗词的释义）
 };
 
 // 单词状态
@@ -36,7 +38,9 @@ let SETTINGS = {
     phaseEnCn: true,
     phaseCnEn: true,
     phaseEnDef: true,
-    phaseDefEn: true
+    phaseDefEn: true,
+    phaseSentEn: true,
+    phaseSentDef: true
 };
 
 // 状态
@@ -46,11 +50,11 @@ let currentPhase = StudyPhase.EN_CN;
 let studyCount = CONFIG.DEFAULT_STUDY_COUNT;
 let currentWordQueue = [];
 let currentWordIndex = 0;
-let wrongWordsInRound = [];      // 当前题型中答错的题，做完后补做一次
-let currentRetryWord = null;      // 当前需要立即重做的单词（答题区显示卡片后重做）
-let newStudyStage = 0;           // 0:英选中 1:中选英 2:英选义 3:义选英
-let studyProgress = {};      // 学习进度
+let wrongWordsInRound = [];
+let currentRetryWord = null;
+let studyProgress = {};
 let isWaiting = false;
+let hasShownCardThisWord = false;  // 当前单词本轮是否已显示过卡片
 
 // DOM元素
 const elements = {};
@@ -77,31 +81,26 @@ function initElements() {
 }
 
 function initEventListeners() {
-    // 移动端菜单
     const menuToggle = document.getElementById('menuToggle');
     const nav = document.querySelector('.nav');
     if (menuToggle && nav) {
         menuToggle.addEventListener('click', () => nav.classList.toggle('active'));
     }
 
-    // Tabs切换
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
 
-    // 学习按钮
     document.getElementById('startStudyBtn')?.addEventListener('click', () => startStudy('new'));
     document.getElementById('startReviewBtn')?.addEventListener('click', () => startStudy('review'));
     document.getElementById('quitStudyBtn')?.addEventListener('click', quitStudy);
     document.getElementById('backToStudyBtn')?.addEventListener('click', backToStudy);
 
-    // 学习数量
     document.getElementById('studyCountSelect')?.addEventListener('change', (e) => {
         studyCount = parseInt(e.target.value);
         saveSettings();
     });
 
-    // 设置
     document.getElementById('settingsBtn')?.addEventListener('click', openSettings);
     document.getElementById('closeSettings')?.addEventListener('click', closeSettings);
     document.getElementById('saveSettingsBtn')?.addEventListener('click', saveSettings);
@@ -109,27 +108,22 @@ function initEventListeners() {
         SETTINGS.cutEnabled = e.target.checked;
     });
 
-    // 添加单词
     document.getElementById('addWordBtn')?.addEventListener('click', openAddWord);
     document.getElementById('closeAddWord')?.addEventListener('click', closeAddWord);
     document.getElementById('cancelAddWord')?.addEventListener('click', closeAddWord);
     document.getElementById('addWordForm')?.addEventListener('submit', handleAddWord);
 
-    // 错词本
     document.getElementById('reviewWrongBtn')?.addEventListener('click', () => reviewWrong());
     document.getElementById('clearWrongBtn')?.addEventListener('click', clearWrongWords);
 
-    // 已掌握库
     document.getElementById('masteredCount')?.parentElement?.addEventListener('click', openMastered);
     document.getElementById('closeMastered')?.addEventListener('click', closeMastered);
     document.getElementById('masteredSearchInput')?.addEventListener('input', debounce(renderMasteredList, 300));
 
-    // 筛选
     document.getElementById('allCategoryFilter')?.addEventListener('change', renderAllWords);
     document.getElementById('allStatusFilter')?.addEventListener('change', renderAllWords);
     document.getElementById('allSearchInput')?.addEventListener('input', debounce(renderAllWords, 300));
 
-    // 模态框
     document.getElementById('settingsModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'settingsModal') closeSettings();
     });
@@ -166,12 +160,10 @@ async function loadData() {
         console.error('加载词汇失败:', error);
     }
 
-    // 如果没有数据，加载示例
     if (vocabulary.length === 0) {
         vocabulary = getSampleVocabulary();
     }
 
-    // 合并本地存储的数据
     const stored = localStorage.getItem('vocabularyData');
     if (stored) {
         const localVocab = JSON.parse(stored);
@@ -185,10 +177,8 @@ async function loadData() {
         });
     }
 
-    // 加载设置
     loadSettings();
 
-    // 加载学习进度
     const savedProgress = localStorage.getItem('studyProgress');
     if (savedProgress) {
         studyProgress = JSON.parse(savedProgress);
@@ -198,1067 +188,28 @@ async function loadData() {
     updateStudyButtons();
 }
 
-/**
- * 示例词汇数据
- */
-function getSampleVocabulary() {
-    return [
-        {
-            id: 'v1',
-            word: 'perovskite',
-            word_cn: '钙钛矿',
-            definition: '一种具有ABX₃晶体结构的半导体材料，在太阳能电池中用作光吸收层',
-            example: 'The perovskite layer absorbs sunlight and generates electron-hole pairs.',
-            example_cn: '钙钛矿层吸收阳光并产生电子-空穴对。',
-            category: 'synthesis',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            phase_en_cn: false,
-            phase_cn_en: false,
-            phase_en_def: false,
-            phase_def_en: false,
-            last_practice: ''
-        },
-        {
-            id: 'v2',
-            word: 'crystallinity',
-            word_cn: '结晶度/结晶性',
-            definition: '材料中原子或分子有序排列的程度，影响材料的光电性质',
-            example: 'High crystallinity reduces grain boundaries and improves charge transport.',
-            example_cn: '高结晶度减少晶界并改善电荷传输。',
-            category: 'synthesis',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            phase_en_cn: false,
-            phase_cn_en: false,
-            phase_en_def: false,
-            phase_def_en: false,
-            last_practice: ''
-        },
-        {
-            id: 'v3',
-            word: 'passivation',
-            word_cn: '钝化',
-            definition: '通过表面处理减少材料表面缺陷态的过程，可降低载流子复合',
-            example: 'Surface passivation significantly reduces non-radiative recombination.',
-            example_cn: '表面钝化显著降低非辐射复合。',
-            category: 'mechanism',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            phase_en_cn: false,
-            phase_cn_en: false,
-            phase_en_def: false,
-            phase_def_en: false,
-            last_practice: ''
-        },
-        {
-            id: 'v4',
-            word: 'grain boundary',
-            word_cn: '晶界',
-            definition: '多晶材料中不同取向晶粒之间的界面区域',
-            example: 'Grain boundaries often act as recombination centers for charge carriers.',
-            example_cn: '晶界通常作为载流子的复合中心。',
-            category: 'mechanism',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            phase_en_cn: false,
-            phase_cn_en: false,
-            phase_en_def: false,
-            phase_def_en: false,
-            last_practice: ''
-        },
-        {
-            id: 'v5',
-            word: 'recombination',
-            word_cn: '复合',
-            definition: '电子和空穴相遇并湮灭释放能量的过程，是太阳能电池中的主要能量损失机制',
-            example: 'Minimizing recombination is crucial for achieving high efficiency.',
-            example_cn: '最小化复合对于实现高效率至关重要。',
-            category: 'mechanism',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            phase_en_cn: false,
-            phase_cn_en: false,
-            phase_en_def: false,
-            phase_def_en: false,
-            last_practice: ''
-        },
-        {
-            id: 'v6',
-            word: 'XRD',
-            word_cn: 'X射线衍射',
-            definition: 'X-ray Diffraction，用于分析材料晶体结构的技术',
-            example: 'XRD patterns reveal the crystallographic information of perovskite films.',
-            example_cn: 'XRD图谱揭示了钙钛矿薄膜的晶体学信息。',
-            category: 'characterization',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            phase_en_cn: false,
-            phase_cn_en: false,
-            phase_en_def: false,
-            phase_def_en: false,
-            last_practice: ''
-        },
-        {
-            id: 'v7',
-            word: 'SEM',
-            word_cn: '扫描电子显微镜',
-            definition: 'Scanning Electron Microscopy，用于观察材料表面形貌的高分辨率成像技术',
-            example: 'SEM images show the surface morphology and grain size distribution.',
-            example_cn: 'SEM图像显示了表面形貌和晶粒尺寸分布。',
-            category: 'characterization',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            phase_en_cn: false,
-            phase_cn_en: false,
-            phase_en_def: false,
-            phase_def_en: false,
-            last_practice: ''
-        },
-        {
-            id: 'v8',
-            word: 'spin-coating',
-            word_cn: '旋涂',
-            definition: '通过高速旋转基底使液体均匀铺展成薄膜的制备方法',
-            example: 'The perovskite layer was prepared by spin-coating at 4000 rpm.',
-            example_cn: '钙钛矿层以4000转/分的速度旋涂制备。',
-            category: 'synthesis',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            phase_en_cn: false,
-            phase_cn_en: false,
-            phase_en_def: false,
-            phase_def_en: false,
-            last_practice: ''
-        },
-        {
-            id: 'v9',
-            word: 'efficiency',
-            word_cn: '效率',
-            definition: '太阳能电池将入射光能转化为电能的百分比',
-            example: 'The certified efficiency reached 26.2% under standard illumination.',
-            example_cn: '在标准光照下认证效率达到26.2%。',
-            category: 'application',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            phase_en_cn: false,
-            phase_cn_en: false,
-            phase_en_def: false,
-            phase_def_en: false,
-            last_practice: ''
-        },
-        {
-            id: 'v10',
-            word: 'defect',
-            word_cn: '缺陷',
-            definition: '晶体结构中的不完整性，如空位、间隙原子或位错',
-            example: 'Defects can act as traps for charge carriers.',
-            example_cn: '缺陷可以作为载流子的陷阱。',
-            category: 'mechanism',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            phase_en_cn: false,
-            phase_cn_en: false,
-            phase_en_def: false,
-            phase_def_en: false,
-            last_practice: ''
-        }
-    ];
-}
-
-/**
- * 更新统计数据
- */
-function updateStats() {
-    const newWords = vocabulary.filter(v => v.status === WordStatus.NEW).length;
-    const studying = vocabulary.filter(v => v.status === WordStatus.STUDYING).length;
-    const learned = vocabulary.filter(v => v.status === WordStatus.LEARNED).length;
-    const mastered = vocabulary.filter(v => v.status === WordStatus.MASTERED).length;
-    const wrong = vocabulary.filter(v => v.error_count >= CONFIG.ERROR_THRESHOLD).length;
-
-    document.getElementById('newCount').textContent = newWords;
-    document.getElementById('studyingCount').textContent = studying;
-    document.getElementById('learnedCount').textContent = learned;
-    document.getElementById('masteredCount').textContent = mastered;
-    document.getElementById('wrongCount').textContent = wrong;
-
-    if (elements.progressText) {
-        elements.progressText.textContent = `新词: ${newWords} | 正在学: ${studying} | 已学: ${learned}`;
+function loadSettings() {
+    const stored = localStorage.getItem('vocabularySettings');
+    if (stored) {
+        SETTINGS = { ...SETTINGS, ...JSON.parse(stored) };
     }
-
-    const total = newWords + studying + learned;
-    const progress = total > 0 ? ((mastered / total) * 100).toFixed(1) : 0;
-    if (elements.progressFill) {
-        elements.progressFill.style.width = `${progress}%`;
-    }
-}
-
-function updateStudyButtons() {
-    const newWords = vocabulary.filter(v => v.status === WordStatus.NEW).length;
-    const studying = vocabulary.filter(v => v.status === WordStatus.STUDYING).length;
-    const learned = vocabulary.filter(v => v.status === WordStatus.LEARNED).length;
-    const newAndStudying = newWords + studying;
-
-    const studyBtn = document.getElementById('startStudyBtn');
-    const reviewBtn = document.getElementById('startReviewBtn');
-
-    if (studyBtn) {
-        studyBtn.disabled = newAndStudying === 0;
-        studyBtn.innerHTML = `📖 开始学习 (${newAndStudying}个)`;
-    }
-
-    if (reviewBtn) {
-        reviewBtn.disabled = learned === 0;
-        reviewBtn.innerHTML = `🔄 开始复习 (${learned}个)`;
-    }
-}
-
-/**
- * 开始学习
- */
-function startStudy(mode) {
-    currentMode = mode;
-    currentWordIndex = 0;
-    wrongWordsInRound = [];
-    currentRetryWord = null;
-    newStudyStage = 0;
-
-    // 获取学习队列
-    if (mode === 'new') {
-        // 新学：优先"正在学"，然后是"新词"
-        const studyingWords = vocabulary.filter(v => v.status === WordStatus.STUDYING);
-        const newWordsList = vocabulary.filter(v => v.status === WordStatus.NEW);
-        
-        // 从上次进度继续
-        const progressKey = 'new_study';
-        const savedIndex = studyProgress[progressKey] || 0;
-        
-        currentWordQueue = [...studyingWords, ...newWordsList].slice(savedIndex, savedIndex + studyCount);
-        
-        if (currentWordQueue.length === 0) {
-            alert('没有可学习的单词了！');
-            return;
-        }
-        
-        // 新学直接从英选中开始（不是卡片）
-        currentPhase = StudyPhase.EN_CN;
-        newStudyStage = 0;
-    } else {
-        // 复习：只复习"已学"
-        const learnedWords = vocabulary.filter(v => v.status === WordStatus.LEARNED);
-        
-        // 从上次进度继续
-        const progressKey = 'review';
-        const savedIndex = studyProgress[progressKey] || 0;
-        
-        currentWordQueue = learnedWords.slice(savedIndex, savedIndex + studyCount);
-        
-        if (currentWordQueue.length === 0) {
-            alert('没有需要复习的单词！');
-            return;
-        }
-        
-        currentPhase = StudyPhase.EN_CN;
-        newStudyStage = 1; // 跳过英选中阶段（复习不需要卡片）
-    }
-
-    // 显示学习界面
-    elements.studyControls?.classList.add('hidden');
-    elements.studyResult?.classList.add('hidden');
-    elements.queueInfo?.classList.remove('hidden');
-    elements.studyArea.innerHTML = '<p class="empty-message">准备开始...</p>';
-
-    updateQueueInfo();
-    renderCurrentQuestion();
-}
-
-/**
- * 渲染当前题目
- */
-function renderCurrentQuestion() {
-    // 检查是否有需要立即重做的题（答题区显示卡片后重做）
-    if (currentRetryWord !== null) {
-        renderQuiz(currentRetryWord);
-        currentRetryWord = null;
-        return;
-    }
-
-    // 检查是否有错题需要补做（当前题型完成后）
-    if (wrongWordsInRound.length > 0 && currentWordIndex >= currentWordQueue.length) {
-        handleRetryWords();
-        return;
-    }
-
-    // 检查是否完成
-    if (currentWordIndex >= currentWordQueue.length) {
-        moveToNextPhase();
-        return;
-    }
-
-    const currentWord = currentWordQueue[currentWordIndex];
-    updateQueueInfo();
-
-    // 渲染题目（新学模式下的英选中完成后会弹出卡片，由 handleCorrectAnswer 处理）
-    renderQuiz(currentWord);
-}
-
-/**
- * 渲染单词卡片
- * @param {Object} word - 单词对象
- * @param {boolean} isInitialCard - 是否是初始卡片（复习模式或首次进入），新学答题后弹出的卡片为false
- */
-function renderWordCard(word, isInitialCard = true) {
-    // 更新单词状态为"正在学"
-    const wordInVocab = vocabulary.find(v => v.id === word.id);
-    if (wordInVocab && wordInVocab.status === WordStatus.NEW) {
-        wordInVocab.status = WordStatus.STUDYING;
-    }
-
-    // 发音
-    if (SETTINGS.speakEnabled) {
-        speakWord(word.word);
-    }
-
-    elements.studyArea.innerHTML = `
-        <div class="word-card-display">
-            <div class="word-main-display">
-                <div class="word-en">${escapeHtml(word.word)}</div>
-                <div class="word-cn">${escapeHtml(word.word_cn)}</div>
-            </div>
-            ${word.definition ? `
-            <div class="word-definition-section">
-                <div class="section-label">释义</div>
-                <div class="word-definition">${escapeHtml(word.definition)}</div>
-            </div>
-            ` : ''}
-            ${word.example ? `
-            <div class="word-example-section">
-                <div class="section-label">例句</div>
-                <div class="word-example">${escapeHtml(word.example)}</div>
-                ${word.example_cn ? `<div class="word-example-cn">${escapeHtml(word.example_cn)}</div>` : ''}
-            </div>
-            ` : ''}
-            <button class="continue-btn" id="continueBtn">记住了，继续 →</button>
-        </div>
-    `;
-
-    document.getElementById('continueBtn')?.addEventListener('click', () => {
-        // 答题后弹出的卡片：点击继续后进入下一个单词的英选中
-        if (!isInitialCard) {
-            currentWordIndex++;
-            renderCurrentQuestion();
-        } else {
-            // 初始卡片（复习模式或其他场景）：继续流程
-            currentPhase = StudyPhase.EN_CN;
-            currentWordIndex++;
-            renderCurrentQuestion();
-        }
-    });
-}
-
-/**
- * 渲染选择题
- */
-function renderQuiz(word) {
-    // 判断是学习还是复习模式
-    const useChineseDef = currentMode === 'new'; // 学习用中文释义，复习用英文释义
-    const defToShow = useChineseDef ? (word.definition_cn || word.definition || word.word_cn) : (word.definition || word.word_cn);
-
-    const phaseConfig = {
-        [StudyPhase.EN_CN]: { prompt: '选择中文释义', main: word.word, type: 'word-en' },
-        [StudyPhase.CN_EN]: { prompt: '选择英文单词', main: word.word_cn, type: 'word-cn' },
-        [StudyPhase.EN_DEF]: { prompt: '选择正确释义', main: word.word, type: 'word-en' },
-        [StudyPhase.DEF_EN]: { prompt: '选择对应单词', main: defToShow, type: 'definition' }
-    };
-
-    const config = phaseConfig[currentPhase];
-    const options = generateOptions(word, currentPhase);
-
-    elements.studyArea.innerHTML = `
-        <div class="quiz-card-display">
-            <div class="quiz-prompt">${config.prompt}</div>
-            <div class="word-display ${config.type}">${escapeHtml(config.main)}</div>
-            <div class="options-grid">
-                ${options.map((opt, idx) => `
-                    <button class="option-btn" data-value="${escapeHtml(opt)}" data-correct="${escapeHtml(getCorrectAnswer(word, currentPhase))}">
-                        ${escapeHtml(opt)}
-                    </button>
-                `).join('')}
-            </div>
-        </div>
-    `;
-
-    elements.studyArea.querySelectorAll('.option-btn').forEach(btn => {
-        btn.addEventListener('click', () => handleAnswer(btn, word));
-    });
-}
-
-/**
- * 生成选项
- */
-function generateOptions(word, phase) {
-    const others = vocabulary.filter(v => v.id !== word.id);
-    const shuffled = shuffleArray([...others]).slice(0, 3);
-
-    while (shuffled.length < 3) {
-        shuffled.push({ word: 'placeholder', word_cn: '占位选项', definition: '占位选项', definition_cn: '占位选项' });
-    }
-
-    // 判断是学习还是复习模式
-    const useChineseDef = currentMode === 'new'; // 学习用中文释义，复习用英文释义
-
-    let correct, distractors;
-    switch (phase) {
-        case StudyPhase.EN_CN:
-            correct = word.word_cn;
-            distractors = shuffled.map(w => w.word_cn);
-            break;
-        case StudyPhase.CN_EN:
-        case StudyPhase.DEF_EN:
-            correct = word.word;
-            distractors = shuffled.map(w => w.word);
-            break;
-        case StudyPhase.EN_DEF:
-            // 学习用中文释义，复习用英文释义
-            correct = useChineseDef ? (word.definition_cn || word.definition || word.word_cn) : (word.definition || word.word_cn);
-            distractors = shuffled.map(w => useChineseDef ? (w.definition_cn || w.definition || w.word_cn) : (w.definition || w.word_cn));
-            break;
-        default:
-            return [];
-    }
-
-    return shuffleArray([correct, ...distractors]);
-}
-
-function getCorrectAnswer(word, phase) {
-    const useChineseDef = currentMode === 'new'; // 学习用中文释义，复习用英文释义
-
-    switch (phase) {
-        case StudyPhase.EN_CN:
-            return word.word_cn;
-        case StudyPhase.CN_EN:
-        case StudyPhase.DEF_EN:
-            return word.word;
-        case StudyPhase.EN_DEF:
-            return useChineseDef ? (word.definition_cn || word.definition || word.word_cn) : (word.definition || word.word_cn);
-        default:
-            return '';
-    }
-}
-
-/**
- * 处理答题
- */
-function handleAnswer(btn, word) {
-    if (isWaiting) return;
-
-    const selected = btn.dataset.value;
-    const correct = btn.dataset.correct;
-    const isCorrect = selected === correct;
-
-    // 显示正确/错误
-    elements.studyArea.querySelectorAll('.option-btn').forEach(b => {
-        if (b.dataset.value === correct) {
-            b.classList.add('correct');
-        }
-    });
-
-    if (!isCorrect) {
-        btn.classList.add('wrong');
-        handleWrongAnswer(word);
-        return;
-    }
-
-    handleCorrectAnswer(word);
-}
-
-function handleCorrectAnswer(word) {
-    const wordInVocab = vocabulary.find(v => v.id === word.id);
-    if (!wordInVocab) return;
-
-    // 更新正确次数
-    wordInVocab.correct_count = (wordInVocab.correct_count || 0) + 1;
-    wordInVocab.last_practice = new Date().toISOString();
-
-    // 检查是否是第一次英选中正确（在更新进度之前检查）
-    const isFirstTimeEnCn = currentMode === 'new' && currentPhase === StudyPhase.EN_CN && !wordInVocab.phase_en_cn;
-
-    // 更新阶段进度
-    updatePhaseProgress(wordInVocab);
-
-    // 检查是否掌握
-    if (wordInVocab.correct_count >= SETTINGS.masterCount) {
-        wordInVocab.status = WordStatus.MASTERED;
-    }
-
-    saveVocabulary();
-    isWaiting = true;
-
-    // 新学模式下，第一次英选中正确后弹出卡片
-    if (isFirstTimeEnCn) {
-        setTimeout(() => {
-            isWaiting = false;
-            renderWordCard(word, false); // false 表示是答题后的卡片，不是初始卡片
-        }, 300);
-        return;
-    }
-
-    setTimeout(() => {
-        isWaiting = false;
-        currentWordIndex++;
-        renderCurrentQuestion();
-    }, 300);
-}
-
-function handleWrongAnswer(word) {
-    isWaiting = true;
-
-    const wordInVocab = vocabulary.find(v => v.id === word.id);
-    if (wordInVocab) {
-        wordInVocab.correct_count = 0;
-        wordInVocab.error_count = (wordInVocab.error_count || 0) + 1;
-        wordInVocab.last_practice = new Date().toISOString();
-        saveVocabulary();
-    }
-
-    // 添加到错题队列（题型结束后补做一次）
-    if (!wrongWordsInRound.find(w => w.id === word.id)) {
-        wrongWordsInRound.push(word);
-    }
-
-    setTimeout(() => {
-        isWaiting = false;
-        // 弹出单词卡片
-        renderWrongWordCard(word);
-    }, 500);
-}
-
-function renderWrongWordCard(word) {
-    elements.studyArea.innerHTML = `
-        <div class="word-card-display">
-            <div style="color: var(--error-color); margin-bottom: 16px;">❌ 答错了，再记一遍！</div>
-            <div class="word-main-display">
-                <div class="word-en">${escapeHtml(word.word)}</div>
-                <div class="word-cn">${escapeHtml(word.word_cn)}</div>
-            </div>
-            ${word.definition ? `
-            <div class="word-definition-section">
-                <div class="section-label">释义</div>
-                <div class="word-definition">${escapeHtml(word.definition)}</div>
-            </div>
-            ` : ''}
-            <button class="continue-btn btn-danger" id="retryBtn">记住了，重做这道题</button>
-        </div>
-    `;
-
-    document.getElementById('retryBtn')?.addEventListener('click', () => {
-        // 设置需要立即重做的单词（只重做一次，不是两遍）
-        currentRetryWord = word;
-        renderCurrentQuestion();
-    });
-}
-
-/**
- * 处理错题补做（当前题型完成后，在队列末尾补做一次错题）
- */
-function handleRetryWords() {
-    const wordToRetry = wrongWordsInRound.shift();
-    if (!wordToRetry) {
-        // 所有错题都补做完了，继续下一阶段
-        currentWordIndex = 0;
-        renderCurrentQuestion();
-        return;
-    }
-
-    elements.phaseBadge.textContent = '🔄 补做错题';
-    elements.studyArea.innerHTML = '<p class="empty-message">正在补做错题...</p>';
-
-    setTimeout(() => {
-        renderQuiz(wordToRetry);
-    }, 500);
-}
-
-/**
- * 更新阶段进度
- */
-function updatePhaseProgress(word) {
-    switch (currentPhase) {
-        case StudyPhase.EN_CN:
-            word.phase_en_cn = true;
-            break;
-        case StudyPhase.CN_EN:
-            word.phase_cn_en = true;
-            break;
-        case StudyPhase.EN_DEF:
-            word.phase_en_def = true;
-            break;
-        case StudyPhase.DEF_EN:
-            word.phase_def_en = true;
-            break;
-    }
-
-    // 如果4个题型都完成过，更新状态
-    if (word.phase_en_cn && word.phase_cn_en && word.phase_en_def && word.phase_def_en) {
-        if (word.status === WordStatus.STUDYING) {
-            word.status = WordStatus.LEARNED;
-        }
-    }
-}
-
-/**
- * 进入下一阶段
- */
-function moveToNextPhase() {
-    // 进入下一阶段前，确保错题已经补做完成
-    if (wrongWordsInRound.length > 0) {
-        handleRetryWords();
-        return;
-    }
-
-    wrongWordsInRound = [];
-
-    if (currentMode === 'new') {
-        newStudyStage++;
-        
-        switch (newStudyStage) {
-            case 1:
-                if (!SETTINGS.phaseCnEn) newStudyStage++;
-            case 2:
-                if (!SETTINGS.phaseEnDef) newStudyStage++;
-            case 3:
-                if (!SETTINGS.phaseDefEn) newStudyStage++;
-        }
-
-        if (newStudyStage >= 4) {
-            completeStudy();
-            return;
-        }
-
-        currentPhase = [StudyPhase.CN_EN, StudyPhase.EN_DEF, StudyPhase.DEF_EN][newStudyStage - 1];
-    } else {
-        // 复习模式：按顺序进行
-        if (currentPhase === StudyPhase.EN_CN && SETTINGS.phaseCnEn) {
-            currentPhase = StudyPhase.CN_EN;
-        } else if (currentPhase === StudyPhase.CN_EN && SETTINGS.phaseEnDef) {
-            currentPhase = StudyPhase.EN_DEF;
-        } else if (currentPhase === StudyPhase.EN_DEF && SETTINGS.phaseDefEn) {
-            currentPhase = StudyPhase.DEF_EN;
-        } else {
-            completeStudy();
-            return;
-        }
-    }
-
-    currentWordIndex = 0;
-    saveProgress();
-    updateQueueInfo();
-
-    // 显示阶段切换提示
-    showPhaseHint();
-}
-
-function showPhaseHint() {
-    const phaseNames = {
-        [StudyPhase.CN_EN]: '中文选英文',
-        [StudyPhase.EN_DEF]: '英文选释义',
-        [StudyPhase.DEF_EN]: '释义选英文'
-    };
-
-    elements.studyArea.innerHTML = `
-        <div class="completion-message">
-            <div class="completion-icon">📝</div>
-            <h3>进入下一阶段</h3>
-            <p>${phaseNames[currentPhase]}</p>
-        </div>
-    `;
-
-    setTimeout(() => {
-        renderCurrentQuestion();
-    }, 1500);
-}
-
-/**
- * 完成学习
- */
-function completeStudy() {
-    // 保存进度
-    const progressKey = currentMode === 'new' ? 'new_study' : 'review';
-    studyProgress[progressKey] = (studyProgress[progressKey] || 0) + currentWordQueue.length;
-    saveProgress();
-
-    // 更新统计
-    updateStats();
-    updateStudyButtons();
-    saveVocabulary();
-
-    // 显示完成界面
-    elements.queueInfo?.classList.add('hidden');
-    elements.studyResult?.classList.remove('hidden');
     
-    document.getElementById('resultTitle').textContent = currentMode === 'new' ? '学习完成！' : '复习完成！';
-    document.getElementById('resultText').textContent = `本次学习了 ${currentWordQueue.length} 个单词`;
-}
-
-/**
- * 更新队列信息
- */
-function updateQueueInfo() {
-    if (!elements.queueBadge || !elements.phaseBadge || !elements.wordProgress) return;
-
-    const phaseNames = {
-        [StudyPhase.EN_CN]: '英选中',
-        [StudyPhase.CN_EN]: '中选英',
-        [StudyPhase.EN_DEF]: '英选义',
-        [StudyPhase.DEF_EN]: '义选英'
-    };
-
-    elements.queueBadge.textContent = currentMode === 'new' ? '📖 学习中' : '🔄 复习中';
-    elements.phaseBadge.textContent = phaseNames[currentPhase];
-    elements.wordProgress.textContent = `第 ${Math.min(currentWordIndex + 1, currentWordQueue.length)} / ${currentWordQueue.length} 个词`;
-}
-
-/**
- * 退出学习
- */
-function quitStudy() {
-    if (!confirm('确定要退出学习吗？当前进度将保存。')) return;
-
-    // 保存进度
-    const progressKey = currentMode === 'new' ? 'new_study' : 'review';
-    studyProgress[progressKey] = (studyProgress[progressKey] || 0) + currentWordIndex;
-    saveProgress();
-
-    backToStudy();
-}
-
-/**
- * 返回学习界面
- */
-function backToStudy() {
-    elements.studyControls?.classList.remove('hidden');
-    elements.studyResult?.classList.add('hidden');
-    elements.queueInfo?.classList.add('hidden');
-    elements.studyArea.innerHTML = '<p class="empty-message">选择上方按钮开始学习！</p>';
-    currentMode = null;
-}
-
-/**
- * 复习错词
- */
-function reviewWrong() {
-    const wrongWords = vocabulary.filter(v => v.error_count >= CONFIG.ERROR_THRESHOLD);
-    if (wrongWords.length === 0) {
-        alert('错词本为空！');
-        return;
-    }
-
-    currentMode = 'review';
-    currentWordQueue = wrongWords.slice(0, studyCount);
-    currentPhase = StudyPhase.EN_CN;
-    currentWordIndex = 0;
-    wrongWordsInRound = [];
-    currentRetryWord = null;
-
-    elements.studyControls?.classList.add('hidden');
-    elements.queueInfo?.classList.remove('hidden');
-    elements.studyArea.innerHTML = '<p class="empty-message">准备开始...</p>';
-
-    updateQueueInfo();
-    renderCurrentQuestion();
-}
-
-/**
- * 清空错词本
- */
-function clearWrongWords() {
-    if (!confirm('确定要清空错词本吗？所有错误记录将被清除。')) return;
-
-    vocabulary.forEach(v => {
-        if (v.error_count >= CONFIG.ERROR_THRESHOLD) {
-            v.error_count = 0;
-        }
-    });
-
-    saveVocabulary();
-    updateStats();
-    renderWrongWords();
-}
-
-/**
- * 渲染全部单词列表
- */
-function renderAllWords() {
-    const category = document.getElementById('allCategoryFilter')?.value || '';
-    const status = document.getElementById('allStatusFilter')?.value || '';
-    const search = document.getElementById('allSearchInput')?.value.toLowerCase() || '';
-
-    let filtered = vocabulary;
-
-    if (category) {
-        filtered = filtered.filter(v => v.category === category);
-    }
-
-    if (status) {
-        filtered = filtered.filter(v => v.status === status);
-    }
-
-    if (search) {
-        filtered = filtered.filter(v => 
-            v.word.toLowerCase().includes(search) ||
-            v.word_cn.includes(search)
-        );
-    }
-
-    // 按首字母排序
-    filtered.sort((a, b) => a.word.localeCompare(b.word));
-
-    if (filtered.length === 0) {
-        elements.allWordList.innerHTML = '<div class="empty-message"><p>没有找到匹配的单词</p></div>';
-        return;
-    }
-
-    elements.allWordList.innerHTML = filtered.map(word => createWordItem(word)).join('');
-
-    // 添加编辑事件
-    elements.allWordList.querySelectorAll('.edit-word-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            editWord(btn.dataset.id);
-        });
-    });
-}
-
-/**
- * 创建单词项
- */
-function createWordItem(word) {
-    const statusNames = {
-        [WordStatus.NEW]: { text: '新词', class: 'status-new' },
-        [WordStatus.STUDYING]: { text: '正在学', class: 'status-studying' },
-        [WordStatus.LEARNED]: { text: '已学', class: 'status-learned' },
-        [WordStatus.MASTERED]: { text: '已掌握', class: 'status-mastered' }
-    };
-
-    const status = statusNames[word.status] || statusNames[WordStatus.NEW];
-
-    return `
-        <div class="word-item" data-id="${word.id}">
-            <div class="word-main">
-                <span class="word-text">${escapeHtml(word.word)}</span>
-                <span class="word-cn">${escapeHtml(word.word_cn)}</span>
-            </div>
-            <div class="word-meta">
-                <span class="word-status ${status.class}">${status.text}</span>
-                <span class="text-muted" style="font-size: 0.85rem;">正确: ${word.correct_count} | 错误: ${word.error_count}</span>
-                <button class="btn btn-sm btn-outline edit-word-btn" data-id="${word.id}">编辑</button>
-            </div>
-        </div>
-    `;
-}
-
-/**
- * 渲染错词列表
- */
-function renderWrongWords() {
-    const wrongWords = vocabulary.filter(v => v.error_count >= CONFIG.ERROR_THRESHOLD)
-        .sort((a, b) => b.error_count - a.error_count);
-
-    if (wrongWords.length === 0) {
-        elements.wrongWordList.innerHTML = '<div class="empty-message"><p>暂无错词记录</p></div>';
-        return;
-    }
-
-    elements.wrongWordList.innerHTML = wrongWords.map(word => createWordItem(word)).join('');
-}
-
-/**
- * 渲染已掌握列表
- */
-function renderMasteredList() {
-    const search = document.getElementById('masteredSearchInput')?.value.toLowerCase() || '';
-    let masteredWords = vocabulary.filter(v => v.status === WordStatus.MASTERED);
-
-    if (search) {
-        masteredWords = masteredWords.filter(v => 
-            v.word.toLowerCase().includes(search)
-        );
-    }
-
-    // 按首字母排序
-    masteredWords.sort((a, b) => a.word.localeCompare(b.word));
-
-    if (masteredWords.length === 0) {
-        document.getElementById('masteredList').innerHTML = '<div class="empty-message"><p>暂无已掌握单词</p></div>';
-        return;
-    }
-
-    document.getElementById('masteredList').innerHTML = masteredWords.map(word => createWordItem(word)).join('');
-}
-
-/**
- * 添加单词
- */
-function openAddWord() {
-    document.getElementById('addWordForm').reset();
-    document.getElementById('addWordModal').classList.remove('hidden');
-}
-
-function closeAddWord() {
-    document.getElementById('addWordModal').classList.add('hidden');
-}
-
-function handleAddWord(e) {
-    e.preventDefault();
-
-    const newWord = {
-        id: generateId(),
-        word: document.getElementById('wordEn').value.trim().toLowerCase(),
-        word_cn: document.getElementById('wordCn').value.trim(),
-        definition: document.getElementById('wordDef').value.trim(),
-        example: document.getElementById('wordExample').value.trim(),
-        example_cn: document.getElementById('wordExampleCn').value.trim(),
-        category: document.getElementById('wordCat').value,
-        status: WordStatus.NEW,
-        correct_count: 0,
-        error_count: 0,
-        phase_en_cn: false,
-        phase_cn_en: false,
-        phase_en_def: false,
-        phase_def_en: false,
-        last_practice: ''
-    };
-
-    // 检查是否已存在
-    if (vocabulary.find(v => v.word.toLowerCase() === newWord.word)) {
-        alert('该单词已存在！');
-        return;
-    }
-
-    vocabulary.push(newWord);
-    saveVocabulary();
-    updateStats();
-    updateStudyButtons();
-    closeAddWord();
-    renderAllWords();
-
-    alert('单词添加成功！');
-}
-
-/**
- * 编辑单词
- */
-function editWord(wordId) {
-    const word = vocabulary.find(v => v.id === wordId);
-    if (!word) return;
-
-    // 复用添加表单
-    document.getElementById('wordEn').value = word.word;
-    document.getElementById('wordCn').value = word.word_cn;
-    document.getElementById('wordDef').value = word.definition || '';
-    document.getElementById('wordExample').value = word.example || '';
-    document.getElementById('wordExampleCn').value = word.example_cn || '';
-    document.getElementById('wordCat').value = word.category || 'custom';
-
-    // 修改表单提交逻辑
-    const form = document.getElementById('addWordForm');
-    const originalHandler = form.onsubmit;
+    studyCount = SETTINGS.studyCount || CONFIG.DEFAULT_STUDY_COUNT;
+    SETTINGS.masterCount = SETTINGS.masterCount || CONFIG.DEFAULT_MASTER_COUNT;
     
-    form.onsubmit = (e) => {
-        e.preventDefault();
-        
-        word.word = document.getElementById('wordEn').value.trim().toLowerCase();
-        word.word_cn = document.getElementById('wordCn').value.trim();
-        word.definition = document.getElementById('wordDef').value.trim();
-        word.example = document.getElementById('wordExample').value.trim();
-        word.example_cn = document.getElementById('wordExampleCn').value.trim();
-        word.category = document.getElementById('wordCat').value;
-
-        saveVocabulary();
-        updateStats();
-        closeAddWord();
-        renderAllWords();
-
-        alert('单词更新成功！');
-        form.onsubmit = originalHandler;
-    };
-
-    openAddWord();
-}
-
-/**
- * 设置
- */
-function openSettings() {
-    document.getElementById('settingSpeak').checked = SETTINGS.speakEnabled;
-    document.getElementById('settingCut').checked = SETTINGS.cutEnabled;
-    document.getElementById('settingMasterCount').value = SETTINGS.masterCount;
-    document.getElementById('settingEnCn').checked = SETTINGS.phaseEnCn;
-    document.getElementById('settingCnEn').checked = SETTINGS.phaseCnEn;
-    document.getElementById('settingEnDef').checked = SETTINGS.phaseEnDef;
-    document.getElementById('settingDefEn').checked = SETTINGS.phaseDefEn;
+    // 应用设置到UI
+    const studyCountSelect = document.getElementById('studyCountSelect');
+    if (studyCountSelect) studyCountSelect.value = studyCount;
     
-    document.getElementById('settingsModal').classList.remove('hidden');
-}
-
-function closeSettings() {
-    document.getElementById('settingsModal').classList.add('hidden');
+    const masterCountSelect = document.getElementById('masterCountSelect');
+    if (masterCountSelect) masterCountSelect.value = SETTINGS.masterCount;
 }
 
 function saveSettings() {
-    SETTINGS.speakEnabled = document.getElementById('settingSpeak').checked;
-    SETTINGS.cutEnabled = document.getElementById('settingCut').checked;
-    SETTINGS.masterCount = parseInt(document.getElementById('settingMasterCount').value);
-    SETTINGS.phaseEnCn = document.getElementById('settingEnCn').checked;
-    SETTINGS.phaseCnEn = document.getElementById('settingCnEn').checked;
-    SETTINGS.phaseEnDef = document.getElementById('settingEnDef').checked;
-    SETTINGS.phaseDefEn = document.getElementById('settingDefEn').checked;
-
-    localStorage.setItem('vocabSettings', JSON.stringify(SETTINGS));
-    localStorage.setItem('studyCount', studyCount.toString());
-    
-    closeSettings();
-    alert('设置已保存！');
+    SETTINGS.studyCount = studyCount;
+    localStorage.setItem('vocabularySettings', JSON.stringify(SETTINGS));
 }
 
-function loadSettings() {
-    const saved = localStorage.getItem('vocabSettings');
-    if (saved) {
-        SETTINGS = { ...SETTINGS, ...JSON.parse(saved) };
-    }
-
-    const savedCount = localStorage.getItem('studyCount');
-    if (savedCount) {
-        studyCount = parseInt(savedCount);
-        const select = document.getElementById('studyCountSelect');
-        if (select) select.value = studyCount.toString();
-    }
-}
-
-/**
- * 已掌握库
- */
-function openMastered() {
-    renderMasteredList();
-    document.getElementById('masteredModal').classList.remove('hidden');
-}
-
-function closeMastered() {
-    document.getElementById('masteredModal').classList.add('hidden');
-}
-
-/**
- * 保存数据
- */
 function saveVocabulary() {
     localStorage.setItem('vocabularyData', JSON.stringify(vocabulary));
 }
@@ -1268,12 +219,818 @@ function saveProgress() {
 }
 
 /**
- * 工具函数
+ * 更新统计
  */
-function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+function updateStats() {
+    const newCount = vocabulary.filter(v => v.status === 'new').length;
+    const studyingCount = vocabulary.filter(v => v.status === 'studying').length;
+    const learnedCount = vocabulary.filter(v => v.status === 'learned').length;
+    const masteredCount = vocabulary.filter(v => v.status === 'mastered').length;
+    const wrongCount = vocabulary.filter(v => (v.error_count || 0) >= CONFIG.ERROR_THRESHOLD).length;
+
+    document.getElementById('newCount').textContent = newCount;
+    document.getElementById('studyingCount').textContent = studyingCount;
+    document.getElementById('learnedCount').textContent = learnedCount;
+    document.getElementById('masteredCount').textContent = masteredCount;
+    document.getElementById('wrongCount').textContent = wrongCount;
+
+    updateStudyButtons();
 }
 
+function updateStudyButtons() {
+    const newCount = vocabulary.filter(v => v.status === 'new' || v.status === 'studying').length;
+    const learnedCount = vocabulary.filter(v => v.status === 'learned').length;
+
+    const startStudyBtn = document.getElementById('startStudyBtn');
+    const startReviewBtn = document.getElementById('startReviewBtn');
+
+    if (startStudyBtn) {
+        startStudyBtn.disabled = newCount === 0;
+        startStudyBtn.textContent = `📚 学习 (${newCount})`;
+    }
+    if (startReviewBtn) {
+        startReviewBtn.disabled = learnedCount === 0;
+        startReviewBtn.textContent = `🔄 复习 (${learnedCount})`;
+    }
+}
+
+/**
+ * 开始学习/复习
+ */
+function startStudy(mode) {
+    currentMode = mode;
+    currentWordIndex = 0;
+    currentPhase = StudyPhase.EN_CN;
+    wrongWordsInRound = [];
+    currentRetryWord = null;
+    hasShownCardThisWord = false;
+
+    // 获取词汇队列
+    if (mode === 'new') {
+        // 学习：新词 + 正在学的词
+        currentWordQueue = vocabulary
+            .filter(v => v.status === 'new' || v.status === 'studying')
+            .slice(0, studyCount)
+            .map(v => ({ ...v }));
+    } else {
+        // 复习：已学的词
+        currentWordQueue = vocabulary
+            .filter(v => v.status === 'learned')
+            .slice(0, studyCount)
+            .map(v => ({ ...v }));
+    }
+
+    if (currentWordQueue.length === 0) {
+        alert(mode === 'new' ? '没有可学习的词汇' : '没有可复习的词汇');
+        return;
+    }
+
+    // 显示学习界面
+    document.getElementById('studyMode').classList.add('active');
+    document.getElementById('allMode').classList.remove('active');
+    document.getElementById('wrongMode').classList.remove('active');
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+    renderCurrentQuestion();
+}
+
+/**
+ * 渲染当前问题
+ */
+function renderCurrentQuestion() {
+    const word = currentRetryWord || currentWordQueue[currentWordIndex];
+    if (!word) {
+        finishStudy();
+        return;
+    }
+
+    const area = elements.studyArea;
+    area.innerHTML = '';
+
+    // 更新进度
+    updateProgress();
+
+    // 根据阶段渲染题目
+    if (currentPhase === StudyPhase.CARD) {
+        renderCard(word);
+    } else {
+        renderQuestion(word);
+    }
+}
+
+/**
+ * 渲染单词卡片
+ */
+function renderCard(word) {
+    const area = elements.studyArea;
+    
+    area.innerHTML = `
+        <div class="word-card">
+            <div class="card-word">${escapeHtml(word.word)}</div>
+            <div class="card-phonetic">${escapeHtml(word.phonetic || '')}</div>
+            <div class="card-cn">${escapeHtml(word.word_cn)}</div>
+            <div class="card-def">
+                <p><strong>中文释义：</strong>${escapeHtml(word.definition_cn || '')}</p>
+                <p><strong>英文释义：</strong>${escapeHtml(word.definition_en || '')}</p>
+            </div>
+            ${word.example ? `
+                <div class="card-example">
+                    <strong>例句：</strong>${formatExample(word.example, word.word)}
+                </div>
+            ` : ''}
+        </div>
+        <div class="card-actions">
+            <button class="btn btn-primary btn-lg" onclick="continueAfterCard()">继续</button>
+        </div>
+    `;
+
+    // 朗读
+    if (SETTINGS.speakEnabled && 'speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(word.word);
+        utterance.lang = 'en-US';
+        speechSynthesis.speak(utterance);
+    }
+}
+
+/**
+ * 格式化例句（将标粗的词保持标粗）
+ */
+function formatExample(example, word) {
+    // 例句中已经用**word**格式标粗
+    return example.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
+
+/**
+ * 卡片后继续
+ */
+function continueAfterCard() {
+    hasShownCardThisWord = true;
+    
+    if (currentRetryWord) {
+        // 重做完成，回到队列末尾
+        currentRetryWord = null;
+        currentPhase = StudyPhase.EN_CN;
+        nextWord();
+    } else {
+        // 正常流程，进入英选中
+        currentPhase = StudyPhase.EN_CN;
+        renderCurrentQuestion();
+    }
+}
+
+/**
+ * 渲染选择题
+ */
+function renderQuestion(word) {
+    const area = elements.studyArea;
+    const isReview = currentMode === 'review';
+    const useEnDef = isReview; // 复习用英文释义，学习用中文释义
+
+    let question, options, correctAnswer;
+
+    switch (currentPhase) {
+        case StudyPhase.EN_CN:
+            question = `<span class="question-word">${escapeHtml(word.word)}</span>`;
+            if (SETTINGS.speakEnabled && 'speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(word.word);
+                utterance.lang = 'en-US';
+                speechSynthesis.speak(utterance);
+            }
+            options = generateOptions(word, 'word_cn');
+            correctAnswer = word.word_cn;
+            break;
+
+        case StudyPhase.CN_EN:
+            question = `<span class="question-text">${escapeHtml(word.word_cn)}</span>`;
+            options = generateOptions(word, 'word');
+            correctAnswer = word.word;
+            break;
+
+        case StudyPhase.EN_DEF:
+            question = `<span class="question-word">${escapeHtml(word.word)}</span>`;
+            options = generateOptions(word, useEnDef ? 'definition_en' : 'definition_cn');
+            correctAnswer = useEnDef ? word.definition_en : word.definition_cn;
+            break;
+
+        case StudyPhase.DEF_EN:
+            const defKey = useEnDef ? 'definition_en' : 'definition_cn';
+            question = `<span class="question-text">${escapeHtml(word[defKey])}</span>`;
+            options = generateOptions(word, 'word');
+            correctAnswer = word.word;
+            break;
+
+        case StudyPhase.SENT_EN:
+            question = `<div class="question-sentence">${formatExample(word.example, word.word)}</div>
+                        <p class="question-hint">选出句中标粗的词汇</p>`;
+            options = generateOptions(word, 'word');
+            correctAnswer = word.word;
+            break;
+
+        case StudyPhase.SENT_DEF:
+            question = `<div class="question-sentence">${formatExample(word.example, word.word)}</div>
+                        <p class="question-hint">选出句中标粗词汇的${useEnDef ? '英文释义' : '中文释义'}</p>`;
+            options = generateOptions(word, useEnDef ? 'definition_en' : 'definition_cn');
+            correctAnswer = useEnDef ? word.definition_en : word.definition_cn;
+            break;
+    }
+
+    // 更新阶段显示
+    updatePhaseBadge();
+
+    area.innerHTML = `
+        <div class="question-area">
+            <div class="question-content">${question}</div>
+            <div class="options-grid">
+                ${options.map((opt, i) => `
+                    <button class="option-btn" onclick="checkAnswer('${escapeAttr(opt)}', '${escapeAttr(correctAnswer)}', this)">
+                        ${escapeHtml(opt)}
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * 生成选项
+ */
+function generateOptions(word, field) {
+    const correctAnswer = word[field];
+    if (!correctAnswer) return [word.word, word.word_cn];
+
+    // 获取其他词汇的同字段值作为干扰项
+    const otherWords = vocabulary.filter(v => v.id !== word.id && v[field]);
+    const distractors = otherWords
+        .map(v => v[field])
+        .filter(val => val && val !== correctAnswer)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+
+    // 如果干扰项不足，用默认值填充
+    while (distractors.length < 3) {
+        distractors.push(`选项${distractors.length + 2}`);
+    }
+
+    // 打乱顺序
+    const options = [correctAnswer, ...distractors.slice(0, 3)];
+    return options.sort(() => Math.random() - 0.5);
+}
+
+/**
+ * 检查答案
+ */
+function checkAnswer(selected, correct, btn) {
+    const word = currentRetryWord || currentWordQueue[currentWordIndex];
+    const isCorrect = selected === correct;
+
+    if (isCorrect) {
+        btn.classList.add('correct');
+        
+        // 检查是否是英选中且需要显示卡片
+        if (currentPhase === StudyPhase.EN_CN && !hasShownCardThisWord && currentMode === 'new') {
+            // 第一次英选中正确，显示卡片
+            setTimeout(() => {
+                currentPhase = StudyPhase.CARD;
+                renderCurrentQuestion();
+            }, 500);
+            return;
+        }
+
+        // 进入下一阶段
+        setTimeout(() => nextPhase(), 500);
+    } else {
+        btn.classList.add('wrong');
+        
+        // 答错处理
+        word.error_count = (word.error_count || 0) + 1;
+        
+        // 清零连续正确次数
+        word.correct_streak = 0;
+
+        // 英选中做错：立即弹卡片重做
+        if (currentPhase === StudyPhase.EN_CN) {
+            setTimeout(() => {
+                currentPhase = StudyPhase.CARD;
+                currentRetryWord = word;
+                renderCurrentQuestion();
+            }, 500);
+            return;
+        }
+
+        // 其他题型做错：加到错题队列，本轮末尾补做
+        if (!wrongWordsInRound.find(w => w.id === word.id)) {
+            wrongWordsInRound.push({ ...word, retryPhase: currentPhase });
+        }
+
+        // 继续当前阶段
+        setTimeout(() => renderCurrentQuestion(), 800);
+    }
+
+    saveVocabulary();
+}
+
+/**
+ * 进入下一阶段
+ */
+function nextPhase() {
+    const phases = currentMode === 'new' 
+        ? [StudyPhase.EN_CN, StudyPhase.CN_EN, StudyPhase.EN_DEF, StudyPhase.DEF_EN, StudyPhase.SENT_EN, StudyPhase.SENT_DEF]
+        : [StudyPhase.EN_CN, StudyPhase.CN_EN, StudyPhase.EN_DEF, StudyPhase.DEF_EN, StudyPhase.SENT_EN, StudyPhase.SENT_DEF];
+    
+    const currentIndex = phases.indexOf(currentPhase);
+    
+    if (currentIndex < phases.length - 1) {
+        currentPhase = phases[currentIndex + 1];
+        renderCurrentQuestion();
+    } else {
+        // 该词完成
+        wordCompleted();
+    }
+}
+
+/**
+ * 单词完成一轮
+ */
+function wordCompleted() {
+    const word = currentRetryWord || currentWordQueue[currentWordIndex];
+    
+    if (!currentRetryWord) {
+        // 更新状态
+        if (word.status === 'new') {
+            word.status = 'studying';
+        }
+        
+        // 增加连续正确次数
+        word.correct_streak = (word.correct_streak || 0) + 1;
+        
+        // 检查是否掌握
+        if (word.correct_streak >= SETTINGS.masterCount) {
+            word.status = 'mastered';
+        } else if (word.status === 'studying') {
+            word.status = 'learned';
+        }
+
+        saveVocabulary();
+        saveProgress();
+    }
+
+    currentRetryWord = null;
+    hasShownCardThisWord = false;
+    currentPhase = StudyPhase.EN_CN;
+    nextWord();
+}
+
+/**
+ * 下一个单词
+ */
+function nextWord() {
+    currentWordIndex++;
+
+    if (currentWordIndex >= currentWordQueue.length) {
+        // 检查是否有错题需要补做
+        if (wrongWordsInRound.length > 0) {
+            currentRetryWord = wrongWordsInRound.shift();
+            currentPhase = currentRetryWord.retryPhase || StudyPhase.EN_CN;
+            hasShownCardThisWord = currentMode === 'review'; // 复习不弹卡片
+            renderCurrentQuestion();
+        } else {
+            finishStudy();
+        }
+    } else {
+        hasShownCardThisWord = false;
+        currentPhase = StudyPhase.EN_CN;
+        renderCurrentQuestion();
+    }
+}
+
+/**
+ * 更新进度显示
+ */
+function updateProgress() {
+    const total = currentWordQueue.length;
+    const current = currentWordIndex + 1;
+    const percent = Math.round((currentWordIndex / total) * 100);
+
+    if (elements.progressText) {
+        elements.progressText.textContent = `${current} / ${total}`;
+    }
+    if (elements.progressFill) {
+        elements.progressFill.style.width = `${percent}%`;
+    }
+}
+
+/**
+ * 更新阶段徽章
+ */
+function updatePhaseBadge() {
+    const phaseNames = {
+        [StudyPhase.EN_CN]: '英选中',
+        [StudyPhase.CN_EN]: '中选英',
+        [StudyPhase.EN_DEF]: currentMode === 'review' ? '英选义(英)' : '英选义(中)',
+        [StudyPhase.DEF_EN]: currentMode === 'review' ? '义选英(英)' : '义选英(中)',
+        [StudyPhase.SENT_EN]: '句选英',
+        [StudyPhase.SENT_DEF]: currentMode === 'review' ? '句选义(英)' : '句选义(中)'
+    };
+
+    if (elements.phaseBadge) {
+        elements.phaseBadge.textContent = phaseNames[currentPhase] || '';
+    }
+}
+
+/**
+ * 完成学习
+ */
+function finishStudy() {
+    elements.studyArea.innerHTML = `
+        <div class="study-complete">
+            <div class="complete-icon">🎉</div>
+            <h3>${currentMode === 'new' ? '学习' : '复习'}完成！</h3>
+            <p>已完成 ${currentWordQueue.length} 个词汇</p>
+            ${wrongWordsInRound.length > 0 ? `<p class="text-muted">错题已加入复习队列</p>` : ''}
+            <div class="complete-actions">
+                <button class="btn btn-outline" onclick="quitStudy()">返回</button>
+                <button class="btn btn-primary" onclick="continueStudy()">继续${currentMode === 'new' ? '学习' : '复习'}</button>
+            </div>
+        </div>
+    `;
+
+    updateStats();
+}
+
+function continueStudy() {
+    startStudy(currentMode);
+}
+
+function quitStudy() {
+    currentMode = null;
+    currentWordQueue = [];
+    currentWordIndex = 0;
+    currentPhase = StudyPhase.EN_CN;
+    wrongWordsInRound = [];
+    currentRetryWord = null;
+
+    document.getElementById('studyMode').classList.remove('active');
+    document.getElementById('allMode').classList.add('active');
+    document.querySelector('.tab-btn[data-tab="all"]').classList.add('active');
+
+    updateStats();
+    renderAllWords();
+}
+
+function backToStudy() {
+    if (currentWordQueue.length > 0) {
+        renderCurrentQuestion();
+    } else {
+        quitStudy();
+    }
+}
+
+/**
+ * 渲染所有词汇
+ */
+function renderAllWords() {
+    const container = elements.allWordList;
+    if (!container) return;
+
+    const categoryFilter = document.getElementById('allCategoryFilter')?.value || '';
+    const statusFilter = document.getElementById('allStatusFilter')?.value || '';
+    const searchTerm = document.getElementById('allSearchInput')?.value?.toLowerCase() || '';
+
+    let filtered = vocabulary.filter(word => {
+        if (categoryFilter && word.category !== categoryFilter) return false;
+        if (statusFilter && word.status !== statusFilter) return false;
+        if (searchTerm) {
+            const searchFields = [word.word, word.word_cn, word.definition_cn, word.definition_en].join(' ').toLowerCase();
+            if (!searchFields.includes(searchTerm)) return false;
+        }
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>暂无词汇</p></div>';
+        return;
+    }
+
+    container.innerHTML = filtered.map(word => `
+        <div class="word-item" data-id="${word.id}">
+            <div class="word-main">
+                <span class="word-text">${escapeHtml(word.word)}</span>
+                <span class="word-cn">${escapeHtml(word.word_cn)}</span>
+                <span class="word-status status-${word.status}">${getStatusName(word.status)}</span>
+            </div>
+            <div class="word-actions">
+                <button class="btn btn-sm btn-outline" onclick="editWord('${word.id}')">编辑</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteWord('${word.id}')">删除</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getStatusName(status) {
+    const names = {
+        'new': '新词',
+        'studying': '学习中',
+        'learned': '已学',
+        'mastered': '已掌握'
+    };
+    return names[status] || status;
+}
+
+/**
+ * 渲染错词本
+ */
+function renderWrongWords() {
+    const container = elements.wrongWordList;
+    if (!container) return;
+
+    const wrongWords = vocabulary.filter(v => (v.error_count || 0) >= CONFIG.ERROR_THRESHOLD);
+
+    if (wrongWords.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>暂无错词</p></div>';
+        return;
+    }
+
+    container.innerHTML = wrongWords.map(word => `
+        <div class="word-item" data-id="${word.id}">
+            <div class="word-main">
+                <span class="word-text">${escapeHtml(word.word)}</span>
+                <span class="word-cn">${escapeHtml(word.word_cn)}</span>
+                <span class="error-count">错${word.error_count}次</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+function reviewWrong() {
+    const wrongWords = vocabulary.filter(v => (v.error_count || 0) >= CONFIG.ERROR_THRESHOLD);
+    if (wrongWords.length === 0) {
+        alert('没有错词需要复习');
+        return;
+    }
+
+    currentMode = 'review';
+    currentWordIndex = 0;
+    currentPhase = StudyPhase.EN_CN;
+    wrongWordsInRound = [];
+    currentRetryWord = null;
+    hasShownCardThisWord = false;
+
+    currentWordQueue = wrongWords.map(v => ({ ...v }));
+
+    document.getElementById('studyMode').classList.add('active');
+    document.getElementById('wrongMode').classList.remove('active');
+
+    renderCurrentQuestion();
+}
+
+function clearWrongWords() {
+    if (!confirm('确定要清空错词本吗？这将重置所有词汇的错误次数。')) return;
+
+    vocabulary.forEach(v => {
+        v.error_count = 0;
+    });
+    saveVocabulary();
+    renderWrongWords();
+    updateStats();
+}
+
+/**
+ * 添加单词
+ */
+function openAddWord() {
+    document.getElementById('addWordModal').classList.remove('hidden');
+    document.getElementById('addWordForm').reset();
+}
+
+function closeAddWord() {
+    document.getElementById('addWordModal').classList.add('hidden');
+}
+
+function handleAddWord(e) {
+    e.preventDefault();
+
+    // 支持格式：英文|中文|中文定义|英文定义|例句
+    const input = document.getElementById('wordInput').value.trim();
+    
+    // 尝试解析格式
+    const parts = input.split('|').map(p => p.trim());
+    
+    let wordData = {};
+    
+    if (parts.length >= 5) {
+        // 完整格式：英文|中文|中文定义|英文定义|例句
+        wordData = {
+            word: parts[0],
+            word_cn: parts[1],
+            definition_cn: parts[2],
+            definition_en: parts[3],
+            example: parts[4]
+        };
+    } else if (parts.length >= 4) {
+        // 缺少例句
+        wordData = {
+            word: parts[0],
+            word_cn: parts[1],
+            definition_cn: parts[2],
+            definition_en: parts[3],
+            example: ''
+        };
+    } else {
+        // 简单格式，只有英文和中文
+        wordData = {
+            word: document.getElementById('wordEn').value.trim(),
+            word_cn: document.getElementById('wordCn').value.trim(),
+            definition_cn: document.getElementById('defCn').value.trim(),
+            definition_en: document.getElementById('defEn').value.trim(),
+            example: document.getElementById('wordExample').value.trim()
+        };
+    }
+
+    if (!wordData.word || !wordData.word_cn) {
+        alert('请填写英文词汇和中文翻译');
+        return;
+    }
+
+    // 检查是否已存在
+    const existing = vocabulary.find(v => v.word.toLowerCase() === wordData.word.toLowerCase());
+    if (existing) {
+        alert('该词汇已存在');
+        return;
+    }
+
+    // 检查是否在已掌握库中
+    const mastered = vocabulary.find(v => v.word.toLowerCase() === wordData.word.toLowerCase() && v.status === 'mastered');
+    if (mastered) {
+        if (!confirm('该词汇已在已掌握库中，是否重新添加到学习队列？')) return;
+        mastered.status = 'new';
+        mastered.correct_streak = 0;
+        saveVocabulary();
+        closeAddWord();
+        updateStats();
+        renderAllWords();
+        return;
+    }
+
+    const newWord = {
+        id: Date.now().toString(),
+        word: wordData.word,
+        word_cn: wordData.word_cn,
+        definition_cn: wordData.definition_cn || '',
+        definition_en: wordData.definition_en || '',
+        example: wordData.example || '',
+        phonetic: '',
+        status: 'new',
+        correct_count: 0,
+        error_count: 0,
+        correct_streak: 0,
+        category: 'custom',
+        addedAt: new Date().toISOString()
+    };
+
+    vocabulary.push(newWord);
+    saveVocabulary();
+    closeAddWord();
+    updateStats();
+    renderAllWords();
+}
+
+function editWord(id) {
+    const word = vocabulary.find(v => v.id === id);
+    if (!word) return;
+
+    const newWordCn = prompt('中文翻译:', word.word_cn);
+    if (newWordCn === null) return;
+
+    const newDefCn = prompt('中文释义:', word.definition_cn);
+    if (newDefCn === null) return;
+
+    const newDefEn = prompt('英文释义:', word.definition_en);
+    if (newDefEn === null) return;
+
+    word.word_cn = newWordCn || word.word_cn;
+    word.definition_cn = newDefCn || word.definition_cn;
+    word.definition_en = newDefEn || word.definition_en;
+
+    saveVocabulary();
+    renderAllWords();
+}
+
+function deleteWord(id) {
+    if (!confirm('确定要删除这个词汇吗？')) return;
+
+    vocabulary = vocabulary.filter(v => v.id !== id);
+    saveVocabulary();
+    updateStats();
+    renderAllWords();
+}
+
+/**
+ * 设置模态框
+ */
+function openSettings() {
+    const modal = document.getElementById('settingsModal');
+    modal.classList.remove('hidden');
+
+    // 填充当前设置
+    document.getElementById('settingSpeak').checked = SETTINGS.speakEnabled;
+    document.getElementById('settingCut').checked = SETTINGS.cutEnabled;
+    document.getElementById('masterCountSelect').value = SETTINGS.masterCount;
+}
+
+function closeSettings() {
+    document.getElementById('settingsModal').classList.add('hidden');
+}
+
+/**
+ * 已掌握库
+ */
+function openMastered() {
+    const modal = document.getElementById('masteredModal');
+    modal.classList.remove('hidden');
+    renderMasteredList();
+}
+
+function closeMastered() {
+    document.getElementById('masteredModal').classList.add('hidden');
+}
+
+function renderMasteredList() {
+    const container = document.getElementById('masteredList');
+    const searchTerm = document.getElementById('masteredSearchInput')?.value?.toLowerCase() || '';
+
+    const mastered = vocabulary.filter(v => {
+        if (v.status !== 'mastered') return false;
+        if (searchTerm) {
+            return v.word.toLowerCase().includes(searchTerm) || 
+                   v.word_cn.toLowerCase().includes(searchTerm);
+        }
+        return true;
+    });
+
+    if (mastered.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>暂无已掌握词汇</p></div>';
+        return;
+    }
+
+    container.innerHTML = mastered.map(word => `
+        <div class="mastered-item">
+            <div class="mastered-word">${escapeHtml(word.word)}</div>
+            <div class="mastered-cn">${escapeHtml(word.word_cn)}</div>
+            <button class="btn btn-sm btn-outline" onclick="unmasterWord('${word.id}')">取消掌握</button>
+        </div>
+    `).join('');
+}
+
+function unmasterWord(id) {
+    const word = vocabulary.find(v => v.id === id);
+    if (word) {
+        word.status = 'learned';
+        word.correct_streak = 0;
+        saveVocabulary();
+        renderMasteredList();
+        updateStats();
+    }
+}
+
+/**
+ * 示例词汇
+ */
+function getSampleVocabulary() {
+    return [
+        {
+            id: 'sample-1',
+            word: 'perovskite',
+            word_cn: '钙钛矿',
+            definition_cn: '一种具有ABX3晶体结构的材料，广泛应用于太阳能电池',
+            definition_en: 'A material with ABX3 crystal structure, widely used in solar cells',
+            example: 'The **perovskite** solar cell achieved an efficiency of 25%.',
+            phonetic: '/pəˈrɒvskaɪt/',
+            status: 'new',
+            correct_count: 0,
+            error_count: 0,
+            correct_streak: 0,
+            category: 'material'
+        },
+        {
+            id: 'sample-2',
+            word: 'photovoltaic',
+            word_cn: '光伏的',
+            definition_cn: '能够将光能直接转换为电能的',
+            definition_en: 'Capable of converting light directly into electricity',
+            example: 'The **photovoltaic** effect is the basis for solar cell operation.',
+            phonetic: '/ˌfəʊtəʊvɒlˈteɪɪk/',
+            status: 'new',
+            correct_count: 0,
+            error_count: 0,
+            correct_streak: 0,
+            category: 'concept'
+        }
+    ];
+}
+
+/**
+ * 工具函数
+ */
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -1281,21 +1038,9 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function shuffleArray(array) {
-    const newArray = [...array];
-    for (let i = newArray.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-    }
-    return newArray;
-}
-
-function speakWord(word) {
-    if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(word);
-        utterance.lang = 'en-US';
-        speechSynthesis.speak(utterance);
-    }
+function escapeAttr(text) {
+    if (!text) return '';
+    return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
 
 function debounce(func, wait) {
