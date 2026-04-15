@@ -1283,6 +1283,55 @@ function checkUrlParams() {
     const action = params.get('action');
     const doi = params.get('doi');
 
+    // 从文献库跳转过来制作单张卡片
+    if (action === 'makeCard') {
+        const pendingPaper = localStorage.getItem('pendingLibraryPaper');
+        if (pendingPaper) {
+            setTimeout(() => {
+                const paper = JSON.parse(pendingPaper);
+                localStorage.removeItem('pendingLibraryPaper');
+                
+                // 打开导入模态框并预填数据
+                openImportModal();
+                importData = {
+                    title: paper.title,
+                    title_cn: paper.title_cn || '',
+                    doi: paper.doi,
+                    journal: paper.journal,
+                    publishDate: paper.publishDate,
+                    authors: paper.authors,
+                    abstract: paper.abstract,
+                    abstract_cn: paper.abstract_cn || '',
+                    pdfContent: paper.pdfContent || ''
+                };
+                
+                // 如果有PDF内容，显示AI解析选项
+                if (paper.hasPdf && paper.pdfContent) {
+                    document.getElementById('useAiParse').checked = true;
+                }
+                
+                // 自动填充表单
+                fillImportForm();
+            }, 300);
+        }
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+    }
+    
+    // 从文献库批量制作卡片
+    if (action === 'batchMakeCards') {
+        const pendingPapers = localStorage.getItem('pendingBatchPapers');
+        if (pendingPapers) {
+            setTimeout(() => {
+                const papers = JSON.parse(pendingPapers);
+                localStorage.removeItem('pendingBatchPapers');
+                processBatchCards(papers);
+            }, 300);
+        }
+        window.history.replaceState({}, '', window.location.pathname);
+        return;
+    }
+
     // 从周报跳转过来制作卡片
     if (action === 'import' && doi) {
         setTimeout(() => {
@@ -1323,6 +1372,92 @@ function checkUrlParams() {
             // 清除URL参数
             window.history.replaceState({}, '', window.location.pathname);
         }, 500);
+    }
+}
+
+// 批量制作卡片
+async function processBatchCards(papersFromLibrary) {
+    if (!papersFromLibrary || papersFromLibrary.length === 0) return;
+    
+    const confirmed = confirm(`将制作 ${papersFromLibrary.length} 张文献卡片。\n\n如果已配置AI，将自动解析；否则需要手动填写。`);
+    if (!confirmed) return;
+    
+    let success = 0;
+    for (const paper of papersFromLibrary) {
+        try {
+            // 创建基础卡片
+            const card = {
+                id: generateId(),
+                title: paper.title,
+                title_cn: paper.title_cn || '',
+                doi: paper.doi,
+                journal: paper.journal,
+                publish_date: paper.publishDate,
+                authors: paper.authors,
+                abstract: paper.abstract,
+                abstract_cn: paper.abstract_cn || '',
+                category: 'custom',
+                keywords: paper.keywords || [],
+                summary: '',
+                summary_cn: '',
+                innovation: '',
+                innovation_cn: '',
+                application: '',
+                application_cn: '',
+                structure: '',
+                structure_cn: '',
+                methods: '',
+                methods_cn: '',
+                createdAt: new Date().toISOString(),
+                source: 'library'
+            };
+            
+            // 如果有PDF内容且配置了AI，尝试AI解析
+            if (paper.hasPdf && paper.pdfContent && isApiKeyConfigured()) {
+                try {
+                    const aiResult = await parsePaperWithAI(paper.doi, paper.title, paper.pdfContent.substring(0, 5000));
+                    Object.assign(card, aiResult);
+                } catch (e) {
+                    console.log('AI解析失败，使用基础数据:', e);
+                }
+            }
+            
+            papers.unshift(card);
+            
+            // 更新文献库中的状态
+            const libraryPapers = JSON.parse(localStorage.getItem('libraryPapers') || '[]');
+            const libPaper = libraryPapers.find(p => p.id === paper.id);
+            if (libPaper) {
+                libPaper.hasCard = true;
+                localStorage.setItem('libraryPapers', JSON.stringify(libraryPapers));
+            }
+            
+            success++;
+        } catch (e) {
+            console.error('制作卡片失败:', paper.title, e);
+        }
+    }
+    
+    await savePapers();
+    filterPapers();
+    alert(`成功制作 ${success} 张文献卡片`);
+}
+
+// 填充导入表单
+function fillImportForm() {
+    if (!importData) return;
+    
+    // 切换到DOI导入tab
+    const doiRadio = document.querySelector('input[name="importType"][value="doi"]');
+    if (doiRadio) {
+        doiRadio.checked = true;
+        handleImportTypeChange();
+    }
+    
+    // 填充DOI并获取信息
+    const doiInput = document.getElementById('importDoi');
+    if (doiInput && importData.doi) {
+        doiInput.value = importData.doi;
     }
 }
 
