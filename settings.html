@@ -3,290 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API设置 - 小N学术站</title>
+    <title>设置 - 小N学术站</title>
     <link rel="stylesheet" href="css/style.css">
-    <style>
-        .settings-container {
-            max-width: 700px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-        
-        .settings-card {
-            background: var(--card-bg);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-            padding: 32px;
-        }
-        
-        .settings-header {
-            text-align: center;
-            margin-bottom: 32px;
-            padding-bottom: 24px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .settings-header h1 {
-            font-size: 1.5rem;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-        
-        .settings-header p {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        .settings-section {
-            margin-bottom: 28px;
-        }
-        
-        .settings-section h2 {
-            font-size: 1.1rem;
-            color: var(--text-primary);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: var(--text-primary);
-        }
-        
-        .form-group .hint {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-top: 6px;
-        }
-        
-        .input-wrapper {
-            position: relative;
-        }
-        
-        .input-wrapper input,
-        .input-wrapper select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            transition: border-color 0.2s;
-            background: var(--card-bg);
-        }
-        
-        .input-wrapper input:focus,
-        .input-wrapper select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-        
-        .toggle-visibility {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 1.2rem;
-            opacity: 0.5;
-            transition: opacity 0.2s;
-        }
-        
-        .provider-selector {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .provider-option {
-            position: relative;
-        }
-        
-        .provider-option input {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-        }
-        
-        .provider-option label {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 16px 12px;
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius);
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-        
-        .provider-option input:checked + label {
-            border-color: var(--primary-color);
-            background: rgba(79, 70, 229, 0.05);
-        }
-        
-        .provider-option .provider-icon {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
-        }
-        
-        .provider-option .provider-name {
-            font-weight: 600;
-            color: var(--text-primary);
-            font-size: 0.9rem;
-        }
-        
-        .model-select {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid var(--border-color);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            background: var(--card-bg);
-        }
-        
-        .btn-group {
-            display: flex;
-            gap: 12px;
-            margin-top: 24px;
-        }
-        
-        .btn-test {
-            flex: 1;
-            padding: 12px 24px;
-            border: none;
-            border-radius: var(--radius);
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .btn-test.primary {
-            background: var(--primary-color);
-            color: white;
-        }
-        
-        .btn-test.primary:hover {
-            background: var(--primary-hover);
-        }
-        
-        .btn-test.secondary {
-            background: var(--secondary-color);
-            color: white;
-        }
-        
-        .test-result {
-            margin-top: 16px;
-            padding: 16px;
-            border-radius: var(--radius);
-            text-align: center;
-            font-weight: 500;
-            display: none;
-        }
-        
-        .test-result.success {
-            display: block;
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success-color);
-            border: 1px solid var(--success-color);
-        }
-        
-        .test-result.error {
-            display: block;
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--error-color);
-            border: 1px solid var(--error-color);
-        }
-        
-        .test-result.loading {
-            display: block;
-            background: rgba(79, 70, 229, 0.1);
-            color: var(--primary-color);
-            border: 1px solid var(--primary-color);
-        }
-        
-        .status-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            margin-top: 16px;
-        }
-        
-        .status-indicator.configured {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--success-color);
-        }
-        
-        .status-indicator.not-configured {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--error-color);
-        }
-        
-        .info-box {
-            background: rgba(79, 70, 229, 0.05);
-            border: 1px solid rgba(79, 70, 229, 0.2);
-            border-radius: var(--radius);
-            padding: 16px;
-            margin-bottom: 24px;
-        }
-        
-        .info-box h3 {
-            font-size: 0.95rem;
-            color: var(--primary-color);
-            margin-bottom: 8px;
-        }
-        
-        .info-box p {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-        
-        .info-box a {
-            color: var(--primary-color);
-        }
-        
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-        }
-        
-        .back-link:hover {
-            color: var(--primary-color);
-        }
-        
-        @media (max-width: 600px) {
-            .settings-card {
-                padding: 20px;
-            }
-            
-            .provider-selector {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .btn-group {
-                flex-direction: column;
-            }
-        }
-    </style>
 </head>
 <body>
     <header class="header">
@@ -297,22 +15,16 @@
             </h1>
             <nav class="nav" id="navMenu">
                 <a href="index.html" class="nav-link">
-                    <span class="icon">🏠</span> 首页
-                </a>
-                <a href="weekly.html" class="nav-link">
-                    <span class="icon">📅</span> 周报
-                </a>
-                <a href="library.html" class="nav-link">
-                    <span class="icon">📚</span> 文献库
+                    <span>🏠</span> 首页
                 </a>
                 <a href="papers.html" class="nav-link">
-                    <span class="icon">📝</span> 文献卡片
+                    <span>📚</span> 文献库
                 </a>
                 <a href="vocabulary.html" class="nav-link">
-                    <span class="icon">📖</span> 词汇本
+                    <span>📖</span> 词汇本
                 </a>
                 <a href="settings.html" class="nav-link active">
-                    <span class="icon">⚙️</span> 设置
+                    <span>⚙️</span> 设置
                 </a>
             </nav>
             <button class="menu-toggle" id="menuToggle">☰</button>
@@ -320,124 +32,165 @@
     </header>
 
     <main class="main">
-        <div class="settings-container">
-            <a href="papers.html" class="back-link">
-                <span>←</span> 返回文献卡片
-            </a>
-            
-            <div class="settings-card">
-                <div class="settings-header">
-                    <h1>🔑 API设置</h1>
-                    <p>选择AI服务商并配置API密钥以启用文献解析</p>
-                    <div id="statusIndicator" class="status-indicator"></div>
+        <div class="container">
+            <!-- 页面标题 -->
+            <div class="section-header">
+                <h3 class="section-title">
+                    <span>⚙️</span>
+                    设置
+                </h3>
+            </div>
+
+            <!-- API配置 -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-title">
+                    <span>🤖</span> AI API 配置
+                </div>
+                <div id="statusIndicator" class="status-indicator not-configured" style="margin-bottom: 20px; padding: 12px; border-radius: 8px;">
+                    ❌ 未配置
                 </div>
                 
-                <div class="settings-section">
-                    <h2>🌐 选择API服务商</h2>
-                    <div class="provider-selector" id="providerSelector">
-                        <div class="provider-option">
-                            <input type="radio" name="provider" id="providerSiliconflow" value="siliconflow">
-                            <label for="providerSiliconflow">
-                                <div class="provider-icon">⚡</div>
-                                <div class="provider-name">硅基流动</div>
-                            </label>
+                <div class="form-group">
+                    <label class="form-label">API 服务商</label>
+                    <div class="grid grid-2" style="gap: 12px;">
+                        <div class="provider-card selected" data-provider="siliconflow" onclick="selectProvider('siliconflow')">
+                            <div class="provider-card-name">💧 硅基流动</div>
+                            <div class="provider-card-desc">新用户有免费额度，支持Qwen等模型</div>
                         </div>
-                        <div class="provider-option">
-                            <input type="radio" name="provider" id="providerDeepseek" value="deepseek">
-                            <label for="providerDeepseek">
-                                <div class="provider-icon">🦉</div>
-                                <div class="provider-name">DeepSeek</div>
-                            </label>
+                        <div class="provider-card" data-provider="deepseek" onclick="selectProvider('deepseek')">
+                            <div class="provider-card-name">🧠 DeepSeek</div>
+                            <div class="provider-card-desc">性价比高，推理能力强</div>
                         </div>
-                        <div class="provider-option">
-                            <input type="radio" name="provider" id="providerQwen" value="qwen">
-                            <label for="providerQwen">
-                                <div class="provider-icon">🔮</div>
-                                <div class="provider-name">通义千问</div>
-                            </label>
+                        <div class="provider-card" data-provider="qwen" onclick="selectProvider('qwen')">
+                            <div class="provider-card-name">🐰 通义千问</div>
+                            <div class="provider-card-desc">阿里云服务，稳定性好</div>
                         </div>
-                        <div class="provider-option">
-                            <input type="radio" name="provider" id="providerDoubao" value="doubao">
-                            <label for="providerDoubao">
-                                <div class="provider-icon">🫛</div>
-                                <div class="provider-name">豆包</div>
-                            </label>
-                        </div>
-                        <div class="provider-option">
-                            <input type="radio" name="provider" id="providerGemini" value="gemini">
-                            <label for="providerGemini">
-                                <div class="provider-icon">✨</div>
-                                <div class="provider-name">Gemini</div>
-                            </label>
+                        <div class="provider-card" data-provider="gemini" onclick="selectProvider('gemini')">
+                            <div class="provider-card-name">✨ Google Gemini</div>
+                            <div class="provider-card-desc">Google AI，需科学上网</div>
                         </div>
                     </div>
                 </div>
-                
-                <div id="providerInfo" class="info-box">
-                    <h3>💡 获取API Key</h3>
-                    <p id="providerHint">选择上方的API服务商查看详细说明</p>
-                </div>
-                
-                <div class="settings-section">
-                    <h2>🔑 API密钥</h2>
-                    <div class="form-group">
-                        <div class="input-wrapper">
-                            <input type="password" id="apiKeyInput" placeholder="请输入API Key">
-                            <button type="button" class="toggle-visibility" id="toggleKeyVisibility">👁️</button>
-                        </div>
-                        <p class="hint">API Key仅保存在本地浏览器，不会上传服务器</p>
+
+                <div id="providerInfo" style="margin: 16px 0; padding: 16px; background: var(--bg); border-radius: 8px;">
+                    <h4 style="margin-bottom: 8px;">💡 硅基流动</h4>
+                    <div id="providerHint" style="font-size: 0.9rem; color: var(--text-secondary);">
+                        1. 访问 <a href="https://cloud.siliconflow.cn" target="_blank" style="color: var(--primary);">硅基流动官网</a> 注册账号<br>
+                        2. 进入控制台 → API密钥 → 创建新密钥<br>
+                        3. 新用户有免费额度可用
                     </div>
                 </div>
                 
-                <div class="settings-section">
-                    <h2>🤖 选择模型</h2>
-                    <div class="form-group">
-                        <select id="modelSelect" class="model-select">
-                            <option value="">请先选择API服务商</option>
-                        </select>
-                    </div>
-                    <div class="form-group" id="customModelGroup" style="display: none;">
-                        <label for="customModelInput">自定义模型ID</label>
-                        <input type="text" id="customModelInput" placeholder="输入模型ID，如: ep-xxxx-xxxx">
-                        <p class="hint">豆包需要在火山引擎控制台创建推理接入点</p>
+                <div class="form-group">
+                    <label class="form-label">API Key</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="password" class="form-input" id="apiKeyInput" placeholder="输入您的API Key" style="flex: 1;">
+                        <button class="btn btn-secondary" id="toggleKeyVisibility" style="padding: 0 16px;">👁️</button>
                     </div>
                 </div>
                 
-                <div class="settings-section">
-                    <h2>📝 词汇提取设置</h2>
-                    <div class="form-group">
-                        <label for="vocabCountInput">每篇文章提取词汇数量</label>
-                        <div class="input-wrapper">
-                            <input type="number" id="vocabCountInput" min="5" max="50" value="20" placeholder="输入数量，如20">
-                        </div>
-                        <p class="hint">实际提取数量会在设定值上下浮动5个左右（默认20个）</p>
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">模型选择</label>
+                    <select class="form-select" id="modelSelect">
+                        <option value="Qwen/Qwen2.5-7B-Instruct">Qwen2.5-7B-Instruct</option>
+                        <option value="Qwen/Qwen2.5-14B-Instruct">Qwen2.5-14B-Instruct</option>
+                        <option value="deepseek-chat">DeepSeek Chat</option>
+                        <option value="deepseek-coder">DeepSeek Coder</option>
+                        <option value="qwen-plus">Qwen Plus</option>
+                        <option value="qwen-max">Qwen Max</option>
+                        <option value="gemini-pro">Gemini Pro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">每次生成词汇数</label>
+                    <select class="form-select" id="vocabCountInput" style="width: 150px;">
+                        <option value="10">10个</option>
+                        <option value="15">15个</option>
+                        <option value="20" selected>20个</option>
+                        <option value="30">30个</option>
+                    </select>
                 </div>
                 
-                <div class="btn-group">
-                    <button type="button" class="btn-test secondary" id="clearBtn">
-                        🗑️ 清除设置
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" id="saveBtn">
+                        <span>💾</span> 保存设置
                     </button>
-                    <button type="button" class="btn-test primary" id="saveBtn">
-                        💾 保存设置
+                    <button class="btn btn-secondary" id="testBtn">
+                        <span>🔗</span> 测试连接
                     </button>
-                    <button type="button" class="btn-test primary" id="testBtn">
-                        🔗 测试连接
+                    <button class="btn btn-outline" id="clearBtn">
+                        <span>🗑️</span> 清除设置
                     </button>
                 </div>
                 
-                <div id="testResult" class="test-result"></div>
+                <div id="testResult" class="test-result" style="margin-top: 16px;"></div>
+            </div>
+
+            <!-- 数据管理 -->
+            <div class="card">
+                <div class="card-title">
+                    <span>💾</span> 数据管理
+                </div>
+                
+                <div class="settings-section">
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">文献库数据</div>
+                            <div class="settings-hint" id="libraryDataInfo">0 条记录</div>
+                        </div>
+                        <button class="btn btn-sm btn-danger" id="clearLibraryBtn">清空</button>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">文献卡片数据</div>
+                            <div class="settings-hint" id="cardsDataInfo">0 条记录</div>
+                        </div>
+                        <button class="btn btn-sm btn-danger" id="clearCardsBtn">清空</button>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">词汇本数据</div>
+                            <div class="settings-hint" id="vocabDataInfo">0 条记录</div>
+                        </div>
+                        <button class="btn btn-sm btn-danger" id="clearVocabBtn">清空</button>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">追踪历史</div>
+                            <div class="settings-hint" id="historyDataInfo">0 条记录</div>
+                        </div>
+                        <button class="btn btn-sm btn-danger" id="clearHistoryBtn">清空</button>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                    <button class="btn btn-danger" id="clearAllBtn">
+                        <span>⚠️</span> 清空所有数据
+                    </button>
+                </div>
+            </div>
+
+            <!-- 关于 -->
+            <div class="card" style="margin-top: 24px;">
+                <div class="card-title">
+                    <span>ℹ️</span> 关于
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 8px;">
+                    小N学术站 v1.0
+                </p>
+                <p style="color: var(--text-secondary); font-size: 0.85rem;">
+                    集文献追踪、文献卡片和学术词汇学习于一体的学术工具。
+                    <br>所有数据均保存在本地浏览器中。
+                </p>
             </div>
         </div>
     </main>
 
-    <footer class="footer">
-        <div class="container">
-            <p>© 2024 小N学术学习站</p>
-        </div>
-    </footer>
-
-    <script src="js/ai-parser.js"></script>
+    <script src="js/main.js"></script>
     <script src="js/settings.js"></script>
 </body>
 </html>
