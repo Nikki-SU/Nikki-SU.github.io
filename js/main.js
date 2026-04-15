@@ -183,18 +183,30 @@ const VocabularyStore = {
     
     add(word) {
         const words = this.getAll();
-        // 兼容新旧两种格式：word 或 en
-        const wordText = (word.word || word.en || '').toLowerCase();
+        // 统一转换为新格式：en, cn, defCn, defEn, ex
+        const en = (word.en || word.word || word.english || '').toLowerCase();
+        const cn = word.cn || word.word_cn || word.chinese || '';
+        const defCn = word.defCn || word.definition_cn || word.definitionCn || '';
+        const defEn = word.defEn || word.definition_en || word.definitionEn || '';
+        const ex = word.ex || word.example || word.exampleSentence || '';
+        
+        // 检查重复
         const exists = words.find(w => {
-            const existingWord = (w.word || w.en || '').toLowerCase();
-            return existingWord === wordText;
+            const existingEn = (w.en || w.word || '').toLowerCase();
+            return existingEn === en;
         });
         if (exists) {
             return { success: false, message: '词汇已存在' };
         }
+        
+        // 只保存新格式字段
         words.unshift({
             id: Date.now().toString(),
-            ...word,
+            en: en,
+            cn: cn,
+            defCn: defCn,
+            defEn: defEn,
+            ex: ex,
             status: 'new',
             correct_count: 0,
             error_count: 0,
