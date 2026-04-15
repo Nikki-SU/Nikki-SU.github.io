@@ -55,6 +55,7 @@ function initEventListeners() {
 /**
  * 加载数据
  * 原则：localStorage有就用localStorage的（即使是空数组），没有才从文件读取
+ * 注意：library.js和papers.js共用papersData，所以这里只读取不写入
  */
 async function loadData() {
     const storedLibrary = localStorage.getItem('libraryData');
@@ -71,20 +72,12 @@ async function loadData() {
             console.error('文献库localStorage解析失败:', e);
         }
     } else {
-        // localStorage完全没有数据（null），才从文件读取
-        try {
-            const libraryRes = await fetch(CONFIG.libraryUrl);
-            if (libraryRes.ok) {
-                const data = await libraryRes.json();
-                libraryPapers = Array.isArray(data) ? data : [];
-            }
-        } catch (e) {
-            console.error('加载文献库文件失败:', e);
-        }
+        // 首次加载，从空数组开始
+        libraryPapers = [];
         localStorage.setItem('libraryData', JSON.stringify(libraryPapers));
     }
 
-    // 文献卡片：localStorage有就用它
+    // 文献卡片：只读取papersData，不写入（papers.js负责写入）
     if (storedCards !== null) {
         try {
             const parsed = JSON.parse(storedCards);
@@ -95,17 +88,9 @@ async function loadData() {
             console.error('文献卡片localStorage解析失败:', e);
         }
     } else {
-        // localStorage完全没有数据（null），才从文件读取
-        try {
-            const cardsRes = await fetch(CONFIG.papersUrl);
-            if (cardsRes.ok) {
-                const data = await cardsRes.json();
-                paperCards = Array.isArray(data) ? data : [];
-            }
-        } catch (e) {
-            console.error('加载文献卡片文件失败:', e);
-        }
-        localStorage.setItem('papersData', JSON.stringify(paperCards));
+        // papersData不存在，初始化为空数组，但不写入localStorage
+        // 让papers.js自己负责初始化
+        paperCards = [];
     }
 
     console.log('数据加载成功 - 文献库:', libraryPapers.length, '篇, 卡片:', paperCards.length, '张');
