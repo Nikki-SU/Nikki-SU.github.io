@@ -153,45 +153,58 @@ function checkUrlParams() {
  * 原则：localStorage有就用localStorage的（即使是空数组），没有才从文件读取
  */
 async function loadPapers() {
-    const stored = localStorage.getItem('papersData');
-    
-    // localStorage有数据（包括空数组[]）就用它
-    if (stored !== null) {
-        try {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed)) {
-                papers = parsed;
-                console.log('从localStorage加载文献:', papers.length, '篇');
-            }
-        } catch (e) {
-            console.error('localStorage数据解析失败:', e);
-            // 解析失败也不覆盖，保持原有数据
-        }
-    } else {
-        // localStorage完全没有数据（null），才从文件读取
-        try {
-            const response = await fetch(CONFIG.papersUrl);
-            if (response.ok) {
-                const data = await response.json();
-                papers = Array.isArray(data) ? data : [];
-            }
-        } catch (error) {
-            console.error('加载文献文件失败:', error);
-            papers = [];
-        }
-
-        if (papers.length === 0) {
-            papers = getSamplePapers();
-        }
+    try {
+        const stored = localStorage.getItem('papersData');
         
-        // 首次加载，保存到localStorage
-        localStorage.setItem('papersData', JSON.stringify(papers));
-        console.log('首次加载文献:', papers.length, '篇');
-    }
+        // localStorage有数据（包括空数组[]）就用它
+        if (stored !== null) {
+            try {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed)) {
+                    papers = parsed;
+                    console.log('从localStorage加载文献:', papers.length, '篇');
+                } else {
+                    console.warn('localStorage数据不是数组，重置');
+                    papers = [];
+                }
+            } catch (e) {
+                console.error('localStorage数据解析失败:', e);
+                papers = [];
+            }
+        } else {
+            // localStorage完全没有数据（null），才从文件读取
+            try {
+                const response = await fetch(CONFIG.papersUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    papers = Array.isArray(data) ? data : [];
+                }
+            } catch (error) {
+                console.error('加载文献文件失败:', error);
+                papers = [];
+            }
 
-    filteredPapers = [...papers];
-    updateJournalFilter();
-    renderPapers();
+            if (papers.length === 0) {
+                papers = getSamplePapers();
+            }
+            
+            // 首次加载，保存到localStorage
+            localStorage.setItem('papersData', JSON.stringify(papers));
+            console.log('首次加载文献:', papers.length, '篇');
+        }
+
+        filteredPapers = [...papers];
+        updateJournalFilter();
+        renderPapers();
+        
+    } catch (error) {
+        console.error('loadPapers发生错误:', error);
+        papers = [];
+        filteredPapers = [];
+        if (typeof renderPapers === 'function') {
+            renderPapers();
+        }
+    }
 }
 
 function getSamplePapers() {
