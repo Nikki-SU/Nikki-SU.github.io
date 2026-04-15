@@ -1,20 +1,21 @@
 /**
  * main.js - 主页面脚本
- * 处理首页的统计信息和最近文献加载
+ * 处理首页的统计信息、周报预览和最近文献加载
  */
 
-// 全局配置
+// 配置
 const CONFIG = {
     papersUrl: 'data/papers.json',
     vocabularyUrl: 'data/vocabulary.json',
-    itemsPerPage: 6
+    weeklyUrl: 'data/weekly.json',
+    recentReportsCount: 3,
+    recentPapersCount: 6
 };
 
 // DOM 加载完成后执行
 document.addEventListener('DOMContentLoaded', () => {
     initMobileMenu();
-    loadStatistics();
-    loadRecentPapers();
+    loadAllData();
 });
 
 /**
@@ -32,17 +33,19 @@ function initMobileMenu() {
 }
 
 /**
- * 加载统计数据
+ * 加载所有数据
  */
-async function loadStatistics() {
+async function loadAllData() {
     try {
-        const [papersRes, vocabRes] = await Promise.all([
+        const [papersRes, vocabRes, weeklyRes] = await Promise.all([
             fetch(CONFIG.papersUrl).catch(() => ({ ok: false, json: async () => [] })),
-            fetch(CONFIG.vocabularyUrl).catch(() => ({ ok: false, json: async () => [] }))
+            fetch(CONFIG.vocabularyUrl).catch(() => ({ ok: false, json: async () => [] })),
+            fetch(CONFIG.weeklyUrl).catch(() => ({ ok: false, json: async () => [] }))
         ]);
         
         let papers = [];
         let vocabularies = [];
+        let weeklyReports = [];
         
         if (papersRes.ok) {
             papers = await papersRes.json();
@@ -52,17 +55,53 @@ async function loadStatistics() {
             vocabularies = await vocabRes.json();
         }
         
-        // 更新统计数字
-        updateStat('paperCount', papers.length);
-        updateStat('wordCount', vocabularies.length);
+        if (weeklyRes.ok) {
+            weeklyReports = await weeklyRes.json();
+        }
         
-        // 从localStorage获取已掌握单词数
-        const mastered = JSON.parse(localStorage.getItem('masteredWords') || '[]');
-        updateStat('masteredCount', mastered.length);
+        // 更新统计
+        updateStatistics(papers, vocabularies, weeklyReports);
+        
+        // 加载最近周报
+        loadRecentReports(weeklyReports);
+        
+        // 加载最近文献
+        loadRecentPapers(papers);
         
     } catch (error) {
-        console.error('加载统计数据失败:', error);
+        console.error('加载数据失败:', error);
+        // 使用本地存储作为后备
+        loadFromLocalStorage();
     }
+}
+
+/**
+ * 从本地存储加载数据
+ */
+function loadFromLocalStorage() {
+    const storedPapers = localStorage.getItem('papersData');
+    const storedVocab = localStorage.getItem('vocabularyData');
+    const storedWeekly = localStorage.getItem('weeklyData');
+    
+    const papers = storedPapers ? JSON.parse(storedPapers) : [];
+    const vocabularies = storedVocab ? JSON.parse(storedVocab) : [];
+    const weeklyReports = storedWeekly ? JSON.parse(storedWeekly) : [];
+    
+    updateStatistics(papers, vocabularies, weeklyReports);
+    loadRecentReports(weeklyReports);
+    loadRecentPapers(papers);
+}
+
+/**
+ * 更新统计数据
+ */
+function updateStatistics(papers, vocabularies, weeklyReports) {
+    const masteredCount = vocabularies.filter(v => v.status === 'mastered').length;
+    
+    updateStat('paperCount', papers.length);
+    updateStat('wordCount', vocabularies.length);
+    updateStat('masteredCount', masteredCount);
+    updateStat('weekCount', weeklyReports.length);
 }
 
 /**
@@ -76,41 +115,87 @@ function updateStat(elementId, value) {
 }
 
 /**
- * 加载最近的文献卡片
+ * 加载最近的周报
  */
-async function loadRecentPapers() {
+function loadRecentReports(reports) {
+    const container = document.getElementById('recentReports');
+    if (!container) return;
+    
+    if (!Array.isArray(reports) || reports.length === 0) {
+        container.innerHTML = `
+            <div class="empty-message">
+                <p>暂无周报记录</p>
+                <a href="weekly.html" class="btn btn-primary mt-4">创建第一篇周报</a>
+            </div>
+        `;
+        return;
+    }
+    
+    const recentReports = reports.slice(0, CONFIG.recentReportsCount);
+    
+    container.innerHTML = recentReports.map(report => createReportCard(report)).join('');
+}
+
+/**
+ * 创建周报卡片HTML
+ */
+function createReportCard(report) {
+    const weekNum = getWeekNumber(new Date(report.date));
+    const progressItems = Array.isArray(report.progress) ? report.progress : [];
+    
+    return `
+        <div class="report-card">
+            <div class="report-header">
+                <span class="report-week">第 ${weekNum} 周</span>
+                <span class="report-date">${report.date}</span>
+            </div>
+            <div class="report-content">
+                <h4>本周进展</h4>
+                <ul>
+                    ${progressItems.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+                </ul>
+                ${report.summary ? `<p class="mt-4" style="color: var(--text-secondary); font-size: 0.9rem;">${escapeHtml(report.summary.substring(0, 100))}...</p>` : ''}
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * 获取周数
+ */
+function getWeekNumber(date) {
+    const startDate = new Date(date.getFullYear(), 0, 1);
+    const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
+    return Math.ceil((days + startDate.getDay() + 1) / 7);
+}
+
+/**
+ * 加载最近的文献
+ */
+function loadRecentPapers(papers) {
     const container = document.getElementById('recentPapers');
     if (!container) return;
     
-    try {
-        const response = await fetch(CONFIG.papersUrl);
-        if (!response.ok) {
-            throw new Error('无法加载文献数据');
-        }
-        
-        const papers = await response.json();
-        
-        if (!Array.isArray(papers) || papers.length === 0) {
-            container.innerHTML = '<p class="empty-message">暂无文献数据，添加你的第一篇文献吧！</p>';
-            return;
-        }
-        
-        // 获取最近的6篇文献
-        const recentPapers = papers.slice(0, CONFIG.itemsPerPage);
-        container.innerHTML = recentPapers.map(paper => createPaperCard(paper)).join('');
-        
-        // 添加点击事件
-        container.querySelectorAll('.paper-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const paperId = card.dataset.id;
-                window.location.href = `papers.html?id=${paperId}`;
-            });
-        });
-        
-    } catch (error) {
-        console.error('加载文献失败:', error);
-        container.innerHTML = '<p class="empty-message">加载失败，请稍后重试</p>';
+    if (!Array.isArray(papers) || papers.length === 0) {
+        container.innerHTML = `
+            <div class="empty-message">
+                <p>暂无文献数据</p>
+                <a href="papers.html" class="btn btn-primary mt-4">导入第一篇文献</a>
+            </div>
+        `;
+        return;
     }
+    
+    const recentPapers = papers.slice(0, CONFIG.recentPapersCount);
+    container.innerHTML = recentPapers.map(paper => createPaperCard(paper)).join('');
+    
+    // 添加点击事件
+    container.querySelectorAll('.paper-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const paperId = card.dataset.id;
+            window.location.href = `papers.html?id=${paperId}`;
+        });
+    });
 }
 
 /**
@@ -118,21 +203,23 @@ async function loadRecentPapers() {
  */
 function createPaperCard(paper) {
     const categoryNames = {
-        synthesis: '合成',
-        characterization: '表征',
-        mechanism: '机理',
-        application: '应用',
-        custom: '自定义'
+        'synthesis': '合成',
+        'characterization': '表征',
+        'mechanism': '机理研究',
+        'application': '应用',
+        'industrial': '工业化',
+        'custom': '自定义'
     };
     
     return `
         <div class="paper-card" data-id="${paper.id || ''}">
             <span class="paper-category">${categoryNames[paper.category] || '未分类'}</span>
             <h4 class="paper-title">${escapeHtml(paper.title || '无标题')}</h4>
+            ${paper.title_cn ? `<p class="paper-title-cn">${escapeHtml(paper.title_cn)}</p>` : ''}
             <p class="paper-authors">${escapeHtml(paper.authors || '未知作者')}</p>
             <div class="paper-meta">
-                <span>${paper.journal || '未知期刊'}</span>
-                <span>${paper.publish_date || ''}</span>
+                <span class="paper-meta-item">📰 ${escapeHtml(paper.journal || '未知期刊')}</span>
+                <span class="paper-meta-item">📅 ${paper.publish_date || ''}</span>
             </div>
             ${paper.abstract ? `<p class="paper-abstract">${escapeHtml(paper.abstract)}</p>` : ''}
         </div>
@@ -143,7 +230,23 @@ function createPaperCard(paper) {
  * HTML转义
  */
 function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/**
+ * 防抖函数
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
