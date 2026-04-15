@@ -167,13 +167,13 @@ async function syncToVocabApp() {
     }
 
     try {
-        // 准备同步的词汇数据
+        // 准备同步的词汇数据（使用新格式：en/cn/defCn/defEn/ex）
         const wordsToSync = vocabulary.map(w => ({
-            word: w.en || w.word,
-            definition: w.cn || w.word_cn,
-            phonetic: w.phonetic || '',
-            example: w.ex || w.example || '',
-            category: w.category || 'custom'
+            en: w.en || w.word || '',
+            cn: w.cn || w.word_cn || '',
+            defCn: w.defCn || w.definition_cn || '',
+            defEn: w.defEn || w.definition_en || '',
+            ex: w.ex || w.example || ''
         }));
 
         let added = 0;
@@ -181,13 +181,40 @@ async function syncToVocabApp() {
 
         if (typeof window.vocabApp !== 'undefined' && typeof window.vocabApp.importToBook === 'function') {
             // 调用小N单词App的导入接口
-            const result = await window.vocabApp.importToBook('academic', wordsToSync, '学术站词汇');
+            const result = window.vocabApp.importToBook('academic', wordsToSync, '学术站词汇');
             added = result.added || 0;
             skipped = result.skipped || 0;
         } else {
-            // 如果vocabApp未定义，模拟同步结果
-            added = wordsToSync.length;
-            console.log('同步词汇:', wordsToSync);
+            // 如果vocabApp未定义，通过localStorage共享
+            const STORAGE_KEY = 'vocab_books_v1';
+            let data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            if (!data.books) data.books = {};
+            if (!data.books['academic']) {
+                data.books['academic'] = {
+                    name: '学术站词汇',
+                    words: [],
+                    settings: { learnCount: 50, reviewCount: 10, masterCount: 12, speak: true, allowZhan: false, types: [1,2,3,4,5,6] },
+                    progress: null
+                };
+            }
+            
+            const existingEns = new Set(data.books['academic'].words.map(w => (w.en || '').toLowerCase()));
+            wordsToSync.forEach(w => {
+                if (w.en && !existingEns.has(w.en.toLowerCase())) {
+                    data.books['academic'].words.push({
+                        ...w,
+                        cardShown: false,
+                        streak: 0,
+                        wrongCount: 0,
+                        correctTypes: []
+                    });
+                    added++;
+                } else {
+                    skipped++;
+                }
+            });
+            
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
 
         // 更新同步状态

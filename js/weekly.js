@@ -431,7 +431,6 @@ function renderJournalList() {
     const grouped = {};
     journals.forEach(j => {
         if (!grouped[j.category]) grouped[j.category] = [];
-        grouped[j.grouped = grouped[j.category];
         grouped[j.category].push(j);
     });
 
