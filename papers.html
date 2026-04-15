@@ -112,6 +112,10 @@
                                 <input type="radio" name="importType" value="pdf">
                                 <span>📄 PDF导入</span>
                             </label>
+                            <label class="radio-label">
+                                <input type="radio" name="importType" value="json">
+                                <span>📋 卡片数据导入</span>
+                            </label>
                         </div>
                         
                         <!-- DOI导入 -->
@@ -171,6 +175,28 @@
                                 </select>
                             </div>
                             <div id="pdfResult" class="mt-4"></div>
+                        </div>
+                        
+                        <!-- JSON导入（手动卡片数据） -->
+                        <div id="jsonImportField" class="import-field hidden">
+                            <div class="info-box" style="margin-bottom: 16px;">
+                                <h3>📋 卡片数据导入</h3>
+                                <p>如果网页AI解析较慢，你可以在另一个对话中让AI解析文献，然后把解析好的JSON数据粘贴到这里导入。</p>
+                                <p style="margin-top: 8px;">提示：在另一个对话中发送"请解析这篇文献：[DOI或文献内容]，返回JSON格式的文献卡片数据"</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="jsonInput">粘贴卡片JSON数据</label>
+                                <textarea id="jsonInput" rows="10" placeholder='粘贴JSON数据，格式如：
+{
+  "title": "...",
+  "title_cn": "...",
+  "abstract": "...",
+  "abstract_cn": "...",
+  ...
+}'></textarea>
+                            </div>
+                            <button class="btn btn-primary" id="parseJsonBtn">解析并预览</button>
+                            <div id="jsonResult" class="mt-4"></div>
                         </div>
                         
                         <div class="form-actions">
