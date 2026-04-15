@@ -709,30 +709,51 @@ function handleWrongAnswer(word) {
             });
         }
         localStorage.setItem(CONFIG.STORAGE_KEYS.WRONG_WORDS, JSON.stringify(wrongWords));
-        elements.studyHint.innerHTML = `<p class="error-hint">❌ 累计错误${totalErrors}次</p>`;
+        elements.studyHint.innerHTML = `<p class="error-hint">❌ 累计错误${totalErrors}次，先看卡片再重做</p>`;
     } else {
-        elements.studyHint.innerHTML = `<p class="error-hint">❌ 累计错误${totalErrors}次</p>`;
+        elements.studyHint.innerHTML = `<p class="error-hint">❌ 累计错误${totalErrors}次，先看卡片再重做</p>`;
     }
     elements.studyHint.classList.add('error');
     
-    if (!wrongWordsInPhase.some(w => w.word === word.word)) {
-        wrongWordsInPhase.push(word);
-    }
-    
     updateStats();
     
+    // 答错后先显示单词卡片，点击继续后重做该题
     setTimeout(() => {
         isWaiting = false;
         elements.studyHint.classList.remove('error');
-        currentWordIndex++;
         
-        // 如果是新学模式的英选中阶段，下一个词要从卡片开始
-        if (currentMode === 'new' && newStudyStage === 0) {
-            currentPhase = StudyPhase.SHOW_CARD;
-        }
-        
-        renderCurrentQuestion();
+        // 显示单词卡片，点击继续后重做当前题型
+        showCardBeforeRetry(word);
     }, 1500);
+}
+
+/**
+ * 答错后显示卡片，点击继续后重做
+ */
+function showCardBeforeRetry(word) {
+    elements.studyArea.innerHTML = `
+        <div class="word-card-display">
+            <div class="word-main-display">
+                <div class="word-en">${escapeHtml(word.word)}</div>
+                <div class="word-cn">${escapeHtml(word.word_cn)}</div>
+            </div>
+            <div class="word-definition-section">
+                <div class="section-label">释义</div>
+                <div class="word-definition">${escapeHtml(word.definition || '暂无')}</div>
+            </div>
+            <div class="word-example-section">
+                <div class="section-label">例句</div>
+                <div class="word-example">${escapeHtml(word.example || '暂无')}</div>
+                ${word.example_cn ? `<div class="word-example-cn">${escapeHtml(word.example_cn)}</div>` : ''}
+            </div>
+            <button class="continue-btn" id="continueBtn">记住了，重做 →</button>
+        </div>
+    `;
+    
+    document.getElementById('continueBtn').addEventListener('click', () => {
+        // 点击继续后，重做当前题型
+        renderQuizCard(word);
+    });
 }
 
 /**
