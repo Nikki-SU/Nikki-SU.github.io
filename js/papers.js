@@ -33,6 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
     checkUrlParams();
 });
 
+// 解决浏览器前进/后退缓存问题
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        loadPapers();
+    }
+});
+
 function initElements() {
     elements.papersGrid = document.getElementById('papersGrid');
     elements.pagination = document.getElementById('pagination');
