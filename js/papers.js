@@ -89,8 +89,9 @@ function initEventListeners() {
     document.getElementById('importPdf')?.addEventListener('change', handlePdfUpload);
     document.getElementById('parsePdfBtn')?.addEventListener('click', parsePdfContent);
     
-    // JSON导入
-    document.getElementById('parseJsonBtn')?.addEventListener('click', parseJsonImport);
+    // JSON导入（文件+粘贴自动解析）
+    document.getElementById('jsonFileInput')?.addEventListener('change', handleJsonFileUpload);
+    document.getElementById('jsonInput')?.addEventListener('input', debounce(parseJsonInput, 500));
 
     // 确认导入
     document.getElementById('confirmImport')?.addEventListener('click', confirmImport);
@@ -907,14 +908,35 @@ async function parsePdfContent() {
 }
 
 /**
- * 解析JSON导入数据
+ * JSON文件上传
  */
-function parseJsonImport() {
+async function handleJsonFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const resultDiv = document.getElementById('jsonResult');
+    resultDiv.innerHTML = '<p class="text-muted">正在读取文件...</p>';
+    
+    try {
+        const text = await file.text();
+        document.getElementById('jsonInput').value = text;
+        parseJsonInput();
+    } catch (error) {
+        resultDiv.innerHTML = `<p class="text-danger">❌ 文件读取失败: ${error.message}</p>`;
+    }
+}
+
+/**
+ * 解析JSON输入（粘贴或文件）
+ */
+function parseJsonInput() {
     const jsonInput = document.getElementById('jsonInput')?.value || '';
     const resultDiv = document.getElementById('jsonResult');
     
     if (!jsonInput.trim()) {
-        resultDiv.innerHTML = '<p class="text-danger">请粘贴JSON数据</p>';
+        resultDiv.innerHTML = '';
+        importData = {};
+        document.getElementById('confirmImport').disabled = true;
         return;
     }
     
@@ -965,25 +987,20 @@ function parseJsonImport() {
         // 显示预览
         resultDiv.innerHTML = `
             <div class="import-preview">
-                <h4>📋 解析成功</h4>
                 <p><strong>标题:</strong> ${importData.title || importData.title_cn}</p>
                 <p><strong>作者:</strong> ${importData.authors || '未提供'}</p>
                 <p><strong>期刊:</strong> ${importData.journal || '未提供'}</p>
                 <p><strong>DOI:</strong> ${importData.doi || '未提供'}</p>
-                <p><strong>关键词:</strong> ${(importData.keywords || []).join(', ') || '未提供'}</p>
-                <p><strong>创新点:</strong> ${(importData.innovation || '未提供').substring(0, 100)}...</p>
-                <p><strong>论证思路:</strong> ${(importData.structure || '未提供').substring(0, 100)}...</p>
-                <p><strong>提取词汇:</strong> ${(importData.vocabulary || []).map(v => v.word || v).join(', ') || '无'}</p>
-                <p class="text-success mt-4">✅ 数据解析完成，可点击"确认导入"</p>
+                <p class="text-success">✅ 解析成功，可点击"确认导入"</p>
             </div>
         `;
         
         document.getElementById('confirmImport').disabled = false;
         
     } catch (error) {
-        console.error('JSON解析错误:', error);
-        resultDiv.innerHTML = `<p class="text-danger">❌ JSON格式错误: ${error.message}</p>
-            <p class="text-muted mt-2">请确保JSON格式正确，或尝试去除markdown代码块标记</p>`;
+        resultDiv.innerHTML = `<p class="text-muted">等待完整JSON数据...</p>`;
+        importData = {};
+        document.getElementById('confirmImport').disabled = true;
     }
 }
 
