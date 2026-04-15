@@ -1,4 +1,4 @@
-const CACHE_NAME = 'academic-site-v6';
+const CACHE_NAME = 'academic-site-v7';
 const urlsToCache = [
   '/',
   '/index.html',
