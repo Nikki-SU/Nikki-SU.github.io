@@ -7,7 +7,10 @@
     "example": "The perovskite layer absorbs sunlight and generates electron-hole pairs.",
     "example_cn": "钙钛矿层吸收阳光并产生电子-空穴对。",
     "category": "synthesis",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   },
   {
     "id": "vocab-2",
@@ -17,7 +20,10 @@
     "example": "High crystallinity reduces grain boundaries and improves charge transport.",
     "example_cn": "高结晶度减少晶界并改善电荷传输。",
     "category": "synthesis",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   },
   {
     "id": "vocab-3",
@@ -27,7 +33,10 @@
     "example": "Surface passivation significantly reduces non-radiative recombination.",
     "example_cn": "表面钝化显著降低非辐射复合。",
     "category": "mechanism",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   },
   {
     "id": "vocab-4",
@@ -37,7 +46,10 @@
     "example": "Grain boundaries often act as recombination centers for charge carriers.",
     "example_cn": "晶界通常作为载流子的复合中心。",
     "category": "mechanism",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   },
   {
     "id": "vocab-5",
@@ -47,7 +59,10 @@
     "example": "Minimizing recombination is crucial for achieving high efficiency.",
     "example_cn": "最小化复合对于实现高效率至关重要。",
     "category": "mechanism",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   },
   {
     "id": "vocab-6",
@@ -57,7 +72,10 @@
     "example": "XRD patterns reveal the crystallographic information of perovskite films.",
     "example_cn": "XRD图谱揭示了钙钛矿薄膜的晶体学信息。",
     "category": "characterization",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   },
   {
     "id": "vocab-7",
@@ -67,7 +85,10 @@
     "example": "SEM images show the surface morphology and grain size distribution.",
     "example_cn": "SEM图像显示了表面形貌和晶粒尺寸分布。",
     "category": "characterization",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   },
   {
     "id": "vocab-8",
@@ -77,7 +98,10 @@
     "example": "PL mapping can reveal spatial variations in film quality.",
     "example_cn": "PL mapping可以揭示薄膜质量的空间变化。",
     "category": "characterization",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   },
   {
     "id": "vocab-9",
@@ -87,7 +111,10 @@
     "example": "Defects can act as traps for charge carriers.",
     "example_cn": "缺陷可以作为载流子的陷阱。",
     "category": "mechanism",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   },
   {
     "id": "vocab-10",
@@ -97,7 +124,10 @@
     "example": "The certified efficiency reached 26.2% under standard illumination.",
     "example_cn": "在标准光照下认证效率达到26.2%。",
     "category": "application",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   },
   {
     "id": "vocab-11",
@@ -107,7 +137,10 @@
     "example": "The perovskite layer was prepared by spin-coating at 4000 rpm.",
     "example_cn": "钙钛矿层以4000转/分的速度旋涂制备。",
     "category": "synthesis",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   },
   {
     "id": "vocab-12",
@@ -117,6 +150,9 @@
     "example": "Thermal annealing at 100°C for 30 minutes promotes crystallization.",
     "example_cn": "在100°C下热退火30分钟促进结晶。",
     "category": "synthesis",
-    "correct_count": 0
+    "correct_count": 0,
+    "error_count": 0,
+    "is_new": true,
+    "last_practice_date": ""
   }
 ]
