@@ -262,30 +262,32 @@ function checkAutoSync() {
 
 /**
  * 加载数据
+ * 原则：localStorage有就用localStorage的（即使是空数组），没有才从文件读取
  */
 async function loadData() {
-    // 检查是否已初始化
-    const initialized = localStorage.getItem('vocabularyData_initialized');
+    const stored = localStorage.getItem('vocabularyData');
     
-    if (initialized === 'true') {
-        // 用户已有数据，只用localStorage
-        const stored = localStorage.getItem('vocabularyData');
+    // localStorage有数据（包括空数组[]）就用它
+    if (stored !== null) {
         try {
-            vocabulary = JSON.parse(stored);
-            if (!Array.isArray(vocabulary)) vocabulary = [];
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) {
+                vocabulary = parsed;
+                console.log('从localStorage加载词汇:', vocabulary.length, '个');
+            }
         } catch (e) {
-            vocabulary = [];
+            console.error('词汇localStorage解析失败:', e);
         }
     } else {
-        // 首次使用：从文件读取，然后标记已初始化
+        // localStorage完全没有数据（null），才从文件读取
         try {
             const response = await fetch(CONFIG.vocabularyUrl);
             if (response.ok) {
-                vocabulary = await response.json();
-                if (!Array.isArray(vocabulary)) vocabulary = [];
+                const data = await response.json();
+                vocabulary = Array.isArray(data) ? data : [];
             }
         } catch (error) {
-            console.error('加载词汇失败:', error);
+            console.error('加载词汇文件失败:', error);
             vocabulary = [];
         }
 
@@ -293,9 +295,9 @@ async function loadData() {
             vocabulary = getSampleVocabulary();
         }
         
-        // 保存并标记已初始化
+        // 首次加载，保存到localStorage
         localStorage.setItem('vocabularyData', JSON.stringify(vocabulary));
-        localStorage.setItem('vocabularyData_initialized', 'true');
+        console.log('首次加载词汇:', vocabulary.length, '个');
     }
 
     loadSettings();
@@ -307,8 +309,6 @@ async function loadData() {
 
     updateStats();
     updateStudyButtons();
-
-    // 检查自动同步
     checkAutoSync();
 }
 
@@ -355,7 +355,6 @@ function saveSettings() {
 
 function saveVocabulary() {
     localStorage.setItem('vocabularyData', JSON.stringify(vocabulary));
-    localStorage.setItem('vocabularyData_initialized', 'true');
 }
 
 function saveProgress() {
