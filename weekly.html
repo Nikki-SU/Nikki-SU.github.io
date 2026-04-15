@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>周报中心 - 小N学术站</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">
+                <span class="logo-icon">🧪</span>
+                小N学术站
+            </h1>
+            <nav class="nav" id="navMenu">
+                <a href="index.html" class="nav-link">
+                    <span class="icon">🏠</span> 首页
+                </a>
+                <a href="weekly.html" class="nav-link active">
+                    <span class="icon">📅</span> 周报
+                </a>
+                <a href="papers.html" class="nav-link">
+                    <span class="icon">📚</span> 文献卡片
+                </a>
+                <a href="vocabulary.html" class="nav-link">
+                    <span class="icon">📝</span> 词汇本
+                </a>
+            </nav>
+            <button class="menu-toggle" id="menuToggle">☰</button>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="section-header">
+                <h3 class="section-title">
+                    <span class="icon">📅</span>
+                    周报中心
+                </h3>
+                <button class="btn btn-primary" id="createReportBtn">
+                    <span>➕</span> 新建周报
+                </button>
+            </div>
+
+            <!-- Weekly Stats -->
+            <div class="weekly-stats">
+                <div class="weekly-stat">
+                    <div class="weekly-stat-value" id="totalReports">0</div>
+                    <div class="weekly-stat-label">总周报数</div>
+                </div>
+                <div class="weekly-stat">
+                    <div class="weekly-stat-value" id="papersThisWeek">0</div>
+                    <div class="weekly-stat-label">本周新增文献</div>
+                </div>
+                <div class="weekly-stat">
+                    <div class="weekly-stat-value" id="wordsThisWeek">0</div>
+                    <div class="weekly-stat-label">本周新词</div>
+                </div>
+                <div class="weekly-stat">
+                    <div class="weekly-stat-value" id="reviewThisWeek">0</div>
+                    <div class="weekly-stat-label">本周复习</div>
+                </div>
+            </div>
+
+            <!-- Journal Tracking -->
+            <section class="section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <span class="icon">🔍</span>
+                        期刊追踪
+                    </h3>
+                    <button class="btn btn-outline btn-sm" id="manageJournalsBtn">
+                        管理期刊
+                    </button>
+                </div>
+                <div id="journalTracking" class="review-section">
+                    <p class="text-muted">点击下方按钮追踪期刊，获取最新文献推送</p>
+                    <button class="btn btn-primary mt-4" id="trackJournalsBtn">
+                        🔄 检查更新
+                    </button>
+                </div>
+            </section>
+
+            <!-- Weekly Reports List -->
+            <section class="section">
+                <h3 class="section-title">
+                    <span class="icon">📋</span>
+                    周报列表
+                </h3>
+                <div id="weeklyList" class="weekly-reports">
+                    <div class="loading">加载中...</div>
+                </div>
+            </section>
+
+            <!-- Weekly Report Preview Modal -->
+            <div id="reportModal" class="modal hidden">
+                <div class="modal-content modal-xl">
+                    <div class="modal-header">
+                        <h3 id="modalReportTitle">周报详情</h3>
+                        <button class="modal-close" id="closeModal">×</button>
+                    </div>
+                    <div class="modal-body" id="modalBody">
+                        <!-- 周报内容 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create/Edit Report Modal -->
+            <div id="createModal" class="modal hidden">
+                <div class="modal-content modal-lg">
+                    <div class="modal-header">
+                        <h3 id="createModalTitle">新建周报</h3>
+                        <button class="modal-close" id="closeCreate">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="reportForm">
+                            <input type="hidden" id="reportId">
+                            <div class="form-group">
+                                <label for="reportDate">周报日期 *</label>
+                                <input type="date" id="reportDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="reportSummary">本周总结 *</label>
+                                <textarea id="reportSummary" rows="4" required placeholder="简要描述本周的学习内容和进展"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="reportPapers">本周阅读的文献（每行一条DOI或标题）</label>
+                                <textarea id="reportPapers" rows="4" placeholder="每行一条DOI或文献标题，如：&#10;10.1038/s41560-023-xxxxx&#10;钙钛矿薄膜的离子工程"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="reportWords">本周学习的新词</label>
+                                <textarea id="reportWords" rows="3" placeholder="输入单词，每行一个，如：&#10;perovskite&#10;passivation"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="reportProgress">主要进展（每行一条）</label>
+                                <textarea id="reportProgress" rows="4" placeholder="列出本周的主要进展，如：&#10;阅读了3篇关于FAPbI₃钙钛矿的文献&#10;整理了表征方法的新术语"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="reportNextWeek">下周计划</label>
+                                <textarea id="reportNextWeek" rows="3" placeholder="计划下周完成的事项"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="cancelCreate">取消</button>
+                                <button type="submit" class="btn btn-primary">保存周报</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Journal Management Modal -->
+            <div id="journalModal" class="modal hidden">
+                <div class="modal-content modal-lg">
+                    <div class="modal-header">
+                        <h3>期刊管理</h3>
+                        <button class="modal-close" id="closeJournal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>添加新期刊</label>
+                            <div style="display: flex; gap: 12px;">
+                                <input type="text" id="newJournalName" placeholder="期刊名称" style="flex: 1;">
+                                <select id="newJournalCategory" style="width: 150px;">
+                                    <option value="top">顶级综合</option>
+                                    <option value="material">材料与能源</option>
+                                    <option value="applied">应用材料化学</option>
+                                    <option value="nanomaterial">材料纳米</option>
+                                    <option value="energy">能源材料</option>
+                                    <option value="other">其他</option>
+                                </select>
+                                <button class="btn btn-primary" id="addJournalBtn">添加</button>
+                            </div>
+                        </div>
+                        <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
+                        <div id="journalList" class="journal-list">
+                            <!-- 期刊列表 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© 2024 小N学术学习站 | 钙钛矿太阳能电池研究方向</p>
+            <p class="footer-link">托管于 GitHub Pages</p>
+        </div>
+    </footer>
+
+    <script src="js/weekly.js"></script>
+</body>
+</html>
