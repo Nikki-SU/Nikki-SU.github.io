@@ -42,12 +42,13 @@ let SETTINGS = {
 // 状态
 let vocabulary = [];
 let currentMode = null;      // 'new' | 'review'
-let currentPhase = StudyPhase.CARD;
+let currentPhase = StudyPhase.EN_CN;
 let studyCount = CONFIG.DEFAULT_STUDY_COUNT;
 let currentWordQueue = [];
 let currentWordIndex = 0;
-let wrongWordsInRound = [];
-let newStudyStage = 0;       // 0:卡片+英选中 1:中选英 2:英选义 3:义选英
+let wrongWordsInRound = [];      // 当前题型中答错的题，做完后补做一次
+let currentRetryWord = null;      // 当前需要立即重做的单词（答题区显示卡片后重做）
+let newStudyStage = 0;           // 0:英选中 1:中选英 2:英选义 3:义选英
 let studyProgress = {};      // 学习进度
 let isWaiting = false;
 
@@ -429,6 +430,7 @@ function startStudy(mode) {
     currentMode = mode;
     currentWordIndex = 0;
     wrongWordsInRound = [];
+    currentRetryWord = null;
     newStudyStage = 0;
 
     // 获取学习队列
@@ -448,7 +450,9 @@ function startStudy(mode) {
             return;
         }
         
-        currentPhase = StudyPhase.CARD;
+        // 新学直接从英选中开始（不是卡片）
+        currentPhase = StudyPhase.EN_CN;
+        newStudyStage = 0;
     } else {
         // 复习：只复习"已学"
         const learnedWords = vocabulary.filter(v => v.status === WordStatus.LEARNED);
@@ -465,7 +469,7 @@ function startStudy(mode) {
         }
         
         currentPhase = StudyPhase.EN_CN;
-        newStudyStage = 1; // 跳过卡片展示阶段
+        newStudyStage = 1; // 跳过英选中阶段（复习不需要卡片）
     }
 
     // 显示学习界面
@@ -482,7 +486,14 @@ function startStudy(mode) {
  * 渲染当前题目
  */
 function renderCurrentQuestion() {
-    // 检查是否有错题需要重做
+    // 检查是否有需要立即重做的题（答题区显示卡片后重做）
+    if (currentRetryWord !== null) {
+        renderQuiz(currentRetryWord);
+        currentRetryWord = null;
+        return;
+    }
+
+    // 检查是否有错题需要补做（当前题型完成后）
     if (wrongWordsInRound.length > 0 && currentWordIndex >= currentWordQueue.length) {
         handleRetryWords();
         return;
@@ -497,17 +508,16 @@ function renderCurrentQuestion() {
     const currentWord = currentWordQueue[currentWordIndex];
     updateQueueInfo();
 
-    if (currentPhase === StudyPhase.CARD) {
-        renderWordCard(currentWord);
-    } else {
-        renderQuiz(currentWord);
-    }
+    // 渲染题目（新学模式下的英选中完成后会弹出卡片，由 handleCorrectAnswer 处理）
+    renderQuiz(currentWord);
 }
 
 /**
  * 渲染单词卡片
+ * @param {Object} word - 单词对象
+ * @param {boolean} isInitialCard - 是否是初始卡片（复习模式或首次进入），新学答题后弹出的卡片为false
  */
-function renderWordCard(word) {
+function renderWordCard(word, isInitialCard = true) {
     // 更新单词状态为"正在学"
     const wordInVocab = vocabulary.find(v => v.id === word.id);
     if (wordInVocab && wordInVocab.status === WordStatus.NEW) {
@@ -543,9 +553,16 @@ function renderWordCard(word) {
     `;
 
     document.getElementById('continueBtn')?.addEventListener('click', () => {
-        currentPhase = StudyPhase.EN_CN;
-        currentWordIndex++;
-        renderCurrentQuestion();
+        // 答题后弹出的卡片：点击继续后进入下一个单词的英选中
+        if (!isInitialCard) {
+            currentWordIndex++;
+            renderCurrentQuestion();
+        } else {
+            // 初始卡片（复习模式或其他场景）：继续流程
+            currentPhase = StudyPhase.EN_CN;
+            currentWordIndex++;
+            renderCurrentQuestion();
+        }
     });
 }
 
@@ -674,6 +691,15 @@ function handleCorrectAnswer(word) {
     saveVocabulary();
     isWaiting = true;
 
+    // 新学模式下，英选中完成后立即弹出该单词的卡片
+    if (currentMode === 'new' && currentPhase === StudyPhase.EN_CN) {
+        setTimeout(() => {
+            isWaiting = false;
+            renderWordCard(word, false); // false 表示是答题后的卡片，不是初始卡片
+        }, 300);
+        return;
+    }
+
     setTimeout(() => {
         isWaiting = false;
         currentWordIndex++;
@@ -692,7 +718,7 @@ function handleWrongAnswer(word) {
         saveVocabulary();
     }
 
-    // 添加到错题队列
+    // 添加到错题队列（题型结束后补做一次）
     if (!wrongWordsInRound.find(w => w.id === word.id)) {
         wrongWordsInRound.push(word);
     }
@@ -723,26 +749,26 @@ function renderWrongWordCard(word) {
     `;
 
     document.getElementById('retryBtn')?.addEventListener('click', () => {
-        // 重做这道题
-        wrongWordsInRound.push(word);
-        currentWordIndex++;
+        // 设置需要立即重做的单词（只重做一次，不是两遍）
+        currentRetryWord = word;
         renderCurrentQuestion();
     });
 }
 
 /**
- * 处理错题重做
+ * 处理错题补做（当前题型完成后，在队列末尾补做一次错题）
  */
 function handleRetryWords() {
     const wordToRetry = wrongWordsInRound.shift();
     if (!wordToRetry) {
-        currentWordIndex++;
+        // 所有错题都补做完了，继续下一阶段
+        currentWordIndex = 0;
         renderCurrentQuestion();
         return;
     }
 
-    elements.phaseBadge.textContent = '🔄 重做错题';
-    elements.studyArea.innerHTML = '<p class="empty-message">正在重做...</p>';
+    elements.phaseBadge.textContent = '🔄 补做错题';
+    elements.studyArea.innerHTML = '<p class="empty-message">正在补做错题...</p>';
 
     setTimeout(() => {
         renderQuiz(wordToRetry);
@@ -780,6 +806,12 @@ function updatePhaseProgress(word) {
  * 进入下一阶段
  */
 function moveToNextPhase() {
+    // 进入下一阶段前，确保错题已经补做完成
+    if (wrongWordsInRound.length > 0) {
+        handleRetryWords();
+        return;
+    }
+
     wrongWordsInRound = [];
 
     if (currentMode === 'new') {
@@ -871,7 +903,6 @@ function updateQueueInfo() {
     if (!elements.queueBadge || !elements.phaseBadge || !elements.wordProgress) return;
 
     const phaseNames = {
-        [StudyPhase.CARD]: '卡片展示',
         [StudyPhase.EN_CN]: '英选中',
         [StudyPhase.CN_EN]: '中选英',
         [StudyPhase.EN_DEF]: '英选义',
@@ -923,6 +954,7 @@ function reviewWrong() {
     currentPhase = StudyPhase.EN_CN;
     currentWordIndex = 0;
     wrongWordsInRound = [];
+    currentRetryWord = null;
 
     elements.studyControls?.classList.add('hidden');
     elements.queueInfo?.classList.remove('hidden');
