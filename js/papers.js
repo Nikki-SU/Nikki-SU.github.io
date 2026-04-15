@@ -956,8 +956,6 @@ function parseJsonInput() {
 }
 
 async function confirmImport() {
-    console.log('确认导入开始, importData:', importData);
-    
     const importType = document.querySelector('input[name="importType"]:checked')?.value || 'doi';
     const category = document.getElementById('importCategory')?.value || 'custom';
 
@@ -995,24 +993,36 @@ async function confirmImport() {
         createdAt: new Date().toISOString()
     };
 
-    console.log('新文献:', newPaper);
-
     // 检查是否已有该DOI的文献
     const existingIndex = papers.findIndex(p => p.doi === newPaper.doi);
     if (existingIndex !== -1) {
         papers[existingIndex] = { ...papers[existingIndex], ...newPaper };
-        console.log('更新已有文献, index:', existingIndex);
     } else {
         papers.unshift(newPaper);
-        console.log('添加新文献, 当前总数:', papers.length);
     }
 
-    console.log('保存到localStorage...');
-    savePapers();
-    
-    console.log('关闭模态框并刷新列表');
+    // 保存
+    try {
+        localStorage.setItem('papersData', JSON.stringify(papers));
+    } catch (e) {
+        alert('保存失败: ' + e.message);
+        return;
+    }
+
     closeImportModal();
-    filterPapers();
+    
+    // 强制刷新
+    filteredPapers = [...papers];
+    currentPage = 1;
+    updateJournalFilter();
+    renderPapers();
+
+    // 调试：在页面顶部显示
+    const debugDiv = document.createElement('div');
+    debugDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#10b981;color:white;padding:10px;z-index:9999;';
+    debugDiv.textContent = `导入成功！当前共 ${papers.length} 篇文献，filteredPapers: ${filteredPapers.length}`;
+    document.body.appendChild(debugDiv);
+    setTimeout(() => debugDiv.remove(), 3000);
 
     alert('文献导入成功！共 ' + papers.length + ' 篇文献');
 }
