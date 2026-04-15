@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小N的学术学习站</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">🧪 小N学术站</h1>
+            <nav class="nav">
+                <a href="index.html" class="nav-link active">首页</a>
+                <a href="vocabulary.html" class="nav-link">生词本</a>
+                <a href="papers.html" class="nav-link">文献卡片</a>
+            </nav>
+            <button class="menu-toggle" id="menuToggle">☰</button>
+        </div>
+    </header>
+
+    <main class="main">
+        <section class="hero">
+            <div class="container">
+                <h2>欢迎来到小N的学术学习站</h2>
+                <p>专注钙钛矿太阳能电池研究 | 化学专业本科</p>
+            </div>
+        </section>
+
+        <div class="container">
+            <section class="section">
+                <h3 class="section-title">📅 周报概览</h3>
+                <div class="weekly-reports">
+                    <div class="report-card">
+                        <div class="report-header">
+                            <span class="report-week">第 12 周</span>
+                            <span class="report-date">2024-03-18</span>
+                        </div>
+                        <div class="report-content">
+                            <h4>本周进展</h4>
+                            <ul>
+                                <li>阅读了3篇关于FAPbI₃钙钛矿的文献</li>
+                                <li>整理了表征方法的新术语</li>
+                                <li>复习了溶剂工程相关词汇</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="report-card">
+                        <div class="report-header">
+                            <span class="report-week">第 11 周</span>
+                            <span class="report-date">2024-03-11</span>
+                        </div>
+                        <div class="report-content">
+                            <h4>本周进展</h4>
+                            <ul>
+                                <li>完成了文献综述第一稿</li>
+                                <li>学习了XRD和SEM表征方法</li>
+                                <li>整理了20个新单词</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="report-card">
+                        <div class="report-header">
+                            <span class="report-week">第 10 周</span>
+                            <span class="report-date">2024-03-04</span>
+                        </div>
+                        <div class="report-content">
+                            <h4>本周进展</h4>
+                            <ul>
+                                <li>确定了研究方向：钙钛矿薄膜制备</li>
+                                <li>开始阅读导师推荐的综述文章</li>
+                                <li>建立了单词本学习计划</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h3 class="section-title">📚 最近文献卡片</h3>
+                <div id="recentPapers" class="papers-grid">
+                    <div class="loading">加载中...</div>
+                </div>
+                <div class="more-link">
+                    <a href="papers.html" class="btn btn-primary">查看全部文献 →</a>
+                </div>
+            </section>
+
+            <section class="section">
+                <h3 class="section-title">📖 学习统计</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📄</div>
+                        <div class="stat-value" id="paperCount">-</div>
+                        <div class="stat-label">文献数量</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-value" id="wordCount">-</div>
+                        <div class="stat-label">生词数量</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-value" id="masteredCount">-</div>
+                        <div class="stat-label">已掌握</div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© 2024 小N学术学习站 | 钙钛矿太阳能电池研究方向</p>
+            <p class="footer-link">托管于 GitHub Pages</p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
