@@ -1,65 +1,112 @@
 /**
- * ai-parser.js - 硅基流动API文献解析模块
- * 调用AI接口解析DOI文献，生成完整双语文献卡片
+ * ai-parser.js - 多API文献解析模块
+ * 支持硅基流动、豆包、千问、DeepSeek、Gemini等多个API
  */
 
 const AI_PARSER_CONFIG = {
-    API_URL: 'https://api.siliconflow.cn/v1/chat/completions',
-    MODELS: {
-        deepseek: 'deepseek-ai/DeepSeek-V3',
-        qwen: 'Qwen/Qwen2.5-72B-Instruct'
+    // API提供商配置
+    PROVIDERS: {
+        siliconflow: {
+            name: '硅基流动',
+            url: 'https://api.siliconflow.cn/v1/chat/completions',
+            models: ['deepseek-ai/DeepSeek-V3', 'Qwen/Qwen2.5-72B-Instruct', 'THUDM/glm-4-9b-chat'],
+            defaultModel: 'deepseek-ai/DeepSeek-V3',
+            authPrefix: 'Bearer'
+        },
+        deepseek: {
+            name: 'DeepSeek',
+            url: 'https://api.deepseek.com/v1/chat/completions',
+            models: ['deepseek-chat', 'deepseek-coder'],
+            defaultModel: 'deepseek-chat',
+            authPrefix: 'Bearer'
+        },
+        qwen: {
+            name: '通义千问',
+            url: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+            models: ['qwen-turbo', 'qwen-plus', 'qwen-max', 'qwen-max-longcontext'],
+            defaultModel: 'qwen-plus',
+            authPrefix: 'Bearer'
+        },
+        doubao: {
+            name: '豆包',
+            url: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+            models: ['自定义模型ID'],
+            defaultModel: '',
+            authPrefix: 'Bearer',
+            needsModelInput: true
+        },
+        gemini: {
+            name: 'Gemini',
+            url: 'https://generativelanguage.googleapis.com/v1beta/models',
+            models: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'],
+            defaultModel: 'gemini-1.5-flash',
+            authPrefix: 'key',  // Gemini用key参数
+            isGemini: true
+        }
     },
-    STORAGE_KEY: 'siliconflow_api_key',
-    MODEL_KEY: 'siliconflow_model',
-    DEFAULT_MODEL: 'deepseek'
+    STORAGE_KEYS: {
+        PROVIDER: 'ai_provider',
+        API_KEY: 'ai_api_key',
+        MODEL: 'ai_model',
+        CUSTOM_MODEL: 'ai_custom_model'
+    },
+    DEFAULT_PROVIDER: 'siliconflow'
 };
 
 /**
  * 检查API Key是否已配置
  */
 function isApiKeyConfigured() {
-    return !!localStorage.getItem(AI_PARSER_CONFIG.STORAGE_KEY);
+    return !!localStorage.getItem(AI_PARSER_CONFIG.STORAGE_KEYS.API_KEY);
 }
 
 /**
- * 获取当前配置的API Key
+ * 获取当前选择的提供商
+ */
+function getProvider() {
+    return localStorage.getItem(AI_PARSER_CONFIG.STORAGE_KEYS.PROVIDER) || AI_PARSER_CONFIG.DEFAULT_PROVIDER;
+}
+
+/**
+ * 获取提供商配置
+ */
+function getProviderConfig() {
+    const providerId = getProvider();
+    return AI_PARSER_CONFIG.PROVIDERS[providerId] || AI_PARSER_CONFIG.PROVIDERS.siliconflow;
+}
+
+/**
+ * 获取当前API Key
  */
 function getApiKey() {
-    return localStorage.getItem(AI_PARSER_CONFIG.STORAGE_KEY);
+    return localStorage.getItem(AI_PARSER_CONFIG.STORAGE_KEYS.API_KEY);
 }
 
 /**
  * 获取当前选择的模型
  */
 function getSelectedModel() {
-    const savedModel = localStorage.getItem(AI_PARSER_CONFIG.MODEL_KEY);
-    return savedModel || AI_PARSER_CONFIG.DEFAULT_MODEL;
+    const providerConfig = getProviderConfig();
+    if (providerConfig.needsModelInput) {
+        return localStorage.getItem(AI_PARSER_CONFIG.STORAGE_KEYS.CUSTOM_MODEL) || providerConfig.defaultModel;
+    }
+    return localStorage.getItem(AI_PARSER_CONFIG.STORAGE_KEYS.MODEL) || providerConfig.defaultModel;
 }
 
 /**
- * 设置API Key
+ * 设置API配置
  */
-function setApiKey(key) {
-    localStorage.setItem(AI_PARSER_CONFIG.STORAGE_KEY, key.trim());
+function setApiConfig(provider, apiKey, model, customModel = '') {
+    localStorage.setItem(AI_PARSER_CONFIG.STORAGE_KEYS.PROVIDER, provider);
+    localStorage.setItem(AI_PARSER_CONFIG.STORAGE_KEYS.API_KEY, apiKey.trim());
+    localStorage.setItem(AI_PARSER_CONFIG.STORAGE_KEYS.MODEL, model);
+    if (customModel) {
+        localStorage.setItem(AI_PARSER_CONFIG.STORAGE_KEYS.CUSTOM_MODEL, customModel);
+    }
 }
 
 /**
- * 设置模型
- */
-function setModel(model) {
-    localStorage.setItem(AI_PARSER_CONFIG.MODEL_KEY, model);
-}
-
-/**
- * 获取模型标识符
- */
-function getModelId() {
-    const model = getSelectedModel();
-    return AI_PARSER_CONFIG.MODELS[model] || AI_PARSER_CONFIG.MODELS.deepseek;
-}
-
-/**
- * 调用硅基流动API解析文献
+ * 调用AI API解析文献
  * @param {string} doi - 文献DOI
  * @param {string} title - 文献标题
  * @param {string} abstractText - 文献摘要
@@ -68,6 +115,8 @@ function getModelId() {
  */
 async function parsePaperWithAI(doi, title, abstractText, onProgress = null) {
     const apiKey = getApiKey();
+    const providerConfig = getProviderConfig();
+    const model = getSelectedModel();
     
     if (!apiKey) {
         throw new Error('请先在设置页面配置API Key');
@@ -75,33 +124,21 @@ async function parsePaperWithAI(doi, title, abstractText, onProgress = null) {
 
     if (onProgress) onProgress('正在连接AI服务...');
 
-    const modelId = getModelId();
-    
     // 构建提示词
     const prompt = buildParsePrompt(doi, title, abstractText);
 
     if (onProgress) onProgress('正在分析文献，请稍候...');
 
     try {
-        const response = await fetch(AI_PARSER_CONFIG.API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: modelId,
-                messages: [
-                    { 
-                        role: 'system', 
-                        content: '你是一位专业的学术论文分析助手，擅长提取学术文献的关键信息并生成结构化的双语分析。请严格按照指定的JSON格式返回结果。'
-                    },
-                    { role: 'user', content: prompt }
-                ],
-                temperature: 0.7,
-                max_tokens: 4000
-            })
-        });
+        let response;
+        
+        if (providerConfig.isGemini) {
+            // Gemini API 特殊处理
+            response = await callGeminiAPI(apiKey, model, prompt);
+        } else {
+            // OpenAI 兼容 API
+            response = await callOpenAICompatibleAPI(providerConfig, apiKey, model, prompt);
+        }
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
@@ -115,15 +152,21 @@ async function parsePaperWithAI(doi, title, abstractText, onProgress = null) {
         }
 
         const data = await response.json();
+        let content;
         
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        if (providerConfig.isGemini) {
+            // Gemini 返回格式不同
+            content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        } else {
+            content = data.choices?.[0]?.message?.content;
+        }
+        
+        if (!content) {
             throw new Error('API返回数据格式异常');
         }
 
         if (onProgress) onProgress('解析完成，正在处理...');
 
-        // 提取并解析JSON
-        const content = data.choices[0].message.content;
         return parseAIResponse(content);
 
     } catch (error) {
@@ -132,6 +175,56 @@ async function parsePaperWithAI(doi, title, abstractText, onProgress = null) {
         }
         throw error;
     }
+}
+
+/**
+ * 调用OpenAI兼容API
+ */
+async function callOpenAICompatibleAPI(providerConfig, apiKey, model, prompt) {
+    return await fetch(providerConfig.url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `${providerConfig.authPrefix} ${apiKey}`
+        },
+        body: JSON.stringify({
+            model: model,
+            messages: [
+                { 
+                    role: 'system', 
+                    content: '你是一位专业的学术论文分析助手，擅长提取学术文献的关键信息并生成结构化的双语分析。请严格按照指定的JSON格式返回结果。'
+                },
+                { role: 'user', content: prompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 4000
+        })
+    });
+}
+
+/**
+ * 调用Gemini API
+ */
+async function callGeminiAPI(apiKey, model, prompt) {
+    const url = `${AI_PARSER_CONFIG.PROVIDERS.gemini.url}/${model}:generateContent?key=${apiKey}`;
+    
+    return await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            contents: [{
+                parts: [{
+                    text: `你是一位专业的学术论文分析助手，擅长提取学术文献的关键信息并生成结构化的双语分析。请严格按照指定的JSON格式返回结果。\n\n${prompt}`
+                }]
+            }],
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 4000
+            }
+        })
+    });
 }
 
 /**
@@ -227,42 +320,52 @@ function parseAIResponse(content) {
  */
 async function testApiConnection() {
     const apiKey = getApiKey();
+    const providerConfig = getProviderConfig();
+    const model = getSelectedModel();
     
     if (!apiKey) {
         throw new Error('请先输入API Key');
     }
 
     try {
-        const response = await fetch(AI_PARSER_CONFIG.API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: getModelId(),
-                messages: [
-                    { role: 'user', content: '请回复"连接成功"确认API正常工作。' }
-                ],
-                max_tokens: 50
-            })
-        });
+        let response;
+        
+        if (providerConfig.isGemini) {
+            // Gemini 测试
+            const url = `${AI_PARSER_CONFIG.PROVIDERS.gemini.url}/${model}:generateContent?key=${apiKey}`;
+            response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: '请回复"连接成功"确认API正常工作。' }] }]
+                })
+            });
+        } else {
+            // OpenAI 兼容 API 测试
+            response = await fetch(providerConfig.url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `${providerConfig.authPrefix} ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [{ role: 'user', content: '请回复"连接成功"确认API正常工作。' }],
+                    max_tokens: 50
+                })
+            });
+        }
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             if (response.status === 401) {
                 throw new Error('API Key无效或已过期');
             }
-            throw new Error(`API返回错误: ${response.status}`);
+            throw new Error(`API返回错误: ${response.status} ${errorData.error?.message || ''}`);
         }
 
-        const data = await response.json();
-        
-        if (data.choices && data.choices[0] && data.choices[0].message) {
-            return { success: true, message: '连接成功！' };
-        }
-        
-        throw new Error('API返回数据格式异常');
+        return { success: true, message: `${providerConfig.name} 连接成功！` };
+
     } catch (error) {
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
             throw new Error('网络连接失败');
