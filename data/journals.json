@@ -1,35 +1,154 @@
-[
-  { "name": "Nature", "category": "top" },
-  { "name": "Science", "category": "top" },
-  { "name": "Nature Materials", "category": "top" },
-  { "name": "Nature Energy", "category": "top" },
-  { "name": "Nature Nanotechnology", "category": "top" },
-  { "name": "Nature Photonics", "category": "top" },
-  { "name": "Nature Communications", "category": "top" },
-  { "name": "Science Advances", "category": "top" },
-  { "name": "Advanced Materials", "category": "material" },
-  { "name": "Energy & Environmental Science", "category": "material" },
-  { "name": "Joule", "category": "material" },
-  { "name": "Materials Horizons", "category": "material" },
-  { "name": "Advanced Energy Materials", "category": "applied" },
-  { "name": "Angewandte Chemie", "category": "applied" },
-  { "name": "JACS", "category": "applied" },
-  { "name": "Chemical Society Reviews", "category": "applied" },
-  { "name": "Nano Energy", "category": "applied" },
-  { "name": "ACS Materials Letters", "category": "applied" },
-  { "name": "Materials Today", "category": "applied" },
-  { "name": "Nano Letters", "category": "nanomaterial" },
-  { "name": "ACS Nano", "category": "nanomaterial" },
-  { "name": "Advanced Functional Materials", "category": "nanomaterial" },
-  { "name": "Small", "category": "nanomaterial" },
-  { "name": "Chemistry of Materials", "category": "nanomaterial" },
-  { "name": "Journal of Materials Chemistry A", "category": "nanomaterial" },
-  { "name": "Chem", "category": "energy" },
-  { "name": "Energy Storage Materials", "category": "energy" },
-  { "name": "Nano-Micro Letters", "category": "energy" },
-  { "name": "ACS Energy Letters", "category": "energy" },
-  { "name": "Solar RRL", "category": "other" },
-  { "name": "Advanced Science", "category": "other" },
-  { "name": "Scientific Reports", "category": "other" },
-  { "name": "ACS Applied Energy Materials", "category": "other" }
-]
+{
+    "categories": [
+        {
+            "id": "synthesis",
+            "name": "合成与制备",
+            "icon": "🧪",
+            "journals": [
+                { "name": "Advanced Materials", "if": 27.4 },
+                { "name": "Nature Materials", "if": 47.6 },
+                { "name": "Chemistry of Materials", "if": 5.1 },
+                { "name": "Journal of Materials Chemistry A", "if": 12.4 },
+                { "name": "ACS Applied Materials & Interfaces", "if": 8.3 },
+                { "name": "Scientific Reports", "if": 4.6 },
+                { "name": "Nature Communications", "if": 14.7 },
+                { "name": "Science Advances", "if": 11.7 }
+            ]
+        },
+        {
+            "id": "characterization",
+            "name": "表征与测试",
+            "icon": "🔬",
+            "journals": [
+                { "name": "Advanced Functional Materials", "if": 18.5 },
+                { "name": "ACS Nano", "if": 15.1 },
+                { "name": "Nano Letters", "if": 10.8 },
+                { "name": "Nature Methods", "if": 48.0 },
+                { "name": "Energy & Environmental Science", "if": 32.5 },
+                { "name": "Joule", "if": 39.0 },
+                { "name": "Matter", "if": 17.3 },
+                { "name": "Cell Reports Physical Science", "if": 8.0 }
+            ]
+        },
+        {
+            "id": "theory",
+            "name": "理论与计算",
+            "icon": "💻",
+            "journals": [
+                { "name": "npj Computational Materials", "if": 9.7 },
+                { "name": "Journal of Physical Chemistry Letters", "if": 4.9 },
+                { "name": "Physical Review B", "if": 3.7 },
+                { "name": "Physical Review Materials", "if": 3.4 },
+                { "name": "Computational Materials Science", "if": 3.3 },
+                { "name": "Journal of Chemical Theory and Computation", "if": 5.5 },
+                { "name": "Journal of Chemical Physics", "if": 3.1 },
+                { "name": "Physical Chemistry Chemical Physics", "if": 3.4 }
+            ]
+        },
+        {
+            "id": "solar_cell",
+            "name": "太阳能电池",
+            "icon": "☀️",
+            "journals": [
+                { "name": "Nature Energy", "if": 56.0 },
+                { "name": "Joule", "if": 39.0 },
+                { "name": "Energy & Environmental Science", "if": 32.5 },
+                { "name": "Advanced Energy Materials", "if": 24.4 },
+                { "name": "ACS Energy Letters", "if": 23.0 },
+                { "name": "Solar RRL", "if": 8.6 },
+                { "name": "Progress in Photovoltaics", "if": 7.6 },
+                { "name": "IEEE Transactions on Electron Devices", "if": 2.9 }
+            ]
+        },
+        {
+            "id": "led",
+            "name": "LED与发光",
+            "icon": "💡",
+            "journals": [
+                { "name": "Nature Photonics", "if": 35.0 },
+                { "name": "Light: Science & Applications", "if": 19.4 },
+                { "name": "ACS Photonics", "if": 7.1 },
+                { "name": "Laser & Photonics Reviews", "if": 13.0 },
+                { "name": "Advanced Optical Materials", "if": 8.3 },
+                { "name": "Photonics Research", "if": 7.6 },
+                { "name": "Optics Express", "if": 3.6 },
+                { "name": "Journal of Luminescence", "if": 3.0 }
+            ]
+        },
+        {
+            "id": "imaging",
+            "name": "成像与探测",
+            "icon": "📷",
+            "journals": [
+                { "name": "Nature Methods", "if": 48.0 },
+                { "name": "Nature Biomedical Engineering", "if": 28.1 },
+                { "name": "Advanced Materials", "if": 27.4 },
+                { "name": "ACS Nano", "if": 15.1 },
+                { "name": "Nano Letters", "if": 10.8 },
+                { "name": "Nature Communications", "if": 14.7 },
+                { "name": "Science Advances", "if": 11.7 },
+                { "name": "Science Bulletin", "if": 18.9 }
+            ]
+        },
+        {
+            "id": "battery",
+            "name": "电池与储能",
+            "icon": "🔋",
+            "journals": [
+                { "name": "Nature Energy", "if": 56.0 },
+                { "name": "Energy & Environmental Science", "if": 32.5 },
+                { "name": "Joule", "if": 39.0 },
+                { "name": "Advanced Energy Materials", "if": 24.4 },
+                { "name": "ACS Energy Letters", "if": 23.0 },
+                { "name": "Energy Storage Materials", "if": 18.9 },
+                { "name": "Nano Energy", "if": 16.0 },
+                { "name": "Electrochemical Energy Reviews", "if": 28.4 }
+            ]
+        },
+        {
+            "id": "membrane",
+            "name": "膜与分离",
+            "icon": "🧬",
+            "journals": [
+                { "name": "Nature Materials", "if": 47.6 },
+                { "name": "Advanced Materials", "if": 27.4 },
+                { "name": "Science", "if": 44.7 },
+                { "name": "Nature Communications", "if": 14.7 },
+                { "name": "ACS Nano", "if": 15.1 },
+                { "name": "Journal of Membrane Science", "if": 8.4 },
+                { "name": "Membranes", "if": 4.2 },
+                { "name": "Desalination", "if": 8.0 }
+            ]
+        },
+        {
+            "id": " catalysis",
+            "name": "催化与环境",
+            "icon": "🌍",
+            "journals": [
+                { "name": "Nature Catalysis", "if": 41.8 },
+                { "name": "Energy & Environmental Science", "if": 32.5 },
+                { "name": "Advanced Materials", "if": 27.4 },
+                { "name": "ACS Catalysis", "if": 12.9 },
+                { "name": "Applied Catalysis B", "if": 19.5 },
+                { "name": "Journal of the American Chemical Society", "if": 14.4 },
+                { "name": "Green Chemistry", "if": 9.3 },
+                { "name": "Environmental Science & Technology", "if": 10.3 }
+            ]
+        },
+        {
+            "id": "bio",
+            "name": "生物医学",
+            "icon": "🏥",
+            "journals": [
+                { "name": "Nature Medicine", "if": 58.7 },
+                { "name": "Nature Materials", "if": 47.6 },
+                { "name": "Nature Biomedical Engineering", "if": 28.1 },
+                { "name": "Advanced Materials", "if": 27.4 },
+                { "name": "ACS Nano", "if": 15.1 },
+                { "name": "Nano Letters", "if": 10.8 },
+                { "name": "Biomaterials", "if": 14.0 },
+                { "name": "Advanced Functional Materials", "if": 18.5 }
+            ]
+        }
+    ]
+}
