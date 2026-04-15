@@ -1280,6 +1280,42 @@ async function deletePaper() {
 function checkUrlParams() {
     const params = new URLSearchParams(window.location.search);
     const paperId = params.get('id');
+    const action = params.get('action');
+    const doi = params.get('doi');
+
+    // 从周报跳转过来制作卡片
+    if (action === 'import' && doi) {
+        setTimeout(() => {
+            openImportModal();
+            // 填充DOI
+            const doiInput = document.getElementById('importDoi');
+            if (doiInput) {
+                doiInput.value = doi;
+                // 自动触发获取
+                fetchDoiPaper();
+            }
+            // 清除URL参数
+            window.history.replaceState({}, '', window.location.pathname);
+        }, 300);
+        return;
+    }
+
+    // 检查localStorage中是否有待处理的DOI
+    const pendingDOI = localStorage.getItem('pendingPaperDOI');
+    if (pendingDOI) {
+        setTimeout(() => {
+            openImportModal();
+            const doiInput = document.getElementById('importDoi');
+            if (doiInput) {
+                doiInput.value = pendingDOI;
+                fetchDoiPaper();
+            }
+            // 清除临时存储
+            localStorage.removeItem('pendingPaperDOI');
+            localStorage.removeItem('pendingPaperTitle');
+        }, 300);
+        return;
+    }
 
     if (paperId) {
         setTimeout(() => {
