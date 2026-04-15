@@ -690,33 +690,94 @@ async function trackJournals() {
     updateTrackingProgress(100);
     
     if (newPapers.length > 0) {
+        // 保存追踪到的文献供后续使用
+        localStorage.setItem('trackedPapers', JSON.stringify(newPapers));
+        
         container.innerHTML = `
             <p style="color: var(--success-color);">🎉 发现 ${newPapers.length} 篇新文献！</p>
-            <div style="margin-top: 16px;">
-                ${newPapers.slice(0, 5).map(p => `
-                    <div class="review-item">
-                        <div class="review-paper-title">${escapeHtml(p.title)}</div>
-                        <div class="review-paper-meta">${escapeHtml(p.journal)} | ${p.publish_date}</div>
+            <p class="text-muted" style="font-size: 0.85rem;">点击「制作卡片」可跳转到文献卡片页面进行AI解析</p>
+            <div style="margin-top: 16px;" class="tracked-papers-list">
+                ${newPapers.map((p, idx) => `
+                    <div class="tracked-paper-item" style="padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius); margin-bottom: 12px;">
+                        <div style="font-weight: 500; margin-bottom: 6px;">${idx + 1}. ${escapeHtml(p.title)}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">
+                            📖 ${escapeHtml(p.journal)} | 📅 ${p.publish_date}
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">
+                            DOI: <a href="https://doi.org/${p.doi}" target="_blank" style="color: var(--primary-color);">${p.doi}</a>
+                        </div>
+                        <button class="btn btn-sm btn-primary" onclick="makePaperCard('${p.doi}', '${escapeHtml(p.title).replace(/'/g, "\\'")}')">
+                            📝 制作卡片
+                        </button>
+                        <button class="btn btn-sm btn-outline" onclick="copyDOI('${p.doi}')" style="margin-left: 8px;">
+                            📋 复制DOI
+                        </button>
                     </div>
                 `).join('')}
-                ${newPapers.length > 5 ? `<p class="text-muted mt-4">...还有 ${newPapers.length - 5} 篇</p>` : ''}
             </div>
-            <button class="btn btn-primary mt-4" onclick="importTrackedPapers()">导入全部文献</button>
+            <div style="margin-top: 16px; display: flex; gap: 8px;">
+                <button class="btn btn-outline" onclick="markAllAsRead()">全部标记为已读</button>
+            </div>
         `;
-        
-        // 临时存储追踪到的文献
-        localStorage.setItem('trackedPapers', JSON.stringify(newPapers));
     } else {
         container.innerHTML = `
-            <p>本周暂无新文献更新</p>
-            <button class="btn btn-outline mt-4" onclick="loadData()">刷新列表</button>
+            <p>✅ 已是最新，暂无新文献</p>
+            <p class="text-muted" style="font-size: 0.85rem;">上次检查: ${getLastCheckTime()}</p>
+            <button class="btn btn-outline mt-4" onclick="loadData()">刷新</button>
         `;
     }
+    
+    // 更新检查时间
+    localStorage.setItem('lastJournalCheck', new Date().toISOString());
     
     if (btn) {
         btn.disabled = false;
         btn.innerHTML = '🔄 检查更新';
     }
+}
+
+// 制作文献卡片 - 跳转到papers页面并预填DOI
+function makePaperCard(doi, title) {
+    // 存储到临时变量，供papers页面使用
+    localStorage.setItem('pendingPaperDOI', doi);
+    localStorage.setItem('pendingPaperTitle', title);
+    // 跳转到文献卡片页面
+    window.location.href = 'papers.html?action=import&doi=' + encodeURIComponent(doi);
+}
+
+// 复制DOI
+function copyDOI(doi) {
+    navigator.clipboard.writeText(doi).then(() => {
+        alert('DOI已复制: ' + doi);
+    }).catch(() => {
+        prompt('复制失败，请手动复制:', doi);
+    });
+}
+
+// 全部标记为已读
+function markAllAsRead() {
+    const tracked = JSON.parse(localStorage.getItem('trackedPapers') || '[]');
+    const checked = JSON.parse(localStorage.getItem('checkedDOIs') || '[]');
+    
+    tracked.forEach(p => {
+        if (!checked.includes(p.doi)) {
+            checked.push(p.doi);
+        }
+    });
+    
+    localStorage.setItem('checkedDOIs', JSON.stringify(checked));
+    localStorage.removeItem('trackedPapers');
+    
+    alert('已全部标记为已读');
+    location.reload();
+}
+
+// 获取上次检查时间
+function getLastCheckTime() {
+    const last = localStorage.getItem('lastJournalCheck');
+    if (!last) return '从未';
+    const date = new Date(last);
+    return date.toLocaleString('zh-CN');
 }
 
 async function searchJournalPapers(journalName) {
