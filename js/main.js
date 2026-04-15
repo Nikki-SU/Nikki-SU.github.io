@@ -1,234 +1,29 @@
 /**
- * main.js - 主页面脚本
- * 处理首页的统计信息、周报预览和最近文献加载
+ * main.js - 全局公共函数
  */
 
-// 配置
-const CONFIG = {
-    papersUrl: 'data/papers.json',
-    vocabularyUrl: 'data/vocabulary.json',
-    weeklyUrl: 'data/weekly.json',
-    recentReportsCount: 3,
-    recentPapersCount: 6
-};
+// Toast通知
+let toastContainer = null;
 
-// DOM 加载完成后执行
-document.addEventListener('DOMContentLoaded', () => {
-    initMobileMenu();
-    loadAllData();
-});
-
-/**
- * 移动端菜单切换
- */
-function initMobileMenu() {
-    const menuToggle = document.getElementById('menuToggle');
-    const nav = document.querySelector('.nav');
-    
-    if (menuToggle && nav) {
-        menuToggle.addEventListener('click', () => {
-            nav.classList.toggle('active');
-        });
-    }
-}
-
-/**
- * 加载所有数据
- */
-async function loadAllData() {
-    try {
-        const [papersRes, vocabRes, weeklyRes] = await Promise.all([
-            fetch(CONFIG.papersUrl).catch(() => ({ ok: false, json: async () => [] })),
-            fetch(CONFIG.vocabularyUrl).catch(() => ({ ok: false, json: async () => [] })),
-            fetch(CONFIG.weeklyUrl).catch(() => ({ ok: false, json: async () => [] }))
-        ]);
-        
-        let papers = [];
-        let vocabularies = [];
-        let weeklyReports = [];
-        
-        if (papersRes.ok) {
-            papers = await papersRes.json();
-        }
-        
-        if (vocabRes.ok) {
-            vocabularies = await vocabRes.json();
-        }
-        
-        if (weeklyRes.ok) {
-            weeklyReports = await weeklyRes.json();
-        }
-        
-        // 更新统计
-        updateStatistics(papers, vocabularies, weeklyReports);
-        
-        // 加载最近周报
-        loadRecentReports(weeklyReports);
-        
-        // 加载最近文献
-        loadRecentPapers(papers);
-        
-    } catch (error) {
-        console.error('加载数据失败:', error);
-        // 使用本地存储作为后备
-        loadFromLocalStorage();
-    }
-}
-
-/**
- * 从本地存储加载数据
- */
-function loadFromLocalStorage() {
-    const storedPapers = localStorage.getItem('papersData');
-    const storedVocab = localStorage.getItem('vocabularyData');
-    const storedWeekly = localStorage.getItem('weeklyData');
-    
-    const papers = storedPapers ? JSON.parse(storedPapers) : [];
-    const vocabularies = storedVocab ? JSON.parse(storedVocab) : [];
-    const weeklyReports = storedWeekly ? JSON.parse(storedWeekly) : [];
-    
-    updateStatistics(papers, vocabularies, weeklyReports);
-    loadRecentReports(weeklyReports);
-    loadRecentPapers(papers);
-}
-
-/**
- * 更新统计数据
- */
-function updateStatistics(papers, vocabularies, weeklyReports) {
-    const masteredCount = vocabularies.filter(v => v.status === 'mastered').length;
-    
-    updateStat('paperCount', papers.length);
-    updateStat('wordCount', vocabularies.length);
-    updateStat('masteredCount', masteredCount);
-    updateStat('weekCount', weeklyReports.length);
-}
-
-/**
- * 更新统计数字
- */
-function updateStat(elementId, value) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.textContent = value;
-    }
-}
-
-/**
- * 加载最近的周报
- */
-function loadRecentReports(reports) {
-    const container = document.getElementById('recentReports');
-    if (!container) return;
-    
-    if (!Array.isArray(reports) || reports.length === 0) {
-        container.innerHTML = `
-            <div class="empty-message">
-                <p>暂无周报记录</p>
-                <a href="weekly.html" class="btn btn-primary mt-4">创建第一篇周报</a>
-            </div>
-        `;
-        return;
+function showToast(message, type = 'info', duration = 3000) {
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        document.body.appendChild(toastContainer);
     }
     
-    const recentReports = reports.slice(0, CONFIG.recentReportsCount);
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
     
-    container.innerHTML = recentReports.map(report => createReportCard(report)).join('');
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
 }
 
-/**
- * 创建周报卡片HTML
- */
-function createReportCard(report) {
-    const weekNum = getWeekNumber(new Date(report.date));
-    const progressItems = Array.isArray(report.progress) ? report.progress : [];
-    
-    return `
-        <div class="report-card">
-            <div class="report-header">
-                <span class="report-week">第 ${weekNum} 周</span>
-                <span class="report-date">${report.date}</span>
-            </div>
-            <div class="report-content">
-                <h4>本周进展</h4>
-                <ul>
-                    ${progressItems.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
-                </ul>
-                ${report.summary ? `<p class="mt-4" style="color: var(--text-secondary); font-size: 0.9rem;">${escapeHtml(report.summary.substring(0, 100))}...</p>` : ''}
-            </div>
-        </div>
-    `;
-}
-
-/**
- * 获取周数
- */
-function getWeekNumber(date) {
-    const startDate = new Date(date.getFullYear(), 0, 1);
-    const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
-    return Math.ceil((days + startDate.getDay() + 1) / 7);
-}
-
-/**
- * 加载最近的文献
- */
-function loadRecentPapers(papers) {
-    const container = document.getElementById('recentPapers');
-    if (!container) return;
-    
-    if (!Array.isArray(papers) || papers.length === 0) {
-        container.innerHTML = `
-            <div class="empty-message">
-                <p>暂无文献数据</p>
-                <a href="papers.html" class="btn btn-primary mt-4">导入第一篇文献</a>
-            </div>
-        `;
-        return;
-    }
-    
-    const recentPapers = papers.slice(0, CONFIG.recentPapersCount);
-    container.innerHTML = recentPapers.map(paper => createPaperCard(paper)).join('');
-    
-    // 添加点击事件
-    container.querySelectorAll('.paper-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const paperId = card.dataset.id;
-            window.location.href = `papers.html?id=${paperId}`;
-        });
-    });
-}
-
-/**
- * 创建文献卡片HTML
- */
-function createPaperCard(paper) {
-    const categoryNames = {
-        'synthesis': '合成',
-        'characterization': '表征',
-        'mechanism': '机理研究',
-        'application': '应用',
-        'industrial': '工业化',
-        'custom': '自定义'
-    };
-    
-    return `
-        <div class="paper-card" data-id="${paper.id || ''}">
-            <span class="paper-category">${categoryNames[paper.category] || '未分类'}</span>
-            <h4 class="paper-title">${escapeHtml(paper.title || '无标题')}</h4>
-            ${paper.title_cn ? `<p class="paper-title-cn">${escapeHtml(paper.title_cn)}</p>` : ''}
-            <p class="paper-authors">${escapeHtml(paper.authors || '未知作者')}</p>
-            <div class="paper-meta">
-                <span class="paper-meta-item">📰 ${escapeHtml(paper.journal || '未知期刊')}</span>
-                <span class="paper-meta-item">📅 ${paper.publish_date || ''}</span>
-            </div>
-            ${paper.abstract ? `<p class="paper-abstract">${escapeHtml(paper.abstract)}</p>` : ''}
-        </div>
-    `;
-}
-
-/**
- * HTML转义
- */
+// 工具函数
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -236,9 +31,11 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-/**
- * 防抖函数
- */
+function escapeAttr(text) {
+    if (!text) return '';
+    return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -250,3 +47,233 @@ function debounce(func, wait) {
         timeout = setTimeout(later, wait);
     };
 }
+
+function formatDate(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
+}
+
+function formatDateTime(date) {
+    if (!date) return '';
+    const d = new Date(date);
+    return d.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// 数据存储
+const Storage = {
+    get(key, defaultValue = null) {
+        try {
+            const value = localStorage.getItem(key);
+            return value ? JSON.parse(value) : defaultValue;
+        } catch (e) {
+            console.error('Storage get error:', e);
+            return defaultValue;
+        }
+    },
+    
+    set(key, value) {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+            return true;
+        } catch (e) {
+            console.error('Storage set error:', e);
+            return false;
+        }
+    },
+    
+    remove(key) {
+        localStorage.removeItem(key);
+    }
+};
+
+// 文献库数据
+const LibraryStore = {
+    key: 'libraryPapers',
+    
+    getAll() {
+        return Storage.get(this.key, []);
+    },
+    
+    add(paper) {
+        const papers = this.getAll();
+        const exists = papers.find(p => p.doi === paper.doi);
+        if (exists) {
+            return { success: false, message: '文献已存在' };
+        }
+        papers.unshift({
+            id: Date.now().toString(),
+            ...paper,
+            addedAt: new Date().toISOString()
+        });
+        Storage.set(this.key, papers);
+        return { success: true, message: '添加成功' };
+    },
+    
+    remove(id) {
+        const papers = this.getAll();
+        const filtered = papers.filter(p => p.id !== id);
+        Storage.set(this.key, filtered);
+    },
+    
+    clear() {
+        Storage.remove(this.key);
+    }
+};
+
+// 文献卡片数据
+const PapersStore = {
+    key: 'papersData',
+    
+    getAll() {
+        return Storage.get(this.key, []);
+    },
+    
+    getById(id) {
+        const papers = this.getAll();
+        return papers.find(p => p.id === id);
+    },
+    
+    add(card) {
+        const cards = this.getAll();
+        cards.unshift({
+            id: Date.now().toString(),
+            ...card,
+            createdAt: new Date().toISOString()
+        });
+        Storage.set(this.key, cards);
+        return { success: true, id: cards[0].id };
+    },
+    
+    update(id, data) {
+        const cards = this.getAll();
+        const index = cards.findIndex(p => p.id === id);
+        if (index !== -1) {
+            cards[index] = { ...cards[index], ...data, updatedAt: new Date().toISOString() };
+            Storage.set(this.key, cards);
+            return true;
+        }
+        return false;
+    },
+    
+    remove(id) {
+        const cards = this.getAll();
+        const filtered = cards.filter(p => p.id !== id);
+        Storage.set(this.key, filtered);
+    }
+};
+
+// 词汇本数据
+const VocabularyStore = {
+    key: 'vocabularyData',
+    
+    getAll() {
+        return Storage.get(this.key, []);
+    },
+    
+    add(word) {
+        const words = this.getAll();
+        const exists = words.find(w => w.word.toLowerCase() === word.word.toLowerCase());
+        if (exists) {
+            return { success: false, message: '词汇已存在' };
+        }
+        words.unshift({
+            id: Date.now().toString(),
+            ...word,
+            status: 'new',
+            correct_count: 0,
+            error_count: 0,
+            correct_streak: 0,
+            category: word.category || 'custom',
+            addedAt: new Date().toISOString()
+        });
+        Storage.set(this.key, words);
+        return { success: true };
+    },
+    
+    update(id, data) {
+        const words = this.getAll();
+        const index = words.findIndex(w => w.id === id);
+        if (index !== -1) {
+            words[index] = { ...words[index], ...data };
+            Storage.set(this.key, words);
+            return true;
+        }
+        return false;
+    },
+    
+    remove(id) {
+        const words = this.getAll();
+        const filtered = words.filter(w => w.id !== id);
+        Storage.set(this.key, filtered);
+    }
+};
+
+// 追踪配置
+const TrackingConfig = {
+    key: 'trackingConfig',
+    
+    get() {
+        return Storage.get(this.key, {
+            selectedJournals: [],
+            keywords: [],
+            lastTracking: null,
+            autoTracking: false
+        });
+    },
+    
+    save(config) {
+        Storage.set(this.key, config);
+    }
+};
+
+// 全局设置
+const GlobalSettings = {
+    key: 'globalSettings',
+    
+    get() {
+        return Storage.get(this.key, {
+            apiProvider: 'siliconflow',
+            apiKey: '',
+            model: 'Qwen/Qwen2.5-7B-Instruct',
+            vocabCount: 20
+        });
+    },
+    
+    save(settings) {
+        Storage.set(this.key, settings);
+    }
+};
+
+// 移动端菜单初始化
+document.addEventListener('DOMContentLoaded', () => {
+    const menuToggle = document.getElementById('menuToggle');
+    const nav = document.querySelector('.nav');
+    if (menuToggle && nav) {
+        menuToggle.addEventListener('click', () => nav.classList.toggle('active'));
+    }
+});
+
+// 导出全局函数
+window.showToast = showToast;
+window.Storage = Storage;
+window.LibraryStore = LibraryStore;
+window.PapersStore = PapersStore;
+window.VocabularyStore = VocabularyStore;
+window.TrackingConfig = TrackingConfig;
+window.GlobalSettings = GlobalSettings;
+window.escapeHtml = escapeHtml;
+window.escapeAttr = escapeAttr;
+window.debounce = debounce;
+window.formatDate = formatDate;
+window.formatDateTime = formatDateTime;
