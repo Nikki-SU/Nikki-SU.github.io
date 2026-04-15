@@ -1,0 +1,52 @@
+[
+  {
+    "id": "weekly-1",
+    "date": "2024-03-18",
+    "summary": "本周继续深入阅读FAPbI₃钙钛矿相关文献，重点关注了高效稳定钙钛矿太阳能电池的最新研究进展。",
+    "progress": [
+      "阅读了3篇关于FAPbI₃钙钛矿的文献",
+      "整理了表征方法的新术语",
+      "复习了溶剂工程相关词汇"
+    ],
+    "papers": [
+      "10.1038/s41560-023-01401-2"
+    ],
+    "newWords": ["crystallinity", "passivation"],
+    "paperIds": ["sample-1"],
+    "reviewContent": "",
+    "nextWeek": "继续阅读稳定性相关的文献",
+    "updatedAt": "2024-03-18T10:00:00Z"
+  },
+  {
+    "id": "weekly-2",
+    "date": "2024-03-11",
+    "summary": "本周完成了文献综述第一稿的撰写，同时学习了XRD和SEM等表征方法的基础知识。",
+    "progress": [
+      "完成了文献综述第一稿",
+      "学习了XRD和SEM表征方法",
+      "整理了20个新单词"
+    ],
+    "papers": [],
+    "newWords": ["XRD", "SEM"],
+    "paperIds": [],
+    "reviewContent": "",
+    "nextWeek": "修改文献综述，学习更多表征技术",
+    "updatedAt": "2024-03-11T10:00:00Z"
+  },
+  {
+    "id": "weekly-3",
+    "date": "2024-03-04",
+    "summary": "本周确定了研究方向为钙钛矿薄膜制备，开始阅读导师推荐的综述文章。",
+    "progress": [
+      "确定了研究方向：钙钛矿薄膜制备",
+      "开始阅读导师推荐的综述文章",
+      "建立了单词本学习计划"
+    ],
+    "papers": [],
+    "newWords": ["perovskite", "defect", "efficiency"],
+    "paperIds": [],
+    "reviewContent": "",
+    "nextWeek": "深入阅读薄膜制备相关文献",
+    "updatedAt": "2024-03-04T10:00:00Z"
+  }
+]
