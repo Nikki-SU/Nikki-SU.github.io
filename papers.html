@@ -26,6 +26,9 @@
                 <a href="vocabulary.html" class="nav-link">
                     <span class="icon">📝</span> 词汇本
                 </a>
+                <a href="settings.html" class="nav-link">
+                    <span class="icon">⚙️</span> 设置
+                </a>
             </nav>
             <button class="menu-toggle" id="menuToggle">☰</button>
         </div>
@@ -128,16 +131,32 @@
                                     <option value="custom">自定义</option>
                                 </select>
                             </div>
+                            <div class="form-group" id="aiOptionGroup">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="useAIParse">
+                                    <span>🤖 使用AI深度解析</span>
+                                </label>
+                                <p class="field-hint" id="aiOptionHint">勾选后自动生成双语摘要、创新点、专业词汇等（需配置API Key）</p>
+                            </div>
                             <button class="btn btn-primary" id="fetchDoiBtn">获取文献信息</button>
                             <div id="doiResult" class="mt-4"></div>
                         </div>
                         
                         <!-- PDF导入 -->
                         <div id="pdfImportField" class="import-field hidden">
+                            <div class="info-box" style="margin-bottom: 16px;">
+                                <h3>📄 PDF处理说明</h3>
+                                <p>由于浏览器安全限制，前端无法直接读取PDF文本内容。您可以：</p>
+                                <p style="margin-top: 8px;">1. <strong>复制PDF内容</strong>：打开PDF，复制摘要部分，粘贴到文本框</p>
+                                <p style="margin-top: 4px;">2. <strong>使用DOI导入</strong>：推荐使用DOI导入，功能更完整</p>
+                            </div>
                             <div class="form-group">
-                                <label for="importPdf">选择PDF文件</label>
+                                <label for="importPdf">选择PDF文件（可选）</label>
                                 <input type="file" id="importPdf" accept=".pdf">
-                                <p class="field-hint">上传PDF后，系统将提取标题、作者、摘要等信息</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="pdfTextContent">PDF文本内容（粘贴摘要）</label>
+                                <textarea id="pdfTextContent" rows="4" placeholder="从PDF中复制摘要或其他文本内容粘贴到这里..."></textarea>
                             </div>
                             <div class="form-group">
                                 <label for="pdfCategory">分类</label>
@@ -277,6 +296,7 @@
         </div>
     </footer>
 
+    <script src="js/ai-parser.js"></script>
     <script src="js/papers.js"></script>
 </body>
 </html>
