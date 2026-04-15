@@ -12,7 +12,7 @@
         
         .library-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -24,6 +24,10 @@
             text-align: center;
             box-shadow: var(--shadow-sm);
         }
+        
+        .stat-card.total { border-left: 3px solid #3b82f6; }
+        .stat-card.pending { border-left: 3px solid #f59e0b; }
+        .stat-card.completed { border-left: 3px solid #10b981; }
         
         .stat-value {
             font-size: 1.8rem;
@@ -67,20 +71,32 @@
             gap: 12px;
         }
         
+        /* 文献项 - 可滑动 */
         .paper-item {
-            display: flex;
-            align-items: center;
+            position: relative;
             background: var(--card-bg);
-            padding: 16px;
             border-radius: var(--radius);
             box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        
+        .paper-content {
+            position: relative;
+            z-index: 1;
+            background: var(--card-bg);
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
             gap: 12px;
+            transition: transform 0.3s ease;
         }
         
         .paper-checkbox {
             width: 20px;
             height: 20px;
             cursor: pointer;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
         
         .paper-info {
@@ -90,20 +106,38 @@
         
         .paper-title {
             font-weight: 500;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             cursor: pointer;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
         }
         
         .paper-title:hover {
             color: var(--primary-color);
         }
         
+        .lang-toggle {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            background: var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
         .paper-meta {
             font-size: 0.85rem;
             color: var(--text-secondary);
             display: flex;
-            gap: 12px;
             flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .paper-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
         
         .paper-status {
@@ -113,22 +147,74 @@
             font-size: 0.85rem;
         }
         
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
+        .status-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
         }
         
-        .status-dot.green { background: #10b981; }
-        .status-dot.red { background: #ef4444; }
-        .status-dot.yellow { background: #f59e0b; }
-        .status-dot.blue { background: #3b82f6; }
+        .status-badge.yellow {
+            background: rgba(245, 158, 11, 0.2);
+            color: #d97706;
+        }
         
-        .paper-actions {
+        .status-badge.green {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        
+        .status-badge.gray {
+            background: rgba(107, 114, 128, 0.2);
+            color: #6b7280;
+        }
+        
+        /* 滑动操作 */
+        .swipe-actions {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             display: flex;
-            gap: 8px;
+            pointer-events: none;
         }
         
+        .swipe-action {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .swipe-left {
+            background: rgba(239, 68, 68, 0.9);
+        }
+        
+        .swipe-right {
+            background: rgba(16, 185, 129, 0.9);
+        }
+        
+        .paper-item.swiped-left .swipe-left {
+            opacity: 1;
+        }
+        
+        .paper-item.swiped-right .swipe-right {
+            opacity: 1;
+        }
+        
+        .paper-item.swiped-left .paper-content {
+            transform: translateX(80px);
+        }
+        
+        .paper-item.swiped-right .paper-content {
+            transform: translateX(-80px);
+        }
+        
+        /* 批量操作栏 */
         .batch-actions {
             position: fixed;
             bottom: 20px;
@@ -147,41 +233,31 @@
             display: flex;
         }
         
-        .import-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-        
-        .import-card {
+        /* 导入选项 */
+        .import-section {
             background: var(--card-bg);
             padding: 20px;
             border-radius: var(--radius);
-            border: 2px dashed var(--border-color);
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
+            margin-bottom: 20px;
         }
         
-        .import-card:hover {
-            border-color: var(--primary-color);
-            background: rgba(79, 70, 229, 0.05);
+        .import-section h4 {
+            margin: 0 0 16px 0;
         }
         
-        .import-card .icon {
-            font-size: 2rem;
-            margin-bottom: 8px;
+        .doi-import-area {
+            display: flex;
+            gap: 12px;
         }
         
-        .import-card .title {
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-        
-        .import-card .desc {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
+        .doi-import-area textarea {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 80px;
         }
         
         .empty-state {
@@ -196,23 +272,21 @@
             opacity: 0.5;
         }
         
-        /* PDF上传提示 */
-        .pdf-prompt {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: var(--radius);
-            padding: 12px;
-            margin-top: 8px;
+        /* 标题提示 */
+        .title-hint {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            cursor: pointer;
         }
         
-        .pdf-prompt.has-pdf {
-            background: rgba(16, 185, 129, 0.1);
-            border-color: rgba(16, 185, 129, 0.3);
-        }
-        
-        .pdf-prompt.declined {
-            background: rgba(245, 158, 11, 0.1);
-            border-color: rgba(245, 158, 11, 0.3);
+        /* 语言指示器 */
+        .lang-indicator {
+            display: inline-block;
+            padding: 2px 6px;
+            background: var(--border-color);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 8px;
         }
     </style>
 </head>
@@ -251,42 +325,34 @@
         <div class="container library-container">
             <!-- 统计 -->
             <div class="library-stats">
-                <div class="stat-card">
+                <div class="stat-card total">
                     <div class="stat-value" id="totalCount">0</div>
                     <div class="stat-label">总文献</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="withPdfCount">0</div>
-                    <div class="stat-label">有PDF</div>
+                <div class="stat-card pending">
+                    <div class="stat-value" id="pendingCount">0</div>
+                    <div class="stat-label">待制卡片</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="cardCount">0</div>
+                <div class="stat-card completed">
+                    <div class="stat-value" id="completedCount">0</div>
                     <div class="stat-label">已制卡片</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="thisWeekCount">0</div>
-                    <div class="stat-label">本周新增</div>
                 </div>
             </div>
             
-            <!-- 导入选项 -->
-            <div class="import-options">
-                <div class="import-card" onclick="openDoiImport()">
-                    <div class="icon">🔗</div>
-                    <div class="title">DOI导入</div>
-                    <div class="desc">输入DOI或链接获取文献</div>
+            <!-- DOI导入区域 -->
+            <div class="import-section">
+                <h4>🔗 导入DOI文献</h4>
+                <div class="doi-import-area">
+                    <textarea id="doiInput" placeholder="输入DOI或链接，每行一个，例如：
+10.1038/s41560-023-01401-2
+https://doi.org/10.1002/adma.202306789"></textarea>
+                    <button class="btn btn-primary" onclick="importDois()" style="height: fit-content;">
+                        📥 导入
+                    </button>
                 </div>
-                <div class="import-card" onclick="document.getElementById('pdfUpload').click()">
-                    <div class="icon">📄</div>
-                    <div class="title">PDF上传</div>
-                    <div class="desc">上传PDF文件解析文献</div>
-                    <input type="file" id="pdfUpload" accept=".pdf" multiple style="display: none;" onchange="handlePdfUpload(event)">
-                </div>
-                <div class="import-card" onclick="openJournalTrack()">
-                    <div class="icon">🔍</div>
-                    <div class="title">期刊追踪</div>
-                    <div class="desc">从期刊获取最新文献</div>
-                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">
+                    💡 提示：左滑删除文献 | 右滑快速制作粗略卡片
+                </p>
             </div>
             
             <!-- 操作栏 -->
@@ -306,16 +372,13 @@
             <div class="filter-bar">
                 <select id="statusFilter" onchange="filterPapers()">
                     <option value="">全部状态</option>
-                    <option value="has_pdf">有PDF</option>
-                    <option value="no_pdf">无PDF</option>
-                    <option value="has_card">已制卡片</option>
-                    <option value="no_card">未制卡片</option>
+                    <option value="pending">待制卡片</option>
+                    <option value="completed">已制卡片</option>
+                </select>
+                <select id="journalFilter" onchange="filterPapers()">
+                    <option value="">全部期刊</option>
                 </select>
                 <input type="text" id="searchInput" placeholder="搜索标题或DOI..." oninput="filterPapers()">
-                <label style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem;">
-                    <input type="checkbox" id="thisWeekOnly" onchange="filterPapers()">
-                    仅显示本周
-                </label>
             </div>
             
             <!-- 文献列表 -->
@@ -327,7 +390,7 @@
             <div class="empty-state" id="emptyState" style="display: none;">
                 <div class="icon">📚</div>
                 <p>文献库为空</p>
-                <p>通过DOI、PDF或期刊追踪添加文献</p>
+                <p>通过DOI导入添加文献</p>
             </div>
         </div>
     </main>
@@ -339,97 +402,6 @@
         <button class="btn btn-outline btn-sm" onclick="batchDelete()">删除</button>
         <button class="btn btn-outline btn-sm" onclick="clearSelection()">取消选择</button>
     </div>
-    
-    <!-- DOI导入模态框 -->
-    <div class="modal" id="doiModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>🔗 DOI导入</h3>
-                <button class="close-btn" onclick="closeDoiModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>输入DOI或链接</label>
-                    <textarea id="doiInput" placeholder="每行一个DOI或链接，例如：&#10;10.1038/s41560-023-01401-2&#10;https://doi.org/10.1038/s41560-023-01401-2" rows="5"></textarea>
-                    <p class="hint">支持批量导入，每行一个DOI</p>
-                </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="autoFetchPdf" checked>
-                        提示上传PDF（DOI通常只能获取标题和摘要）
-                    </label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeDoiModal()">取消</button>
-                <button class="btn btn-primary" onclick="importDois()">导入</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 期刊追踪模态框 -->
-    <div class="modal" id="trackModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h3>🔍 期刊追踪</h3>
-                <button class="close-btn" onclick="closeTrackModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>选择期刊</label>
-                    <select id="journalSelect" style="width: 100%;">
-                        <option value="">全部期刊</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>关键词筛选（可选）</label>
-                    <input type="text" id="keywordInput" placeholder="如：perovskite, stability, tandem" style="width: 100%;">
-                    <p class="hint">多个关键词用逗号分隔</p>
-                </div>
-                <div class="form-group">
-                    <label>时间范围</label>
-                    <select id="dateRange" style="width: 100%;">
-                        <option value="7">最近一周</option>
-                        <option value="30">最近一月</option>
-                        <option value="90">最近三月</option>
-                    </select>
-                </div>
-                <div id="trackProgress" style="display: none;">
-                    <div class="progress-bar" style="background: var(--border-color); border-radius: 4px; height: 8px;">
-                        <div id="trackProgressBar" style="width: 0%; height: 100%; background: var(--primary-color); border-radius: 4px; transition: width 0.3s;"></div>
-                    </div>
-                    <p id="trackStatus" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;"></p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeTrackModal()">取消</button>
-                <button class="btn btn-primary" onclick="startTracking()">开始追踪</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- PDF上传确认模态框 -->
-    <div class="modal" id="pdfConfirmModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>📄 上传PDF</h3>
-                <button class="close-btn" onclick="closePdfConfirmModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p>文献: <strong id="pdfConfirmTitle"></strong></p>
-                <p>DOI: <span id="pdfConfirmDoi"></span></p>
-                <div class="form-group" style="margin-top: 16px;">
-                    <input type="file" id="pdfConfirmUpload" accept=".pdf" style="display: none;" onchange="confirmPdfUpload(event)">
-                    <button class="btn btn-primary" onclick="document.getElementById('pdfConfirmUpload').click()">
-                        选择PDF文件
-                    </button>
-                    <button class="btn btn-outline" onclick="declinePdfUpload()" style="margin-left: 8px;">
-                        暂不上传
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <footer class="footer">
         <div class="container">
@@ -437,7 +409,6 @@
         </div>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="js/ai-parser.js"></script>
     <script src="js/library.js"></script>
 </body>

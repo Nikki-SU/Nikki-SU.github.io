@@ -5,6 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文献卡片 - 小N学术站</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .card-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .card-badge.yellow {
+            background: rgba(245, 158, 11, 0.2);
+            color: #d97706;
+        }
+        
+        .card-badge.green {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        
+        .paper-card {
+            position: relative;
+        }
+        
+        .rough-card {
+            border-left: 3px solid #f59e0b;
+        }
+        
+        .complete-card {
+            border-left: 3px solid #10b981;
+        }
+        
+        .card-type-banner {
+            text-align: center;
+            padding: 12px;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        
+        .card-type-banner.yellow {
+            background: rgba(245, 158, 11, 0.15);
+            color: #d97706;
+        }
+        
+        .card-type-banner.green {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+        
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #d97706;
+        }
+        
+        .complete-modal-content {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
@@ -47,9 +112,9 @@
                     文献卡片库
                 </h3>
                 <div style="display: flex; gap: 12px; align-items: center;">
-                    <div class="lang-toggle" id="langToggle" title="切换语言显示">
-                        <span class="lang-indicator" id="langIndicator">中/EN</span>
-                    </div>
+                    <button class="btn btn-outline" id="langToggle" title="切换语言显示">
+                        <span id="langIndicator">🌐 中文</span>
+                    </button>
                     <button class="btn btn-primary" id="importBtn">
                         <span>📥</span> 导入文献
                     </button>
@@ -97,6 +162,41 @@
                 </div>
             </div>
 
+            <!-- 补全卡片模态框（仅粗略卡片显示） -->
+            <div id="completeModal" class="modal hidden">
+                <div class="modal-content modal-lg complete-modal-content">
+                    <div class="modal-header">
+                        <h3>📝 补全文献卡片</h3>
+                        <button class="modal-close" id="closeComplete">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="margin-bottom: 12px;">
+                            <strong>文献：</strong><span id="completePaperTitle"></span>
+                        </p>
+                        
+                        <div class="info-box" style="background: #fef3c7; margin-bottom: 16px;">
+                            <h4>💡 如何补全</h4>
+                            <p style="font-size: 0.9rem;">复制下方提示词到AI对话中，让AI分析文献并返回JSON数据，然后粘贴回来。</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>提示词（点击复制）</label>
+                            <textarea id="completePrompt" readonly style="height: 200px; font-size: 12px; font-family: monospace;"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>粘贴AI返回的JSON数据</label>
+                            <textarea id="completeJson" rows="8" placeholder='{"summary": "...", "summary_cn": "...", ...}'></textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelComplete">取消</button>
+                            <button type="button" class="btn btn-primary" id="confirmComplete">确认补全</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Import Modal -->
             <div id="importModal" class="modal hidden">
                 <div class="modal-content modal-lg">
@@ -110,10 +210,6 @@
                             <label class="radio-label">
                                 <input type="radio" name="importType" value="doi" checked>
                                 <span>📎 DOI导入</span>
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="importType" value="pdf">
-                                <span>📄 PDF导入</span>
                             </label>
                             <label class="radio-label">
                                 <input type="radio" name="importType" value="json">
@@ -144,40 +240,10 @@
                                     <input type="checkbox" id="useAIParse">
                                     <span>🤖 使用AI深度解析</span>
                                 </label>
-                                <p class="field-hint" id="aiOptionHint">勾选后自动生成双语摘要、创新点、专业词汇等（需配置API Key）</p>
+                                <p class="field-hint" id="aiOptionHint">勾选后自动生成双语摘要、创新点，专业词汇等（需配置API Key）</p>
                             </div>
                             <button class="btn btn-primary" id="fetchDoiBtn">获取文献信息</button>
                             <div id="doiResult" class="mt-4"></div>
-                        </div>
-                        
-                        <!-- PDF导入 -->
-                        <div id="pdfImportField" class="import-field hidden">
-                            <div class="info-box" style="margin-bottom: 16px;">
-                                <h3>📄 PDF处理说明</h3>
-                                <p>由于浏览器安全限制，前端无法直接读取PDF文本内容。您可以：</p>
-                                <p style="margin-top: 8px;">1. <strong>复制PDF内容</strong>：打开PDF，复制摘要部分，粘贴到文本框</p>
-                                <p style="margin-top: 4px;">2. <strong>使用DOI导入</strong>：推荐使用DOI导入，功能更完整</p>
-                            </div>
-                            <div class="form-group">
-                                <label for="importPdf">选择PDF文件（可选）</label>
-                                <input type="file" id="importPdf" accept=".pdf">
-                            </div>
-                            <div class="form-group">
-                                <label for="pdfTextContent">PDF文本内容（粘贴摘要）</label>
-                                <textarea id="pdfTextContent" rows="4" placeholder="从PDF中复制摘要或其他文本内容粘贴到这里..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="pdfCategory">分类</label>
-                                <select id="pdfCategory">
-                                    <option value="synthesis">合成</option>
-                                    <option value="characterization">表征</option>
-                                    <option value="mechanism">机理研究</option>
-                                    <option value="application">应用</option>
-                                    <option value="industrial">工业化</option>
-                                    <option value="custom">自定义</option>
-                                </select>
-                            </div>
-                            <div id="pdfResult" class="mt-4"></div>
                         </div>
                         
                         <!-- JSON导入（手动卡片数据） -->
@@ -194,7 +260,7 @@
                                     <button class="btn btn-sm btn-secondary" id="copyPromptBtn">复制提示词</button>
                                 </div>
                                 <textarea id="promptTemplate" readonly style="width: 100%; height: 280px; font-size: 12px; font-family: monospace; resize: vertical; border: 1px solid var(--border-color); border-radius: 4px; padding: 8px;">请解析这篇文献：[这里填DOI或文献内容]
-
+	
 返回一个完整的JSON格式文献卡片数据，要求：
 
 {
@@ -217,21 +283,11 @@
   "structure_cn": "中文论证思路",
   "methods": "表征技术（如XRD, SEM, UV-vis等）",
   "methods_cn": "中文表征技术",
-  "category": "分类（synthesis/characterization/mechanism/application/industrial/custom）",
-  "vocabulary": [
-    {
-      "word": "专业术语英文",
-      "word_cn": "中文翻译",
-      "definition": "英文释义（50字内）",
-      "definition_cn": "中文释义（50字内）",
-      "example": "例句"
-    }
-  ]
+  "category": "分类（synthesis/characterization/mechanism/application/industrial/custom）"
 }
 
 注意：
 - structure要描述论证逻辑，不是章节标题
-- vocabulary提取10-30个专业术语
 - 只返回JSON，不要其他文字</textarea>
                             </div>
                             
@@ -268,45 +324,50 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="paperTitle">文献标题 (EN) *</label>
-                                    <input type="text" id="paperTitle" required placeholder="英文标题">
+                                    <input type="text" id="paperTitle" name="title" required placeholder="英文标题">
                                 </div>
                                 <div class="form-group">
                                     <label for="paperTitleCn">文献标题 (中文)</label>
-                                    <input type="text" id="paperTitleCn" placeholder="中文标题">
+                                    <input type="text" id="paperTitleCn" name="title_cn" placeholder="中文标题">
                                 </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="paperAuthors">作者</label>
-                                    <input type="text" id="paperAuthors" placeholder="如: Wang, Li; Zhang, Ming">
+                                    <input type="text" id="paperAuthors" name="authors" placeholder="如: Wang, Li; Zhang, Ming">
                                 </div>
                                 <div class="form-group">
                                     <label for="paperJournal">期刊</label>
-                                    <input type="text" id="paperJournal" placeholder="如: Nature Energy">
+                                    <input type="text" id="paperJournal" name="journal" placeholder="如: Nature Energy">
                                 </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="paperDate">发表日期</label>
-                                    <input type="date" id="paperDate">
+                                    <input type="date" id="paperDate" name="publish_date">
                                 </div>
                                 <div class="form-group">
                                     <label for="paperDoi">DOI</label>
-                                    <input type="text" id="paperDoi" placeholder="如: 10.1038/s41560-023-xxxxx">
+                                    <input type="text" id="paperDoi" name="doi" placeholder="如: 10.1038/s41560-023-xxxxx">
                                 </div>
                             </div>
                             
                             <div class="form-group">
                                 <label for="paperAbstract">摘要</label>
-                                <textarea id="paperAbstract" rows="4" placeholder="文献摘要"></textarea>
+                                <textarea id="paperAbstract" name="abstract" rows="4" placeholder="文献摘要"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="paperAbstractCn">摘要中文</label>
+                                <textarea id="paperAbstractCn" name="abstract_cn" rows="4" placeholder="摘要中文翻译"></textarea>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="paperCategory">分类</label>
-                                    <select id="paperCategory">
+                                    <select id="paperCategory" name="category">
                                         <option value="synthesis">合成</option>
                                         <option value="characterization">表征</option>
                                         <option value="mechanism">机理研究</option>
@@ -317,38 +378,62 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="paperKeywords">关键词（逗号分隔）</label>
-                                    <input type="text" id="paperKeywords" placeholder="如: perovskite, solar cell">
+                                    <input type="text" id="paperKeywords" name="keywords" placeholder="如: perovskite, solar cell">
+                                </div>
+                            </div>
+                            
+                            <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
+                            <h4 style="margin-bottom: 16px;">📝 完整卡片字段</h4>
+                            
+                            <div class="form-group">
+                                <label for="paperSummary">工作总结 (EN)</label>
+                                <textarea id="paperSummary" name="summary" rows="3" placeholder="本文的主要工作总结"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="paperSummaryCn">工作总结 (中文)</label>
+                                <textarea id="paperSummaryCn" name="summary_cn" rows="3" placeholder="工作总结中文翻译"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="paperInnovation">主要创新点 (EN)</label>
+                                <textarea id="paperInnovation" name="innovation" rows="3" placeholder="本文的主要创新点或贡献"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="paperInnovationCn">主要创新点 (中文)</label>
+                                <textarea id="paperInnovationCn" name="innovation_cn" rows="3" placeholder="创新点中文翻译"></textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="paperApplication">应用领域 (EN)</label>
+                                    <input type="text" id="paperApplication" name="application" placeholder="英文应用领域">
+                                </div>
+                                <div class="form-group">
+                                    <label for="paperApplicationCn">应用领域 (中文)</label>
+                                    <input type="text" id="paperApplicationCn" name="application_cn" placeholder="中文应用领域">
                                 </div>
                             </div>
                             
                             <div class="form-group">
-                                <label for="paperImage">题图URL</label>
-                                <input type="text" id="paperImage" placeholder="输入图片URL（可选）">
+                                <label for="paperStructure">文章脉络 (EN)</label>
+                                <textarea id="paperStructure" name="structure" rows="3" placeholder="文章的主要结构和大纲"></textarea>
                             </div>
                             
                             <div class="form-group">
-                                <label for="paperSummary">工作总结</label>
-                                <textarea id="paperSummary" rows="3" placeholder="本文的主要工作总结"></textarea>
+                                <label for="paperStructureCn">文章脉络 (中文)</label>
+                                <textarea id="paperStructureCn" name="structure_cn" rows="3" placeholder="文章脉络中文"></textarea>
                             </div>
                             
                             <div class="form-group">
-                                <label for="paperInnovation">主要创新点</label>
-                                <textarea id="paperInnovation" rows="3" placeholder="本文的主要创新点或贡献"></textarea>
+                                <label for="paperMethods">表征技术与数据分析 (EN)</label>
+                                <textarea id="paperMethods" name="methods" rows="3" placeholder="文中使用的表征技术和数据分析方法"></textarea>
                             </div>
                             
                             <div class="form-group">
-                                <label for="paperApplication">应用领域</label>
-                                <input type="text" id="paperApplication" placeholder="如: 柔性器件、室内光伏">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="paperStructure">文章脉络</label>
-                                <textarea id="paperStructure" rows="3" placeholder="文章的主要结构和大纲"></textarea>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="paperMethods">表征技术与数据分析</label>
-                                <textarea id="paperMethods" rows="3" placeholder="文中使用的表征技术和数据分析方法"></textarea>
+                                <label for="paperMethodsCn">表征技术与数据分析 (中文)</label>
+                                <textarea id="paperMethodsCn" name="methods_cn" rows="3" placeholder="表征技术中文"></textarea>
                             </div>
                             
                             <div class="form-actions">

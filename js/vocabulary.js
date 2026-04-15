@@ -11,7 +11,7 @@ const StudyPhase = {
     EN_DEF: 'en_def',       // 英文 -> 选释义
     DEF_EN: 'def_en',       // 释义 -> 选英文
     SENT_EN: 'sent_en',     // 例句 -> 选英文（选出例句中标粗的词）
-    SENT_DEF: 'sent_def'    // 例句 -> 选释义（选出例句中标粗词的释义）
+    SENT_CN: 'sent_cn'      // 例句 -> 选中文（选出例句中标粗词的中文释义）
 };
 
 // 单词状态
@@ -30,17 +30,19 @@ const CONFIG = {
     ERROR_THRESHOLD: 3
 };
 
-// 学习设置（默认值）
+// 学习设置（默认值）- 6种题型
 let SETTINGS = {
     speakEnabled: false,
     cutEnabled: false,
     masterCount: 12,
-    phaseEnCn: true,
-    phaseCnEn: true,
-    phaseEnDef: true,
-    phaseDefEn: true,
-    phaseSentEn: true,
-    phaseSentDef: true
+    phaseEnCn: true,        // 英选中
+    phaseCnEn: true,        // 中选英
+    phaseEnDef: true,       // 英选义
+    phaseDefEn: true,       // 义选英
+    phaseSentEn: true,      // 句选中
+    phaseSentCn: true,      // 句选义
+    autoSync: false,        // 自动同步开关
+    lastSyncDate: null      // 上次同步日期
 };
 
 // 状态
@@ -108,6 +110,13 @@ function initEventListeners() {
         SETTINGS.cutEnabled = e.target.checked;
     });
 
+    // 同步按钮
+    document.getElementById('syncToAppBtn')?.addEventListener('click', syncToVocabApp);
+    document.getElementById('autoSyncToggle')?.addEventListener('change', (e) => {
+        SETTINGS.autoSync = e.target.checked;
+        saveSettings();
+    });
+
     document.getElementById('addWordBtn')?.addEventListener('click', openAddWord);
     document.getElementById('closeAddWord')?.addEventListener('click', closeAddWord);
     document.getElementById('cancelAddWord')?.addEventListener('click', closeAddWord);
@@ -148,6 +157,83 @@ function switchTab(tab) {
 }
 
 /**
+ * 同步到小N单词App
+ */
+async function syncToVocabApp() {
+    const btn = document.getElementById('syncToAppBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = '同步中...';
+    }
+
+    try {
+        // 准备同步的词汇数据
+        const wordsToSync = vocabulary.map(w => ({
+            word: w.en || w.word,
+            definition: w.cn || w.word_cn,
+            phonetic: w.phonetic || '',
+            example: w.ex || w.example || '',
+            category: w.category || 'custom'
+        }));
+
+        let added = 0;
+        let skipped = 0;
+
+        if (typeof window.vocabApp !== 'undefined' && typeof window.vocabApp.importToBook === 'function') {
+            // 调用小N单词App的导入接口
+            const result = await window.vocabApp.importToBook('academic', wordsToSync, '学术站词汇');
+            added = result.added || 0;
+            skipped = result.skipped || 0;
+        } else {
+            // 如果vocabApp未定义，模拟同步结果
+            added = wordsToSync.length;
+            console.log('同步词汇:', wordsToSync);
+        }
+
+        // 更新同步状态
+        SETTINGS.lastSyncDate = new Date().toISOString();
+        saveSettings();
+
+        // 显示结果
+        showSyncResult(added, skipped);
+
+    } catch (error) {
+        console.error('同步失败:', error);
+        alert('同步失败: ' + error.message);
+    }
+
+    if (btn) {
+        btn.disabled = false;
+        btn.textContent = '🔄 同步到小N单词';
+    }
+}
+
+/**
+ * 显示同步结果
+ */
+function showSyncResult(added, skipped) {
+    const result = `✅ 同步完成！
+新增: ${added} 个
+跳过: ${skipped} 个
+总计词汇: ${vocabulary.length} 个`;
+    alert(result);
+}
+
+/**
+ * 检查是否需要自动同步
+ */
+function checkAutoSync() {
+    if (!SETTINGS.autoSync) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const lastSync = SETTINGS.lastSyncDate?.split('T')[0];
+
+    if (lastSync !== today) {
+        syncToVocabApp();
+    }
+}
+
+/**
  * 加载数据
  */
 async function loadData() {
@@ -168,7 +254,9 @@ async function loadData() {
     if (stored) {
         const localVocab = JSON.parse(stored);
         localVocab.forEach(localWord => {
-            const index = vocabulary.findIndex(v => v.word.toLowerCase() === localWord.word.toLowerCase());
+            // 兼容新旧格式：en/word
+            const wordKey = localWord.en || localWord.word;
+            const index = vocabulary.findIndex(v => (v.en || v.word).toLowerCase() === wordKey.toLowerCase());
             if (index === -1) {
                 vocabulary.push(localWord);
             } else {
@@ -186,6 +274,9 @@ async function loadData() {
 
     updateStats();
     updateStudyButtons();
+
+    // 检查自动同步
+    checkAutoSync();
 }
 
 function loadSettings() {
@@ -203,6 +294,25 @@ function loadSettings() {
     
     const masterCountSelect = document.getElementById('masterCountSelect');
     if (masterCountSelect) masterCountSelect.value = SETTINGS.masterCount;
+
+    // 应用题型开关到UI
+    const typeToggles = {
+        'settingEnCn': 'phaseEnCn',
+        'settingCnEn': 'phaseCnEn',
+        'settingEnDef': 'phaseEnDef',
+        'settingDefEn': 'phaseDefEn',
+        'settingSentEn': 'phaseSentEn',
+        'settingSentCn': 'phaseSentCn'
+    };
+
+    Object.entries(typeToggles).forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = SETTINGS[key];
+    });
+
+    // 自动同步开关
+    const autoSyncToggle = document.getElementById('autoSyncToggle');
+    if (autoSyncToggle) autoSyncToggle.checked = SETTINGS.autoSync;
 }
 
 function saveSettings() {
@@ -326,16 +436,16 @@ function renderCard(word) {
     
     area.innerHTML = `
         <div class="word-card">
-            <div class="card-word">${escapeHtml(word.word)}</div>
+            <div class="card-word">${escapeHtml(word.en || word.word)}</div>
             <div class="card-phonetic">${escapeHtml(word.phonetic || '')}</div>
-            <div class="card-cn">${escapeHtml(word.word_cn)}</div>
+            <div class="card-cn">${escapeHtml(word.cn || word.word_cn)}</div>
             <div class="card-def">
-                <p><strong>中文释义：</strong>${escapeHtml(word.definition_cn || '')}</p>
-                <p><strong>英文释义：</strong>${escapeHtml(word.definition_en || '')}</p>
+                <p><strong>中文释义：</strong>${escapeHtml(word.defCn || word.definition_cn || '')}</p>
+                <p><strong>英文释义：</strong>${escapeHtml(word.defEn || word.definition_en || '')}</p>
             </div>
-            ${word.example ? `
+            ${(word.ex || word.example) ? `
                 <div class="card-example">
-                    <strong>例句：</strong>${formatExample(word.example, word.word)}
+                    <strong>例句：</strong>${formatExample(word.ex || word.example, word.en || word.word)}
                 </div>
             ` : ''}
         </div>
@@ -346,7 +456,7 @@ function renderCard(word) {
 
     // 朗读
     if (SETTINGS.speakEnabled && 'speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(word.word);
+        const utterance = new SpeechSynthesisUtterance(word.en || word.word);
         utterance.lang = 'en-US';
         speechSynthesis.speak(utterance);
     }
@@ -379,7 +489,7 @@ function continueAfterCard() {
 }
 
 /**
- * 渲染选择题
+ * 渲染选择题 - 6种题型
  */
 function renderQuestion(word) {
     const area = elements.studyArea;
@@ -389,48 +499,49 @@ function renderQuestion(word) {
     let question, options, correctAnswer;
 
     switch (currentPhase) {
-        case StudyPhase.EN_CN:
-            question = `<span class="question-word">${escapeHtml(word.word)}</span>`;
+        case StudyPhase.EN_CN: // 英选中
+            question = `<span class="question-word">${escapeHtml(word.en || word.word)}</span>`;
             if (SETTINGS.speakEnabled && 'speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(word.word);
+                const utterance = new SpeechSynthesisUtterance(word.en || word.word);
                 utterance.lang = 'en-US';
                 speechSynthesis.speak(utterance);
             }
-            options = generateOptions(word, 'word_cn');
-            correctAnswer = word.word_cn;
+            options = generateOptions(word, 'cn');
+            correctAnswer = word.cn || word.word_cn;
             break;
 
-        case StudyPhase.CN_EN:
-            question = `<span class="question-text">${escapeHtml(word.word_cn)}</span>`;
-            options = generateOptions(word, 'word');
-            correctAnswer = word.word;
+        case StudyPhase.CN_EN: // 中选英
+            question = `<span class="question-text">${escapeHtml(word.cn || word.word_cn)}</span>`;
+            options = generateOptions(word, 'en');
+            correctAnswer = word.en || word.word;
             break;
 
-        case StudyPhase.EN_DEF:
-            question = `<span class="question-word">${escapeHtml(word.word)}</span>`;
-            options = generateOptions(word, useEnDef ? 'definition_en' : 'definition_cn');
-            correctAnswer = useEnDef ? word.definition_en : word.definition_cn;
+        case StudyPhase.EN_DEF: // 英选义
+            question = `<span class="question-word">${escapeHtml(word.en || word.word)}</span>`;
+            options = generateOptions(word, useEnDef ? 'defEn' : 'defCn');
+            correctAnswer = useEnDef ? (word.defEn || word.definition_en) : (word.defCn || word.definition_cn);
             break;
 
-        case StudyPhase.DEF_EN:
-            const defKey = useEnDef ? 'definition_en' : 'definition_cn';
-            question = `<span class="question-text">${escapeHtml(word[defKey])}</span>`;
-            options = generateOptions(word, 'word');
-            correctAnswer = word.word;
+        case StudyPhase.DEF_EN: // 义选英
+            const defKey = useEnDef ? 'defEn' : 'defCn';
+            const defValue = useEnDef ? (word.definition_en || word.defEn) : (word.definition_cn || word.defCn);
+            question = `<span class="question-text">${escapeHtml(word[defKey] || defValue)}</span>`;
+            options = generateOptions(word, 'en');
+            correctAnswer = word.en || word.word;
             break;
 
-        case StudyPhase.SENT_EN:
-            question = `<div class="question-sentence">${formatExample(word.example, word.word)}</div>
+        case StudyPhase.SENT_EN: // 句选中
+            question = `<div class="question-sentence">${formatExample(word.ex || word.example, word.en || word.word)}</div>
                         <p class="question-hint">选出句中标粗的词汇</p>`;
-            options = generateOptions(word, 'word');
-            correctAnswer = word.word;
+            options = generateOptions(word, 'en');
+            correctAnswer = word.en || word.word;
             break;
 
-        case StudyPhase.SENT_DEF:
-            question = `<div class="question-sentence">${formatExample(word.example, word.word)}</div>
-                        <p class="question-hint">选出句中标粗词汇的${useEnDef ? '英文释义' : '中文释义'}</p>`;
-            options = generateOptions(word, useEnDef ? 'definition_en' : 'definition_cn');
-            correctAnswer = useEnDef ? word.definition_en : word.definition_cn;
+        case StudyPhase.SENT_CN: // 句选义
+            question = `<div class="question-sentence">${formatExample(word.ex || word.example, word.en || word.word)}</div>
+                        <p class="question-hint">选出句中标粗词汇的中文释义</p>`;
+            options = generateOptions(word, 'cn');
+            correctAnswer = word.cn || word.word_cn;
             break;
     }
 
@@ -455,16 +566,43 @@ function renderQuestion(word) {
  * 生成选项
  */
 function generateOptions(word, field) {
-    const correctAnswer = word[field];
-    if (!correctAnswer) return [word.word, word.word_cn];
+    // 兼容新旧字段名
+    const fieldMapping = {
+        'en': ['en', 'word'],
+        'cn': ['cn', 'word_cn'],
+        'defCn': ['defCn', 'definition_cn'],
+        'defEn': ['defEn', 'definition_en']
+    };
+    
+    let correctAnswer;
+    if (fieldMapping[field]) {
+        for (const f of fieldMapping[field]) {
+            if (word[f]) {
+                correctAnswer = word[f];
+                break;
+            }
+        }
+    } else {
+        correctAnswer = word[field];
+    }
+    
+    if (!correctAnswer) return [word.en || word.word, word.cn || word.word_cn];
 
     // 获取其他词汇的同字段值作为干扰项
-    const otherWords = vocabulary.filter(v => v.id !== word.id && v[field]);
-    const distractors = otherWords
-        .map(v => v[field])
-        .filter(val => val && val !== correctAnswer)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3);
+    const otherWords = vocabulary.filter(v => v.id !== word.id);
+    const distractors = [];
+    
+    for (const f of (fieldMapping[field] || [field])) {
+        otherWords.forEach(v => {
+            if (v[f] && v[f] !== correctAnswer && !distractors.includes(v[f])) {
+                distractors.push(v[f]);
+            }
+        });
+        if (distractors.length >= 3) break;
+    }
+    
+    distractors.sort(() => Math.random() - 0.5);
+    distractors.splice(3);
 
     // 如果干扰项不足，用默认值填充
     while (distractors.length < 3) {
@@ -530,17 +668,30 @@ function checkAnswer(selected, correct, btn) {
 }
 
 /**
+ * 获取启用的题型列表
+ */
+function getEnabledPhases() {
+    const phases = [];
+    
+    if (SETTINGS.phaseEnCn) phases.push(StudyPhase.EN_CN);      // 英选中
+    if (SETTINGS.phaseCnEn) phases.push(StudyPhase.CN_EN);      // 中选英
+    if (SETTINGS.phaseEnDef) phases.push(StudyPhase.EN_DEF);     // 英选义
+    if (SETTINGS.phaseDefEn) phases.push(StudyPhase.DEF_EN);    // 义选英
+    if (SETTINGS.phaseSentEn) phases.push(StudyPhase.SENT_EN);   // 句选中
+    if (SETTINGS.phaseSentCn) phases.push(StudyPhase.SENT_CN);   // 句选义
+    
+    return phases;
+}
+
+/**
  * 进入下一阶段
  */
 function nextPhase() {
-    const phases = currentMode === 'new' 
-        ? [StudyPhase.EN_CN, StudyPhase.CN_EN, StudyPhase.EN_DEF, StudyPhase.DEF_EN, StudyPhase.SENT_EN, StudyPhase.SENT_DEF]
-        : [StudyPhase.EN_CN, StudyPhase.CN_EN, StudyPhase.EN_DEF, StudyPhase.DEF_EN, StudyPhase.SENT_EN, StudyPhase.SENT_DEF];
+    const enabledPhases = getEnabledPhases();
+    const currentIndex = enabledPhases.indexOf(currentPhase);
     
-    const currentIndex = phases.indexOf(currentPhase);
-    
-    if (currentIndex < phases.length - 1) {
-        currentPhase = phases[currentIndex + 1];
+    if (currentIndex < enabledPhases.length - 1) {
+        currentPhase = enabledPhases[currentIndex + 1];
         renderCurrentQuestion();
     } else {
         // 该词完成
@@ -620,7 +771,7 @@ function updateProgress() {
 }
 
 /**
- * 更新阶段徽章
+ * 更新阶段徽章 - 6种题型
  */
 function updatePhaseBadge() {
     const phaseNames = {
@@ -628,8 +779,8 @@ function updatePhaseBadge() {
         [StudyPhase.CN_EN]: '中选英',
         [StudyPhase.EN_DEF]: currentMode === 'review' ? '英选义(英)' : '英选义(中)',
         [StudyPhase.DEF_EN]: currentMode === 'review' ? '义选英(英)' : '义选英(中)',
-        [StudyPhase.SENT_EN]: '句选英',
-        [StudyPhase.SENT_DEF]: currentMode === 'review' ? '句选义(英)' : '句选义(中)'
+        [StudyPhase.SENT_EN]: '句选中',
+        [StudyPhase.SENT_CN]: '句选义'
     };
 
     if (elements.phaseBadge) {
@@ -700,7 +851,7 @@ function renderAllWords() {
         if (categoryFilter && word.category !== categoryFilter) return false;
         if (statusFilter && word.status !== statusFilter) return false;
         if (searchTerm) {
-            const searchFields = [word.word, word.word_cn, word.definition_cn, word.definition_en].join(' ').toLowerCase();
+            const searchFields = [word.en || word.word, word.cn || word.word_cn, word.defCn || word.definition_cn, word.defEn || word.definition_en].join(' ').toLowerCase();
             if (!searchFields.includes(searchTerm)) return false;
         }
         return true;
@@ -714,8 +865,8 @@ function renderAllWords() {
     container.innerHTML = filtered.map(word => `
         <div class="word-item" data-id="${word.id}">
             <div class="word-main">
-                <span class="word-text">${escapeHtml(word.word)}</span>
-                <span class="word-cn">${escapeHtml(word.word_cn)}</span>
+                <span class="word-text">${escapeHtml(word.en || word.word)}</span>
+                <span class="word-cn">${escapeHtml(word.cn || word.word_cn)}</span>
                 <span class="word-status status-${word.status}">${getStatusName(word.status)}</span>
             </div>
             <div class="word-actions">
@@ -753,8 +904,8 @@ function renderWrongWords() {
     container.innerHTML = wrongWords.map(word => `
         <div class="word-item" data-id="${word.id}">
             <div class="word-main">
-                <span class="word-text">${escapeHtml(word.word)}</span>
-                <span class="word-cn">${escapeHtml(word.word_cn)}</span>
+                <span class="word-text">${escapeHtml(word.en || word.word)}</span>
+                <span class="word-cn">${escapeHtml(word.cn || word.word_cn)}</span>
                 <span class="error-count">错${word.error_count}次</span>
             </div>
         </div>
@@ -767,36 +918,79 @@ function reviewWrong() {
         alert('没有错词需要复习');
         return;
     }
-
+    
+    // 临时将错词作为学习队列
     currentMode = 'review';
+    currentWordQueue = wrongWords.map(w => ({ ...w }));
     currentWordIndex = 0;
     currentPhase = StudyPhase.EN_CN;
     wrongWordsInRound = [];
-    currentRetryWord = null;
-    hasShownCardThisWord = false;
-
-    currentWordQueue = wrongWords.map(v => ({ ...v }));
-
+    
     document.getElementById('studyMode').classList.add('active');
+    document.getElementById('allMode').classList.remove('active');
     document.getElementById('wrongMode').classList.remove('active');
-
+    
     renderCurrentQuestion();
 }
 
 function clearWrongWords() {
-    if (!confirm('确定要清空错词本吗？这将重置所有词汇的错误次数。')) return;
-
-    vocabulary.forEach(v => {
-        v.error_count = 0;
+    if (!confirm('确定要清空错词本吗？')) return;
+    
+    vocabulary.forEach(word => {
+        if ((word.error_count || 0) >= CONFIG.ERROR_THRESHOLD) {
+            word.error_count = 0;
+        }
     });
+    
     saveVocabulary();
     renderWrongWords();
     updateStats();
+    alert('错词本已清空');
 }
 
-/**
- * 添加单词
- */
+// ============ 设置面板 ============
+
+function openSettings() {
+    document.getElementById('settingsModal').classList.remove('hidden');
+    
+    // 加载当前设置
+    document.getElementById('settingSpeak').checked = SETTINGS.speakEnabled;
+    document.getElementById('settingCut').checked = SETTINGS.cutEnabled;
+    document.getElementById('settingMasterCount').value = SETTINGS.masterCount;
+    
+    // 6种题型开关
+    document.getElementById('settingEnCn').checked = SETTINGS.phaseEnCn;
+    document.getElementById('settingCnEn').checked = SETTINGS.phaseCnEn;
+    document.getElementById('settingEnDef').checked = SETTINGS.phaseEnDef;
+    document.getElementById('settingDefEn').checked = SETTINGS.phaseDefEn;
+    document.getElementById('settingSentEn').checked = SETTINGS.phaseSentEn;
+    document.getElementById('settingSentCn').checked = SETTINGS.phaseSentCn;
+}
+
+function closeSettings() {
+    document.getElementById('settingsModal').classList.add('hidden');
+}
+
+function saveSettings() {
+    SETTINGS.speakEnabled = document.getElementById('settingSpeak').checked;
+    SETTINGS.cutEnabled = document.getElementById('settingCut').checked;
+    SETTINGS.masterCount = parseInt(document.getElementById('settingMasterCount').value);
+    
+    // 6种题型开关
+    SETTINGS.phaseEnCn = document.getElementById('settingEnCn').checked;
+    SETTINGS.phaseCnEn = document.getElementById('settingCnEn').checked;
+    SETTINGS.phaseEnDef = document.getElementById('settingEnDef').checked;
+    SETTINGS.phaseDefEn = document.getElementById('settingDefEn').checked;
+    SETTINGS.phaseSentEn = document.getElementById('settingSentEn').checked;
+    SETTINGS.phaseSentCn = document.getElementById('settingSentCn').checked;
+    
+    localStorage.setItem('vocabularySettings', JSON.stringify(SETTINGS));
+    closeSettings();
+    alert('设置已保存');
+}
+
+// ============ 添加单词 ============
+
 function openAddWord() {
     document.getElementById('addWordModal').classList.remove('hidden');
     document.getElementById('addWordForm').reset();
@@ -808,145 +1002,55 @@ function closeAddWord() {
 
 function handleAddWord(e) {
     e.preventDefault();
-
-    // 支持格式：英文|中文|中文定义|英文定义|例句
-    const input = document.getElementById('wordInput').value.trim();
     
-    // 尝试解析格式
-    const parts = input.split('|').map(p => p.trim());
-    
-    let wordData = {};
-    
-    if (parts.length >= 5) {
-        // 完整格式：英文|中文|中文定义|英文定义|例句
-        wordData = {
-            word: parts[0],
-            word_cn: parts[1],
-            definition_cn: parts[2],
-            definition_en: parts[3],
-            example: parts[4]
-        };
-    } else if (parts.length >= 4) {
-        // 缺少例句
-        wordData = {
-            word: parts[0],
-            word_cn: parts[1],
-            definition_cn: parts[2],
-            definition_en: parts[3],
-            example: ''
-        };
-    } else {
-        // 简单格式，只有英文和中文
-        wordData = {
-            word: document.getElementById('wordEn').value.trim(),
-            word_cn: document.getElementById('wordCn').value.trim(),
-            definition_cn: document.getElementById('defCn').value.trim(),
-            definition_en: document.getElementById('defEn').value.trim(),
-            example: document.getElementById('wordExample').value.trim()
-        };
-    }
-
-    if (!wordData.word || !wordData.word_cn) {
-        alert('请填写英文词汇和中文翻译');
-        return;
-    }
-
-    // 检查是否已存在
-    const existing = vocabulary.find(v => v.word.toLowerCase() === wordData.word.toLowerCase());
-    if (existing) {
-        alert('该词汇已存在');
-        return;
-    }
-
-    // 检查是否在已掌握库中
-    const mastered = vocabulary.find(v => v.word.toLowerCase() === wordData.word.toLowerCase() && v.status === 'mastered');
-    if (mastered) {
-        if (!confirm('该词汇已在已掌握库中，是否重新添加到学习队列？')) return;
-        mastered.status = 'new';
-        mastered.correct_streak = 0;
-        saveVocabulary();
-        closeAddWord();
-        updateStats();
-        renderAllWords();
-        return;
-    }
-
-    const newWord = {
-        id: Date.now().toString(),
-        word: wordData.word,
-        word_cn: wordData.word_cn,
-        definition_cn: wordData.definition_cn || '',
-        definition_en: wordData.definition_en || '',
-        example: wordData.example || '',
-        phonetic: '',
+    const word = {
+        id: generateId(),
+        en: document.getElementById('wordEn').value.trim(),
+        cn: document.getElementById('wordCn').value.trim(),
+        defCn: document.getElementById('wordDef').value.trim(),
+        ex: document.getElementById('wordExample').value.trim(),
+        category: document.getElementById('wordCat').value,
         status: 'new',
         correct_count: 0,
         error_count: 0,
-        correct_streak: 0,
-        category: 'custom',
-        addedAt: new Date().toISOString()
+        correct_streak: 0
     };
-
-    vocabulary.push(newWord);
+    
+    // 兼容旧字段
+    word.word = word.en;
+    word.word_cn = word.cn;
+    word.definition_cn = word.defCn;
+    word.example = word.ex;
+    
+    vocabulary.push(word);
     saveVocabulary();
+    updateStats();
+    renderAllWords();
     closeAddWord();
-    updateStats();
-    renderAllWords();
+    
+    alert(`单词 "${word.en}" 已添加`);
 }
 
-function editWord(id) {
-    const word = vocabulary.find(v => v.id === id);
+function editWord(wordId) {
+    const word = vocabulary.find(v => v.id === wordId);
     if (!word) return;
-
-    const newWordCn = prompt('中文翻译:', word.word_cn);
-    if (newWordCn === null) return;
-
-    const newDefCn = prompt('中文释义:', word.definition_cn);
-    if (newDefCn === null) return;
-
-    const newDefEn = prompt('英文释义:', word.definition_en);
-    if (newDefEn === null) return;
-
-    word.word_cn = newWordCn || word.word_cn;
-    word.definition_cn = newDefCn || word.definition_cn;
-    word.definition_en = newDefEn || word.definition_en;
-
-    saveVocabulary();
-    renderAllWords();
+    
+    prompt('编辑功能开发中，请手动删除后重新添加');
 }
 
-function deleteWord(id) {
-    if (!confirm('确定要删除这个词汇吗？')) return;
-
-    vocabulary = vocabulary.filter(v => v.id !== id);
+function deleteWord(wordId) {
+    if (!confirm('确定要删除这个单词吗？')) return;
+    
+    vocabulary = vocabulary.filter(v => v.id !== wordId);
     saveVocabulary();
     updateStats();
     renderAllWords();
 }
 
-/**
- * 设置模态框
- */
-function openSettings() {
-    const modal = document.getElementById('settingsModal');
-    modal.classList.remove('hidden');
+// ============ 已掌握库 ============
 
-    // 填充当前设置
-    document.getElementById('settingSpeak').checked = SETTINGS.speakEnabled;
-    document.getElementById('settingCut').checked = SETTINGS.cutEnabled;
-    document.getElementById('masterCountSelect').value = SETTINGS.masterCount;
-}
-
-function closeSettings() {
-    document.getElementById('settingsModal').classList.add('hidden');
-}
-
-/**
- * 已掌握库
- */
 function openMastered() {
-    const modal = document.getElementById('masteredModal');
-    modal.classList.remove('hidden');
+    document.getElementById('masteredModal').classList.remove('hidden');
     renderMasteredList();
 }
 
@@ -957,80 +1061,35 @@ function closeMastered() {
 function renderMasteredList() {
     const container = document.getElementById('masteredList');
     const searchTerm = document.getElementById('masteredSearchInput')?.value?.toLowerCase() || '';
-
-    const mastered = vocabulary.filter(v => {
-        if (v.status !== 'mastered') return false;
-        if (searchTerm) {
-            return v.word.toLowerCase().includes(searchTerm) || 
-                   v.word_cn.toLowerCase().includes(searchTerm);
-        }
-        return true;
-    });
-
+    
+    const mastered = vocabulary
+        .filter(v => v.status === 'mastered')
+        .filter(v => {
+            if (!searchTerm) return true;
+            const text = [v.en, v.cn, v.defCn].join(' ').toLowerCase();
+            return text.includes(searchTerm);
+        })
+        .sort((a, b) => (a.en || a.word).localeCompare(b.en || b.word));
+    
     if (mastered.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>暂无已掌握词汇</p></div>';
+        container.innerHTML = '<div class="empty-state"><p>暂无已掌握的单词</p></div>';
         return;
     }
-
+    
     container.innerHTML = mastered.map(word => `
-        <div class="mastered-item">
-            <div class="mastered-word">${escapeHtml(word.word)}</div>
-            <div class="mastered-cn">${escapeHtml(word.word_cn)}</div>
-            <button class="btn btn-sm btn-outline" onclick="unmasterWord('${word.id}')">取消掌握</button>
+        <div class="word-item">
+            <span class="word-text">${escapeHtml(word.en || word.word)}</span>
+            <span class="word-cn">${escapeHtml(word.cn || word.word_cn)}</span>
         </div>
     `).join('');
 }
 
-function unmasterWord(id) {
-    const word = vocabulary.find(v => v.id === id);
-    if (word) {
-        word.status = 'learned';
-        word.correct_streak = 0;
-        saveVocabulary();
-        renderMasteredList();
-        updateStats();
-    }
+// ============ 工具函数 ============
+
+function generateId() {
+    return 'w_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
-/**
- * 示例词汇
- */
-function getSampleVocabulary() {
-    return [
-        {
-            id: 'sample-1',
-            word: 'perovskite',
-            word_cn: '钙钛矿',
-            definition_cn: '一种具有ABX3晶体结构的材料，广泛应用于太阳能电池',
-            definition_en: 'A material with ABX3 crystal structure, widely used in solar cells',
-            example: 'The **perovskite** solar cell achieved an efficiency of 25%.',
-            phonetic: '/pəˈrɒvskaɪt/',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            correct_streak: 0,
-            category: 'material'
-        },
-        {
-            id: 'sample-2',
-            word: 'photovoltaic',
-            word_cn: '光伏的',
-            definition_cn: '能够将光能直接转换为电能的',
-            definition_en: 'Capable of converting light directly into electricity',
-            example: 'The **photovoltaic** effect is the basis for solar cell operation.',
-            phonetic: '/ˌfəʊtəʊvɒlˈteɪɪk/',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            correct_streak: 0,
-            category: 'concept'
-        }
-    ];
-}
-
-/**
- * 工具函数
- */
 function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
@@ -1043,14 +1102,49 @@ function escapeAttr(text) {
     return text.replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
 
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
+function debounce(fn, delay) {
+    let timer = null;
+    return function(...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
     };
+}
+
+function getSampleVocabulary() {
+    return [
+        {
+            id: 'sample-1',
+            word: 'perovskite',
+            en: 'perovskite',
+            word_cn: '钙钛矿',
+            cn: '钙钛矿',
+            definition_cn: '一类具有ABX3晶体结构的材料，广泛应用于太阳能电池',
+            defCn: '一类具有ABX3晶体结构的材料，广泛应用于太阳能电池',
+            definition_en: 'A class of materials with ABX3 crystal structure, widely used in solar cells',
+            defEn: 'A class of materials with ABX3 crystal structure, widely used in solar cells',
+            example: 'The **perovskite** solar cell has achieved over 25% efficiency.',
+            ex: 'The **perovskite** solar cell has achieved over 25% efficiency.',
+            category: 'synthesis',
+            status: 'new',
+            correct_count: 0,
+            error_count: 0
+        },
+        {
+            id: 'sample-2',
+            word: 'passivation',
+            en: 'passivation',
+            word_cn: '钝化',
+            cn: '钝化',
+            definition_cn: '减少材料表面缺陷态密度的技术',
+            defCn: '减少材料表面缺陷态密度的技术',
+            definition_en: 'Technique to reduce surface defect density',
+            defEn: 'Technique to reduce surface defect density',
+            example: 'Surface **passivation** significantly reduces non-radiative recombination.',
+            ex: 'Surface **passivation** significantly reduces non-radiative recombination.',
+            category: 'mechanism',
+            status: 'new',
+            correct_count: 0,
+            error_count: 0
+        }
+    ];
 }

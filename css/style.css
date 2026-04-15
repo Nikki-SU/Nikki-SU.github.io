@@ -1545,3 +1545,110 @@ input:checked + .toggle-slider:before {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* ===== Card Badges ===== */
+.card-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.card-badge.yellow {
+    background: rgba(245, 158, 11, 0.2);
+    color: #d97706;
+}
+
+.card-badge.green {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+/* ===== Paper Cards ===== */
+.paper-card {
+    position: relative;
+}
+
+.paper-card.rough-card {
+    border-left: 3px solid #f59e0b;
+}
+
+.paper-card.complete-card {
+    border-left: 3px solid #10b981;
+}
+
+/* ===== Detail Modal ===== */
+.card-type-banner {
+    text-align: center;
+    padding: 12px;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    font-weight: 500;
+}
+
+.card-type-banner.yellow {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+}
+
+.card-type-banner.green {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+/* ===== Complete Modal ===== */
+.complete-modal-content {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* ===== Buttons ===== */
+.btn-warning {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #d97706;
+}
+
+/* ===== Swipeable Items ===== */
+.swipe-actions {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    pointer-events: none;
+}
+
+.swipe-action {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.swipe-left {
+    background: rgba(239, 68, 68, 0.9);
+}
+
+.swipe-right {
+    background: rgba(16, 185, 129, 0.9);
+}
+
+/* ===== Sync Section ===== */
+.sync-section {
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    margin: 16px 0;
+}
+

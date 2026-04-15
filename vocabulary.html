@@ -45,9 +45,11 @@
                     <span class="icon">📝</span>
                     学术词汇本
                 </h3>
-                <button class="btn btn-secondary" id="settingsBtn">
-                    <span>⚙️</span> 学习设置
-                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" id="settingsBtn">
+                        <span>⚙️</span> 学习设置
+                    </button>
+                </div>
             </div>
 
             <!-- Stats -->
@@ -76,6 +78,28 @@
                     <div class="stat-icon">❌</div>
                     <div class="stat-value" id="wrongCount">0</div>
                     <div class="stat-label">错词本</div>
+                </div>
+            </div>
+
+            <!-- 同步按钮 -->
+            <div class="sync-section" style="margin: 16px 0; padding: 16px; background: var(--card-bg); border-radius: var(--radius);">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h4 style="margin: 0 0 4px 0;">🔄 同步到小N单词</h4>
+                        <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">
+                            将词汇同步到背单词App的学术站词书
+                        </p>
+                    </div>
+                    <button class="btn btn-primary" id="syncToAppBtn">
+                        🔄 同步到小N单词
+                    </button>
+                </div>
+                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer;">
+                        <input type="checkbox" id="autoSyncToggle">
+                        每日自动同步
+                    </label>
+                    <span id="lastSyncInfo" style="font-size: 0.8rem; color: var(--text-secondary);"></span>
                 </div>
             </div>
 
@@ -233,7 +257,7 @@
                             </div>
                         </div>
                         <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
-                        <h4 style="margin-bottom: 16px;">题型开关</h4>
+                        <h4 style="margin-bottom: 16px;">🎯 题型开关（6种）</h4>
                         <div class="settings-row">
                             <span class="settings-label">🇬🇧 英选中</span>
                             <div class="settings-value">
@@ -270,6 +294,24 @@
                                 </label>
                             </div>
                         </div>
+                        <div class="settings-row">
+                            <span class="settings-label">📋 句选中</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="settingSentEn" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">📋 句选义</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="settingSentCn" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
                         <div class="form-actions" style="margin-top: 24px;">
                             <button class="btn btn-primary" id="saveSettingsBtn">保存设置</button>
                         </div>
@@ -300,11 +342,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="wordExample">英文例句</label>
-                                <textarea id="wordExample" rows="2" placeholder="包含该词的英文例句"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="wordExampleCn">中文例句</label>
-                                <textarea id="wordExampleCn" rows="2" placeholder="例句的中文翻译"></textarea>
+                                <textarea id="wordExample" rows="2" placeholder="包含该词的英文例句，词汇用**标粗**"></textarea>
                             </div>
                             <div class="form-group">
                                 <label for="wordCat">分类</label>

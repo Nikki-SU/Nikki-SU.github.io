@@ -262,14 +262,13 @@ function buildParsePrompt(doi, title, abstractText) {
   "category": "分类（从以下选项中选择最合适的：synthesis/characterization/mechanism/application/industrial/custom）",
   "vocabulary": [
     {
-      "word": "专业术语英文",
-      "word_cn": "专业术语中文翻译",
-      "definition_en": "术语的专业定义（英文，50字以内，要求准确专业）",
-      "definition_cn": "术语的专业定义（中文，50字以内，要求准确专业）",
-      "example": "该术语在文献中的典型用法例句，**例句中该词汇要用双星号标粗**"
+      "en": "专业术语英文",
+      "cn": "中文翻译",
+      "defCn": "中文定义（50字以内，解释该术语的专业含义）",
+      "defEn": "英文定义（50字以内，解释该术语的专业含义）",
+      "ex": "文献中的例句，**例句中该词汇要用双星号标粗**"
     }
-  ],
-  "vocabulary_count": 提取的词汇总数
+  ]
 }
 
 重要要求：
@@ -279,10 +278,10 @@ function buildParsePrompt(doi, title, abstractText) {
    - 提取${minCount}-${maxCount}个该文献中出现的专业术语和学术表达
    - 只提取专业术语，不要提取普通日常词汇（如study, result, method等通用词）
    - 优先提取：材料名称、实验技术、表征方法、专业概念、反应机理、特殊结构等专业内容
-   - 每个词汇必须有准确的中英文翻译和专业的中英文定义解释
-   - definition_en和definition_cn必须解释该术语的含义，而不是翻译
-   - example必须来自文献中的实际用法，**例句中该词汇要用双星号标粗**
-   - 例如：如果词汇是"perovskite"，例句应为"The **perovskite** structure was confirmed by XRD analysis."
+   - 每个词汇必须有：en（英文）、cn（中文翻译）、defCn（中文定义）、defEn（英文定义）、ex（例句）
+   - defCn和defEn必须解释该术语的专业含义，而不是简单翻译
+   - ex必须来自文献中的实际用法，例句中该词汇要用**双星号**标粗
+   - 例如：如果词汇是"perovskite"，ex应为"The **perovskite** structure was confirmed by XRD analysis."
 4. category必须从以下选项中选择：synthesis（合成）、characterization（表征）、mechanism（机理）、application（应用）、industrial（工业化）、custom（自定义）
 5. 所有字段必须完整，不能有null或空值
 6. 返回的必须是有效的JSON格式，不要包含任何其他文字`;
@@ -415,4 +414,15 @@ function mergeWithBaseInfo(baseInfo, aiResult) {
 // 导出配置和函数
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
-   
+        AI_PARSER_CONFIG,
+        isApiKeyConfigured,
+        getApiKey,
+        getSelectedModel,
+        setApiKey,
+        setModel,
+        getModelId,
+        parsePaperWithAI,
+        testApiConnection,
+        mergeWithBaseInfo
+    };
+}

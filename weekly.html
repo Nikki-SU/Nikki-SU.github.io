@@ -5,6 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>周报中心 - 小N学术站</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .journal-category {
+            margin-bottom: 16px;
+        }
+        
+        .keyword-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        .keyword-badge.relation-and {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+        
+        .keyword-badge.relation-or {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        
+        .keyword-badge.relation-not {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        
+        .tracking-section {
+            margin-bottom: 24px;
+            padding: 16px;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+        }
+        
+        .tracking-section h4 {
+            margin: 0 0 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .keyword-input-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .keyword-input-row select {
+            width: 100px;
+        }
+        
+        .journal-input-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .journal-input-row input {
+            flex: 1;
+        }
+        
+        .journal-input-row select {
+            width: 140px;
+        }
+    </style>
 </head>
 <body>
     <header class="header">
@@ -70,22 +134,43 @@
                 </div>
             </div>
 
-            <!-- Journal Tracking -->
+            <!-- 追踪管理 -->
             <section class="section">
                 <div class="section-header">
                     <h3 class="section-title">
                         <span class="icon">🔍</span>
-                        期刊追踪
+                        追踪管理
                     </h3>
-                    <button class="btn btn-outline btn-sm" id="manageJournalsBtn">
-                        管理期刊
-                    </button>
                 </div>
-                <div id="journalTracking" class="review-section">
-                    <p class="text-muted">点击下方按钮追踪期刊，获取最新文献推送</p>
-                    <button class="btn btn-primary mt-4" id="trackJournalsBtn">
+                
+                <!-- 期刊追踪 -->
+                <div class="tracking-section">
+                    <h4>📰 期刊列表</h4>
+                    <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 8px;">
+                        管理要追踪的期刊，近一周有新文献会自动入库
+                    </p>
+                    <button class="btn btn-outline btn-sm" id="trackJournalsBtn">
                         🔄 检查更新
                     </button>
+                    <button class="btn btn-secondary btn-sm" onclick="openTrackingModal()" style="margin-left: 8px;">
+                        ⚙️ 管理期刊
+                    </button>
+                </div>
+                
+                <!-- 关键词追踪 -->
+                <div class="tracking-section">
+                    <h4>🔑 关键词追踪</h4>
+                    <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 8px;">
+                        支持AND/OR/NOT逻辑组合，最多10个关键词
+                    </p>
+                    <button class="btn btn-outline btn-sm" id="manageKeywordsBtn">
+                        ⚙️ 管理关键词
+                    </button>
+                </div>
+                
+                <!-- 追踪结果 -->
+                <div id="journalTracking" class="review-section">
+                    <p class="text-muted">点击上方按钮开始追踪</p>
                 </div>
             </section>
 
@@ -131,6 +216,14 @@
                                 <label for="reportSummary">本周总结 *</label>
                                 <textarea id="reportSummary" rows="4" required placeholder="简要描述本周的学习内容和进展"></textarea>
                             </div>
+                            <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                                <button type="button" class="btn btn-outline btn-sm" id="generateSummaryBtn">
+                                    🤖 AI生成总结
+                                </button>
+                                <span style="font-size: 0.85rem; color: var(--text-secondary);">
+                                    使用AI根据文献库和卡片自动生成
+                                </span>
+                            </div>
                             <div class="form-group">
                                 <label for="reportPapers">本周阅读的文献（每行一条DOI或标题）</label>
                                 <textarea id="reportPapers" rows="4" placeholder="每行一条DOI或文献标题，如：&#10;10.1038/s41560-023-xxxxx&#10;钙钛矿薄膜的离子工程"></textarea>
@@ -156,32 +249,68 @@
                 </div>
             </div>
 
-            <!-- Journal Management Modal -->
+            <!-- 追踪管理模态框 -->
             <div id="journalModal" class="modal hidden">
-                <div class="modal-content modal-lg">
+                <div class="modal-content modal-lg" style="max-width: 700px;">
                     <div class="modal-header">
-                        <h3>期刊管理</h3>
+                        <h3>📰 期刊管理</h3>
                         <button class="modal-close" id="closeJournal">×</button>
                     </div>
                     <div class="modal-body">
-                        <div class="form-group">
-                            <label>添加新期刊</label>
-                            <div style="display: flex; gap: 12px;">
-                                <input type="text" id="newJournalName" placeholder="期刊名称" style="flex: 1;">
-                                <select id="newJournalCategory" style="width: 150px;">
-                                    <option value="top">顶级综合</option>
-                                    <option value="material">材料与能源</option>
-                                    <option value="applied">应用材料化学</option>
-                                    <option value="nanomaterial">材料纳米</option>
-                                    <option value="energy">能源材料</option>
-                                    <option value="other">其他</option>
-                                </select>
-                                <button class="btn btn-primary" id="addJournalBtn">添加</button>
-                            </div>
+                        <!-- 添加期刊 -->
+                        <div class="journal-input-row">
+                            <input type="text" id="newJournalName" placeholder="期刊名称" style="flex: 1; padding: 8px;">
+                            <select id="newJournalCategory" style="padding: 8px;">
+                                <option value="top">顶级综合</option>
+                                <option value="material">材料与能源</option>
+                                <option value="applied">应用材料化学</option>
+                                <option value="nanomaterial">材料纳米</option>
+                                <option value="energy">能源材料</option>
+                                <option value="other">其他</option>
+                            </select>
+                            <button class="btn btn-primary" id="addJournalBtn">添加</button>
                         </div>
-                        <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
-                        <div id="journalList" class="journal-list">
-                            <!-- 期刊列表 -->
+                        <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
+                        <!-- 期刊列表 -->
+                        <div id="journalList" class="journal-list" style="max-height: 400px; overflow-y: auto;">
+                            <!-- 动态生成 -->
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <button class="btn btn-danger btn-sm" id="deleteJournalBtn">🗑️ 删除选中</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 关键词管理模态框 -->
+            <div id="keywordModal" class="modal hidden">
+                <div class="modal-content modal-lg" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3>🔑 关键词管理</h3>
+                        <button class="modal-close" id="closeKeyword">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted" style="margin-bottom: 12px;">
+                            支持 AND / OR / NOT 逻辑组合，用于精确筛选文献。最多10个关键词。
+                        </p>
+                        <!-- 添加关键词 -->
+                        <div class="keyword-input-row">
+                            <input type="text" id="newKeywordText" placeholder="关键词，如：perovskite" style="flex: 1; padding: 8px;">
+                            <select id="newKeywordRelation" style="padding: 8px;">
+                                <option value="">无关系（首个词）</option>
+                                <option value="AND">AND</option>
+                                <option value="OR">OR</option>
+                                <option value="NOT">NOT</option>
+                            </select>
+                            <button class="btn btn-primary" id="addKeywordBtn">添加</button>
+                        </div>
+                        <hr style="margin: 16px 0; border: none; border-top: 1px solid var(--border-color);">
+                        <!-- 关键词列表 -->
+                        <div id="keywordList">
+                            <!-- 动态生成 -->
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <button class="btn btn-danger btn-sm" id="deleteKeywordBtn">🗑️ 删除选中</button>
                         </div>
                     </div>
                 </div>
@@ -197,5 +326,13 @@
     </footer>
 
     <script src="js/weekly.js"></script>
+    <script>
+        // 打开追踪管理模态框
+        function openTrackingModal() {
+            if (typeof openJournalModal === 'function') {
+                openJournalModal();
+            }
+        }
+    </script>
 </body>
 </html>
