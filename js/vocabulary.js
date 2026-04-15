@@ -264,32 +264,38 @@ function checkAutoSync() {
  * 加载数据
  */
 async function loadData() {
-    try {
-        const response = await fetch(CONFIG.vocabularyUrl);
-        if (response.ok) {
-            vocabulary = await response.json();
+    // 检查是否已初始化
+    const initialized = localStorage.getItem('vocabularyData_initialized');
+    
+    if (initialized === 'true') {
+        // 用户已有数据，只用localStorage
+        const stored = localStorage.getItem('vocabularyData');
+        try {
+            vocabulary = JSON.parse(stored);
+            if (!Array.isArray(vocabulary)) vocabulary = [];
+        } catch (e) {
+            vocabulary = [];
         }
-    } catch (error) {
-        console.error('加载词汇失败:', error);
-    }
-
-    if (vocabulary.length === 0) {
-        vocabulary = getSampleVocabulary();
-    }
-
-    const stored = localStorage.getItem('vocabularyData');
-    if (stored) {
-        const localVocab = JSON.parse(stored);
-        localVocab.forEach(localWord => {
-            // 兼容新旧格式：en/word
-            const wordKey = localWord.en || localWord.word;
-            const index = vocabulary.findIndex(v => (v.en || v.word).toLowerCase() === wordKey.toLowerCase());
-            if (index === -1) {
-                vocabulary.push(localWord);
-            } else {
-                vocabulary[index] = { ...vocabulary[index], ...localWord };
+    } else {
+        // 首次使用：从文件读取，然后标记已初始化
+        try {
+            const response = await fetch(CONFIG.vocabularyUrl);
+            if (response.ok) {
+                vocabulary = await response.json();
+                if (!Array.isArray(vocabulary)) vocabulary = [];
             }
-        });
+        } catch (error) {
+            console.error('加载词汇失败:', error);
+            vocabulary = [];
+        }
+
+        if (vocabulary.length === 0) {
+            vocabulary = getSampleVocabulary();
+        }
+        
+        // 保存并标记已初始化
+        localStorage.setItem('vocabularyData', JSON.stringify(vocabulary));
+        localStorage.setItem('vocabularyData_initialized', 'true');
     }
 
     loadSettings();
@@ -349,6 +355,7 @@ function saveSettings() {
 
 function saveVocabulary() {
     localStorage.setItem('vocabularyData', JSON.stringify(vocabulary));
+    localStorage.setItem('vocabularyData_initialized', 'true');
 }
 
 function saveProgress() {
