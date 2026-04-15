@@ -248,61 +248,40 @@ function renderPapers() {
     }
 
     elements.emptyState.style.display = 'none';
-
     elements.paperList.innerHTML = filteredPapers.map(paper => createPaperItem(paper)).join('');
-
-    // 初始化滑动事件
-    initSwipeHandlers();
 }
 
 /**
- * 创建文献项HTML
+ * 创建文献项HTML（简化版）
  */
 function createPaperItem(paper) {
     const title = displayLang === 'cn' 
         ? (paper.title_cn || paper.title)
         : (paper.title || paper.title_cn);
-    
-    const originalTitle = displayLang === 'cn' ? paper.title : paper.title_cn;
-    const hasAltTitle = originalTitle && originalTitle !== title;
 
-    // 检查卡片状态：无卡片、粗略卡片、完整卡片
     const existingCard = paperCards.find(c => c.doi === paper.doi);
     let statusBadge = '';
     
-    if (!existingCard) {
-        // 无卡片 - 无颜色标识
-        statusBadge = '';
-    } else if (existingCard.isRough || !isCompleteCard(existingCard)) {
-        // 粗略卡片 - 黄色
-        statusBadge = '<span class="status-badge yellow">📝 粗略卡片</span>';
-    } else {
-        // 完整卡片 - 绿色
-        statusBadge = '<span class="status-badge green">✓ 完整卡片</span>';
+    if (existingCard) {
+        statusBadge = existingCard.isRough || !isCompleteCard(existingCard) 
+            ? '<span style="background:#fef3c7;padding:2px 8px;border-radius:4px;font-size:12px;">📝 粗略卡片</span>'
+            : '<span style="background:#d1fae5;padding:2px 8px;border-radius:4px;font-size:12px;">✓ 完整卡片</span>';
     }
 
+    const doiLink = paper.doi 
+        ? `<a href="https://doi.org/${escapeHtml(paper.doi)}" target="_blank" class="btn btn-sm btn-primary">🔗 原文</a>`
+        : '';
+
     return `
-        <div class="paper-item" data-doi="${escapeHtml(paper.doi || '')}">
-            <div class="swipe-actions">
-                <div class="swipe-action swipe-left">🗑️ 删除</div>
-                <div class="swipe-action swipe-right">📝 制卡</div>
-            </div>
-            <div class="paper-content">
-                <input type="checkbox" class="paper-checkbox" 
-                    ${selectedPapers.has(paper.doi) ? 'checked' : ''} 
-                    onchange="toggleSelect('${escapeHtml(paper.doi || '')}')">
-                <div class="paper-info">
-                    <div class="paper-title" onclick="viewPaper('${escapeHtml(paper.doi || '')}')">
-                        <span>${escapeHtml(title || '无标题')}</span>
-                        ${hasAltTitle ? `<span class="lang-toggle" onclick="event.stopPropagation(); toggleTitleLang(this)">${displayLang === 'cn' ? 'EN' : 'CN'}</span>` : ''}
-                    </div>
-                    <div class="paper-meta">
-                        <span class="paper-meta-item">📰 ${escapeHtml(paper.journal || '未知期刊')}</span>
-                        <span class="paper-meta-item">📅 ${paper.publish_date || ''}</span>
-                        <span class="paper-meta-item">🔗 DOI: ${escapeHtml(paper.doi || '')}</span>
-                    </div>
-                    ${statusBadge ? `<div class="paper-status" style="margin-top: 8px;">${statusBadge}</div>` : ''}
+        <div style="background:var(--card-bg);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow-sm);">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div style="flex:1;">
+                    <div style="font-weight:600;margin-bottom:8px;">${escapeHtml(title || '无标题')}</div>
+                    <div style="font-size:0.85rem;color:var(--text-secondary);">📰 ${escapeHtml(paper.journal || '未知期刊')} · 📅 ${paper.publish_date || ''}</div>
+                    <div style="font-size:0.85rem;color:var(--text-secondary);">🔗 ${escapeHtml(paper.doi || '')}</div>
+                    ${statusBadge ? `<div style="margin-top:8px;">${statusBadge}</div>` : ''}
                 </div>
+                ${doiLink}
             </div>
         </div>
     `;
