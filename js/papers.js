@@ -88,6 +88,9 @@ function initEventListeners() {
     // PDF上传
     document.getElementById('importPdf')?.addEventListener('change', handlePdfUpload);
     document.getElementById('parsePdfBtn')?.addEventListener('click', parsePdfContent);
+    
+    // JSON导入
+    document.getElementById('parseJsonBtn')?.addEventListener('click', parseJsonImport);
 
     // 确认导入
     document.getElementById('confirmImport')?.addEventListener('click', confirmImport);
@@ -621,6 +624,11 @@ function handleImportTypeChange(e) {
     const type = e.target.value;
     document.getElementById('doiImportField').classList.toggle('hidden', type !== 'doi');
     document.getElementById('pdfImportField').classList.toggle('hidden', type !== 'pdf');
+    document.getElementById('jsonImportField').classList.toggle('hidden', type !== 'json');
+    
+    // 重置导入数据
+    importData = {};
+    document.getElementById('confirmImport').disabled = true;
 }
 
 async function fetchDoiPaper() {
@@ -898,18 +906,102 @@ async function parsePdfContent() {
     }
 }
 
+/**
+ * 解析JSON导入数据
+ */
+function parseJsonImport() {
+    const jsonInput = document.getElementById('jsonInput')?.value || '';
+    const resultDiv = document.getElementById('jsonResult');
+    
+    if (!jsonInput.trim()) {
+        resultDiv.innerHTML = '<p class="text-danger">请粘贴JSON数据</p>';
+        return;
+    }
+    
+    try {
+        // 尝试解析JSON
+        let jsonData = JSON.parse(jsonInput.trim());
+        
+        // 如果是markdown代码块包裹的，尝试提取
+        if (typeof jsonData === 'string') {
+            const jsonMatch = jsonData.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (jsonMatch) {
+                jsonData = JSON.parse(jsonMatch[1]);
+            }
+        }
+        
+        // 验证必要字段
+        if (!jsonData.title && !jsonData.title_cn) {
+            resultDiv.innerHTML = '<p class="text-danger">JSON数据缺少标题字段</p>';
+            return;
+        }
+        
+        // 保存到importData
+        importData = {
+            title: jsonData.title || '',
+            title_cn: jsonData.title_cn || '',
+            authors: jsonData.authors || '',
+            journal: jsonData.journal || '',
+            publish_date: jsonData.publish_date || jsonData.date || '',
+            doi: jsonData.doi || '',
+            abstract: jsonData.abstract || '',
+            abstract_cn: jsonData.abstract_cn || '',
+            keywords: jsonData.keywords || [],
+            summary: jsonData.summary || jsonData.work_summary || '',
+            summary_cn: jsonData.summary_cn || jsonData.work_summary_cn || '',
+            innovation: jsonData.innovation || jsonData.innovation_points || '',
+            innovation_cn: jsonData.innovation_cn || jsonData.innovation_points_cn || '',
+            application: jsonData.application || '',
+            application_cn: jsonData.application_cn || '',
+            structure: jsonData.structure || jsonData.argument_flow || '',
+            structure_cn: jsonData.structure_cn || jsonData.argument_flow_cn || '',
+            methods: jsonData.methods || jsonData.techniques || '',
+            methods_cn: jsonData.methods_cn || jsonData.techniques_cn || '',
+            category: jsonData.category || 'custom',
+            vocabulary: jsonData.vocabulary || [],
+            source: 'json_import'
+        };
+        
+        // 显示预览
+        resultDiv.innerHTML = `
+            <div class="import-preview">
+                <h4>📋 解析成功</h4>
+                <p><strong>标题:</strong> ${importData.title || importData.title_cn}</p>
+                <p><strong>作者:</strong> ${importData.authors || '未提供'}</p>
+                <p><strong>期刊:</strong> ${importData.journal || '未提供'}</p>
+                <p><strong>DOI:</strong> ${importData.doi || '未提供'}</p>
+                <p><strong>关键词:</strong> ${(importData.keywords || []).join(', ') || '未提供'}</p>
+                <p><strong>创新点:</strong> ${(importData.innovation || '未提供').substring(0, 100)}...</p>
+                <p><strong>论证思路:</strong> ${(importData.structure || '未提供').substring(0, 100)}...</p>
+                <p><strong>提取词汇:</strong> ${(importData.vocabulary || []).map(v => v.word || v).join(', ') || '无'}</p>
+                <p class="text-success mt-4">✅ 数据解析完成，可点击"确认导入"</p>
+            </div>
+        `;
+        
+        document.getElementById('confirmImport').disabled = false;
+        
+    } catch (error) {
+        console.error('JSON解析错误:', error);
+        resultDiv.innerHTML = `<p class="text-danger">❌ JSON格式错误: ${error.message}</p>
+            <p class="text-muted mt-2">请确保JSON格式正确，或尝试去除markdown代码块标记</p>`;
+    }
+}
+
 async function confirmImport() {
     const importType = document.querySelector('input[name="importType"]:checked').value;
     let category;
 
     if (importType === 'doi') {
         category = document.getElementById('importCategory').value;
-    } else {
+    } else if (importType === 'pdf') {
         category = document.getElementById('pdfCategory').value;
+    } else {
+        // JSON导入，使用导入数据中的分类或默认
+        category = importData.category || 'custom';
     }
 
-    if (!importData.title && importType === 'doi') {
-        alert('请先获取文献信息');
+    if (!importData.title && !importData.title_cn) {
+        alert('请先解析文献信息');
         return;
     }
 
