@@ -150,61 +150,37 @@ function checkUrlParams() {
 
 /**
  * 加载文献数据
- * 原则：localStorage有就用localStorage的（即使是空数组），没有才从文件读取
  */
 async function loadPapers() {
-    try {
-        const stored = localStorage.getItem('papersData');
-        
-        // localStorage有数据（包括空数组[]）就用它
-        if (stored !== null) {
-            try {
-                const parsed = JSON.parse(stored);
-                if (Array.isArray(parsed)) {
-                    papers = parsed;
-                    console.log('从localStorage加载文献:', papers.length, '篇');
-                } else {
-                    console.warn('localStorage数据不是数组，重置');
-                    papers = [];
-                }
-            } catch (e) {
-                console.error('localStorage数据解析失败:', e);
-                papers = [];
-            }
-        } else {
-            // localStorage完全没有数据（null），才从文件读取
-            try {
-                const response = await fetch(CONFIG.papersUrl);
-                if (response.ok) {
-                    const data = await response.json();
-                    papers = Array.isArray(data) ? data : [];
-                }
-            } catch (error) {
-                console.error('加载文献文件失败:', error);
-                papers = [];
-            }
-
-            if (papers.length === 0) {
-                papers = getSamplePapers();
-            }
-            
-            // 首次加载，保存到localStorage
-            localStorage.setItem('papersData', JSON.stringify(papers));
-            console.log('首次加载文献:', papers.length, '篇');
-        }
-
-        filteredPapers = [...papers];
-        updateJournalFilter();
-        renderPapers();
-        
-    } catch (error) {
-        console.error('loadPapers发生错误:', error);
-        papers = [];
-        filteredPapers = [];
-        if (typeof renderPapers === 'function') {
-            renderPapers();
+    // 优先从localStorage读取（这是用户的数据）
+    const stored = localStorage.getItem('papersData');
+    if (stored) {
+        try {
+            papers = JSON.parse(stored);
+        } catch (e) {
+            papers = [];
         }
     }
+
+    // 如果localStorage没有数据，尝试从文件读取
+    if (papers.length === 0) {
+        try {
+            const response = await fetch(CONFIG.papersUrl);
+            if (response.ok) {
+                papers = await response.json();
+            }
+        } catch (error) {
+            console.error('加载文献失败:', error);
+        }
+    }
+
+    // 如果还是没有数据，使用示例数据
+    if (papers.length === 0) {
+        papers = getSamplePapers();
+    }
+
+    updateJournalFilter();
+    filterPapers();
 }
 
 function getSamplePapers() {
@@ -632,59 +608,40 @@ function closeCompleteModal() {
 }
 
 /**
- * 生成补全提示词（完整字段，用于AI解析PDF）
+ * 生成补全提示词
  */
 function generateCompletePrompt(paper) {
-    return `请解析这篇文献，返回完整的JSON格式文献卡片数据。
+    return `请补全以下文献卡片的剩余字段。
 
-文献信息：
-- DOI：${paper.doi || '无'}
+已填写的字段：
 - 标题：${paper.title || paper.title_cn || '无'}
 - 作者：${paper.authors || '无'}
 - 期刊：${paper.journal || '无'}
 - 出版日期：${paper.publish_date || '无'}
-- 摘要：${paper.abstract || paper.abstract_cn || '无'}
+- DOI：${paper.doi || '无'}
+- 摘要：${(paper.abstract || paper.abstract_cn || '无').substring(0, 200)}...
 
-请返回以下JSON格式（所有字段必填，只返回JSON，不要其他文字）：
+请补全以下JSON格式的字段（只需返回JSON，不要其他内容）：
 
 {
-  "title": "英文标题",
-  "title_cn": "中文标题",
-  "authors": "作者列表",
-  "journal": "期刊名",
-  "publish_date": "发表日期",
-  "abstract": "英文摘要",
-  "abstract_cn": "中文摘要翻译",
-  "keywords": ["关键词1", "关键词2", "关键词3"],
-  "summary": "工作总结（本文做了什么、得到了什么结论，100-200字）",
+  "summary": "英文工作总结（本文做了什么、得到了什么结论，100-200字）",
   "summary_cn": "中文工作总结",
-  "innovation": "创新点（列出2-4点主要贡献）",
+  "innovation": "英文创新点（本文的主要贡献和创新之处）",
   "innovation_cn": "中文创新点",
-  "application": "应用领域",
+  "application": "英文应用领域",
   "application_cn": "中文应用领域",
-  "structure": "论证思路（研究了什么问题→用了什么方法→得到什么结果→得出什么结论）",
+  "structure": "英文论证思路（研究了什么→用了什么方法→得到什么结果→得出什么结论）",
   "structure_cn": "中文论证思路",
-  "methods": "表征技术（如XRD, SEM, UV-vis等）",
+  "methods": "英文表征技术（如：XRD, SEM, UV-vis等）",
   "methods_cn": "中文表征技术",
-  "vocabulary": [
-    {
-      "en": "专业术语英文",
-      "cn": "中文翻译",
-      "defCn": "中文释义（50字内）",
-      "defEn": "英文释义（50字内）",
-      "ex": "例句（词汇标粗）"
-    }
-  ]
+  "keywords": ["关键词1", "关键词2", "关键词3"]
 }
 
-注意：
-- vocabulary提取10-30个专业术语
-- structure要描述论证逻辑，不是章节标题
-- 所有字段必须完整，不能有null或空值`;
+所有字段必须完整，不能有null或空值。`;
 }
 
 /**
- * 确认补全（AI返回的JSON覆盖已有字段，DOI除外）
+ * 确认补全
  */
 function confirmComplete() {
     const jsonStr = document.getElementById('completeJson').value.trim();
@@ -695,29 +652,22 @@ function confirmComplete() {
     }
 
     try {
-        // 处理可能被代码块包裹的JSON
-        let cleanJson = jsonStr;
+        const data = JSON.parse(jsonStr);
         
-        // 检查是否被 ```json ... ``` 或 ``` ... ``` 包裹
-        const codeBlockMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (codeBlockMatch && typeof codeBlockMatch[1] === 'string') {
-            cleanJson = codeBlockMatch[1].trim();
+        // 验证必要字段
+        const required = ['summary', 'summary_cn', 'innovation', 'innovation_cn', 
+                        'application', 'application_cn', 'structure', 'structure_cn',
+                        'methods', 'methods_cn'];
+        
+        for (const field of required) {
+            if (!data[field] || data[field].trim() === '') {
+                alert(`字段 "${field}" 不能为空`);
+                return;
+            }
         }
-        
-        // 移除可能的前后空白和换行
-        if (typeof cleanJson === 'string') {
-            cleanJson = cleanJson.trim();
-        }
-        
-        // 解析JSON
-        const data = JSON.parse(cleanJson);
-        
-        // 保存原始DOI（不被覆盖）
-        const originalDoi = editingPaper.doi;
-        
-        // 更新卡片（AI返回的数据覆盖已有字段，但DOI除外）
+
+        // 更新卡片
         Object.assign(editingPaper, data);
-        editingPaper.doi = originalDoi;  // 恢复原始DOI
         editingPaper.isRough = false;
         editingPaper.completedAt = new Date().toISOString();
 
@@ -728,8 +678,7 @@ function confirmComplete() {
         alert('✅ 卡片补全成功！');
 
     } catch (e) {
-        console.error('JSON解析错误:', e);
-        alert('JSON格式错误: ' + e.message + '\n\n请检查JSON是否完整，是否有多余的逗号或缺失的括号。');
+        alert('JSON格式错误: ' + e.message);
     }
 }
 
@@ -739,8 +688,6 @@ function confirmComplete() {
 function openImportModal() {
     document.getElementById('importDoi').value = '';
     document.getElementById('doiResult').innerHTML = '';
-    document.getElementById('jsonInput').value = '';  // 清空JSON输入框
-    document.getElementById('jsonResult').innerHTML = '';  // 清空结果
     document.getElementById('confirmImport').disabled = true;
     importData = {};
     elements.importModal.classList.remove('hidden');
@@ -896,19 +843,16 @@ function parseJsonInput() {
     }
     
     try {
-        let cleanJson = jsonInput.trim();
+        let jsonData = JSON.parse(jsonInput.trim());
         
-        // 先检查是否被代码块包裹
-        const codeBlockMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (codeBlockMatch && typeof codeBlockMatch[1] === 'string') {
-            cleanJson = codeBlockMatch[1].trim();
+        // 检查是否被代码块包裹
+        if (typeof jsonData === 'string') {
+            const jsonMatch = jsonData.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (jsonMatch) jsonData = JSON.parse(jsonMatch[1]);
         }
-        
-        let jsonData = JSON.parse(cleanJson);
         
         if (!jsonData.title && !jsonData.title_cn) {
             resultDiv.innerHTML = '<p class="text-danger">JSON数据缺少标题字段</p>';
-            document.getElementById('confirmImport').disabled = true;
             return;
         }
         
@@ -948,8 +892,7 @@ function parseJsonInput() {
         document.getElementById('confirmImport').disabled = false;
         
     } catch (error) {
-        console.error('JSON解析错误:', error);
-        resultDiv.innerHTML = `<p class="text-danger">❌ JSON格式错误: ${error.message}</p>`;
+        resultDiv.innerHTML = `<p class="text-muted">等待完整JSON数据...</p>`;
         importData = {};
         document.getElementById('confirmImport').disabled = true;
     }
@@ -1001,30 +944,11 @@ async function confirmImport() {
         papers.unshift(newPaper);
     }
 
-    // 保存
-    try {
-        localStorage.setItem('papersData', JSON.stringify(papers));
-    } catch (e) {
-        alert('保存失败: ' + e.message);
-        return;
-    }
-
+    savePapers();
     closeImportModal();
-    
-    // 强制刷新
-    filteredPapers = [...papers];
-    currentPage = 1;
-    updateJournalFilter();
-    renderPapers();
+    filterPapers();
 
-    // 调试：在页面顶部显示
-    const debugDiv = document.createElement('div');
-    debugDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#10b981;color:white;padding:10px;z-index:9999;';
-    debugDiv.textContent = `导入成功！当前共 ${papers.length} 篇文献，filteredPapers: ${filteredPapers.length}`;
-    document.body.appendChild(debugDiv);
-    setTimeout(() => debugDiv.remove(), 3000);
-
-    alert('文献导入成功！共 ' + papers.length + ' 篇文献');
+    alert('文献导入成功！');
 }
 
 function openEditModal(paperId = null) {
