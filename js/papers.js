@@ -147,14 +147,20 @@ function getSamplePapers() {
             publish_date: '2024-01-15',
             doi: '10.1038/s41560-023-01401-2',
             abstract: 'We report a novel ionic engineering strategy to simultaneously improve the efficiency and stability of perovskite solar cells through controlled anion incorporation.',
+            abstract_cn: '我们报道了一种新型离子工程技术，通过可控的阴离子引入来同时提升钙钛矿太阳能电池的效率和稳定性。',
             category: 'synthesis',
             keywords: ['perovskite', 'solar cell', 'ionic engineering', 'stability'],
             image: '',
-            summary: '开发了一种新型离子工程技术，通过引入特定的阴离子来调控钙钛矿薄膜的晶体结构和缺陷密度。',
-            innovation: '首次提出离子工程策略，同时提升钙钛矿太阳能电池的效率和稳定性。',
-            application: '高效稳定钙钛矿太阳能电池',
-            structure: '1.引言 2.材料制备 3.表征分析 4.器件性能 5.稳定性测试 6.结论',
-            methods: 'XRD、SEM、UV-vis、PL、TRPL、EIS',
+            summary: 'We developed a novel ionic engineering technique to regulate the crystal structure and defect density of perovskite films through introducing specific anions.',
+            summary_cn: '开发了一种新型离子工程技术，通过引入特定的阴离子来调控钙钛矿薄膜的晶体结构和缺陷密度。',
+            innovation: 'First demonstration of ionic engineering strategy to simultaneously improve both efficiency and stability of perovskite solar cells.',
+            innovation_cn: '首次提出离子工程策略，同时提升钙钛矿太阳能电池的效率和稳定性。',
+            application: 'High-efficiency and stable perovskite solar cells for renewable energy applications.',
+            application_cn: '高效稳定钙钛矿太阳能电池',
+            structure: '1. Introduction 2. Materials Preparation 3. Characterization 4. Device Performance 5. Stability Testing 6. Conclusion',
+            structure_cn: '1.引言 2.材料制备 3.表征分析 4.器件性能 5.稳定性测试 6.结论',
+            methods: 'XRD, SEM, UV-vis, PL, TRPL, EIS',
+            methods_cn: 'XRD、SEM、UV-vis、PL、TRPL、EIS',
             source: 'sample'
         },
         {
@@ -166,14 +172,20 @@ function getSamplePapers() {
             publish_date: '2023-12-20',
             doi: '10.1002/adma.202306789',
             abstract: 'Understanding the crystallization kinetics of perovskite films is crucial for scalable manufacturing of perovskite solar modules.',
+            abstract_cn: '理解钙钛矿薄膜的结晶动力学对于钙钛矿太阳能组件的可扩展制造至关重要。',
             category: 'characterization',
             keywords: ['GIWAXS', 'crystallization', 'blade coating', 'scalable'],
             image: '',
-            summary: '利用原位GIWAXS技术实时观测刮刀涂布过程中钙钛矿的结晶动态。',
-            innovation: '首次使用原位GIWAXS实时追踪刮刀涂布过程中的晶体演变。',
-            application: '大面积钙钛矿薄膜制备',
-            structure: '1.背景 2.实验方法 3.原位表征 4.机理分析 5.工艺优化 6.结论',
-            methods: 'GIWAXS、XRD、SEM、原位光学显微镜',
+            summary: 'Real-time observation of perovskite crystallization dynamics during blade coating using in-situ GIWAXS technique.',
+            summary_cn: '利用原位GIWAXS技术实时观测刮刀涂布过程中钙钛矿的结晶动态。',
+            innovation: 'First in-situ GIWAXS study to track crystal evolution during blade coating process in real-time.',
+            innovation_cn: '首次使用原位GIWAXS实时追踪刮刀涂布过程中的晶体演变。',
+            application: 'Large-area perovskite thin film fabrication for solar modules.',
+            application_cn: '大面积钙钛矿薄膜制备',
+            structure: '1. Background 2. Experimental Methods 3. In-situ Characterization 4. Mechanism Analysis 5. Process Optimization 6. Conclusion',
+            structure_cn: '1.背景 2.实验方法 3.原位表征 4.机理分析 5.工艺优化 6.结论',
+            methods: 'GIWAXS, XRD, SEM, In-situ optical microscopy',
+            methods_cn: 'GIWAXS、XRD、SEM、原位光学显微镜',
             source: 'sample'
         },
         {
@@ -185,14 +197,20 @@ function getSamplePapers() {
             publish_date: '2024-02-10',
             doi: '10.1126/science.abq6872',
             abstract: 'Grain boundary passivation is a key strategy to reduce non-radiative recombination in perovskite solar cells.',
+            abstract_cn: '晶界钝化是减少钙钛矿太阳能电池非辐射复合的关键策略。',
             category: 'mechanism',
             keywords: ['graphene quantum dot', 'grain boundary', 'passivation', 'recombination'],
             image: '',
-            summary: '使用功能化石墨烯量子点作为晶界钝化剂，显著降低了载流子复合。',
-            innovation: '首次将功能化石墨烯量子点用于晶界钝化，开辟了新的钝化策略。',
-            application: '高效钙钛矿太阳能电池',
-            structure: '1.引言 2.GQDs合成 3.钝化处理 4.表征分析 5.器件性能 6.机理讨论',
-            methods: 'TEM、PL mapping、KPFM、EIS、XPS',
+            summary: 'Using functionalized graphene quantum dots as grain boundary passivating agents to significantly reduce carrier recombination.',
+            summary_cn: '使用功能化石墨烯量子点作为晶界钝化剂，显著降低了载流子复合。',
+            innovation: 'First application of functionalized graphene quantum dots for grain boundary passivation, opening new passivation strategies.',
+            innovation_cn: '首次将功能化石墨烯量子点用于晶界钝化，开辟了新的钝化策略。',
+            application: 'High-efficiency perovskite solar cells with reduced recombination losses.',
+            application_cn: '高效钙钛矿太阳能电池',
+            structure: '1. Introduction 2. GQDs Synthesis 3. Passivation Treatment 4. Characterization 5. Device Performance 6. Mechanism Discussion',
+            structure_cn: '1.引言 2.GQDs合成 3.钝化处理 4.表征分析 5.器件性能 6.机理讨论',
+            methods: 'TEM, PL mapping, KPFM, EIS, XPS',
+            methods_cn: 'TEM、PL mapping、KPFM、EIS、XPS',
             source: 'sample'
         },
         {
@@ -204,14 +222,20 @@ function getSamplePapers() {
             publish_date: '2024-03-01',
             doi: '10.1016/j.joule.2024.01.015',
             abstract: 'Flexible perovskite solar cells hold great promise for portable electronics and wearable devices.',
+            abstract_cn: '柔性钙钛矿太阳能电池在便携式电子产品和可穿戴设备方面具有巨大潜力。',
             category: 'application',
             keywords: ['flexible', 'wearable', 'bending stability', 'portable'],
             image: '',
-            summary: '开发了一种适用于柔性基底的新型钙钛矿墨水配方。',
-            innovation: '实现了23%效率的柔性钙钛矿电池，并保持了优异的弯曲稳定性。',
-            application: '柔性可穿戴电子设备',
-            structure: '1.背景 2.材料设计 3.制备工艺 4.性能测试 5.稳定性评估 6.展望',
-            methods: 'SEM、AFM、XRD、弯曲循环测试、J-V曲线',
+            summary: 'Development of a novel perovskite ink formulation suitable for flexible substrates.',
+            summary_cn: '开发了一种适用于柔性基底的新型钙钛矿墨水配方。',
+            innovation: 'Achieved 23% efficiency in flexible perovskite cells while maintaining excellent bending stability.',
+            innovation_cn: '实现了23%效率的柔性钙钛矿电池，并保持了优异的弯曲稳定性。',
+            application: 'Flexible wearable electronic devices and portable power sources.',
+            application_cn: '柔性可穿戴电子设备',
+            structure: '1. Background 2. Material Design 3. Fabrication Process 4. Performance Testing 5. Stability Evaluation 6. Outlook',
+            structure_cn: '1.背景 2.材料设计 3.制备工艺 4.性能测试 5.稳定性评估 6.展望',
+            methods: 'SEM, AFM, XRD, Bending cycle test, J-V curves',
+            methods_cn: 'SEM、AFM、XRD、弯曲循环测试、J-V曲线',
             source: 'sample'
         }
     ];
@@ -327,20 +351,19 @@ function createPaperCard(paper) {
     };
 
     // 根据语言设置选择标题
-    const title = displayLang === 'cn' && paper.title_cn ? paper.title_cn : paper.title;
-    const titleAlt = displayLang === 'cn' ? paper.title : paper.title_cn;
+    const title = getBilingualField(paper, 'title');
+    const abstract = getBilingualField(paper, 'abstract');
 
     return `
         <div class="paper-card" data-id="${paper.id}">
             <span class="paper-category">${categoryNames[paper.category] || '未分类'}</span>
             <h4 class="paper-title">${escapeHtml(title || '无标题')}</h4>
-            ${titleAlt ? `<p class="paper-title-cn">${escapeHtml(titleAlt)}</p>` : ''}
             <p class="paper-authors">${escapeHtml(paper.authors || '未知作者')}</p>
             <div class="paper-meta">
                 <span class="paper-meta-item">📰 ${escapeHtml(paper.journal || '未知期刊')}</span>
                 <span class="paper-meta-item">📅 ${paper.publish_date || ''}</span>
             </div>
-            ${paper.abstract ? `<p class="paper-abstract">${escapeHtml(paper.abstract)}</p>` : ''}
+            ${abstract ? `<p class="paper-abstract">${escapeHtml(abstract)}</p>` : ''}
         </div>
     `;
 }
@@ -397,11 +420,26 @@ function goToPage(page) {
 }
 
 /**
+ * 获取双语字段值
+ * @param {Object} paper - 文献对象
+ * @param {string} field - 字段名（英文版）
+ * @returns {string} 根据当前语言设置返回对应版本，无则返回另一个版本
+ */
+function getBilingualField(paper, field) {
+    const cnField = field + '_cn';
+    if (displayLang === 'cn') {
+        return paper[cnField] || paper[field] || '';
+    } else {
+        return paper[field] || paper[cnField] || '';
+    }
+}
+
+/**
  * 语言切换
  */
 function toggleLang() {
     displayLang = displayLang === 'cn' ? 'en' : 'cn';
-    elements.langIndicator.textContent = displayLang === 'cn' ? '中/EN' : 'EN/中';
+    elements.langIndicator.textContent = displayLang === 'cn' ? '中文' : 'English';
     renderPapers();
 }
 
@@ -421,7 +459,33 @@ function openDetailModal(paperId) {
         'custom': '自定义'
     };
 
-    document.getElementById('detailModalTitle').textContent = displayLang === 'cn' && paper.title_cn ? paper.title_cn : paper.title;
+    // 双语字段
+    const title = getBilingualField(paper, 'title');
+    const abstract = getBilingualField(paper, 'abstract');
+    const summary = getBilingualField(paper, 'summary');
+    const innovation = getBilingualField(paper, 'innovation');
+    const application = getBilingualField(paper, 'application');
+    const structure = getBilingualField(paper, 'structure');
+    const methods = getBilingualField(paper, 'methods');
+
+    // 双语标签
+    const labels = displayLang === 'cn' ? {
+        abstract: '摘要',
+        summary: '工作总结',
+        innovation: '主要创新点',
+        application: '应用领域',
+        structure: '文章脉络',
+        methods: '表征技术与数据分析'
+    } : {
+        abstract: 'Abstract',
+        summary: 'Summary',
+        innovation: 'Key Innovation',
+        application: 'Application',
+        structure: 'Structure',
+        methods: 'Methods & Analysis'
+    };
+
+    document.getElementById('detailModalTitle').textContent = title;
 
     const keywordsHtml = Array.isArray(paper.keywords) ?
         paper.keywords.map(k => `<span class="keyword-tag">${escapeHtml(k)}</span>`).join('') : '';
@@ -429,12 +493,6 @@ function openDetailModal(paperId) {
     const detailBody = document.getElementById('detailModalBody');
     detailBody.innerHTML = `
         <div class="paper-detail">
-            <!-- 头部信息 -->
-            <div class="detail-header">
-                <h2 class="detail-title">${escapeHtml(paper.title)}</h2>
-                ${paper.title_cn ? `<h3 class="detail-title-cn">${escapeHtml(paper.title_cn)}</h3>` : ''}
-            </div>
-
             <!-- 元信息 -->
             <div class="detail-meta">
                 <div class="detail-meta-item">
@@ -480,50 +538,50 @@ function openDetailModal(paperId) {
             ` : ''}
 
             <!-- 摘要 -->
-            ${paper.abstract ? `
+            ${abstract ? `
             <div class="detail-section">
-                <h4 class="detail-section-title">摘要</h4>
-                <div class="detail-content">${escapeHtml(paper.abstract)}</div>
+                <h4 class="detail-section-title">${labels.abstract}</h4>
+                <div class="detail-content">${escapeHtml(abstract)}</div>
             </div>
             ` : ''}
 
             <!-- 工作总结 -->
-            ${paper.summary ? `
+            ${summary ? `
             <div class="detail-section">
-                <h4 class="detail-section-title">工作总结</h4>
-                <div class="detail-content">${escapeHtml(paper.summary)}</div>
+                <h4 class="detail-section-title">${labels.summary}</h4>
+                <div class="detail-content">${escapeHtml(summary)}</div>
             </div>
             ` : ''}
 
             <!-- 主要创新点 -->
-            ${paper.innovation ? `
+            ${innovation ? `
             <div class="detail-section">
-                <h4 class="detail-section-title">主要创新点</h4>
-                <div class="detail-content">${escapeHtml(paper.innovation)}</div>
+                <h4 class="detail-section-title">${labels.innovation}</h4>
+                <div class="detail-content">${escapeHtml(innovation)}</div>
             </div>
             ` : ''}
 
             <!-- 应用领域 -->
-            ${paper.application ? `
+            ${application ? `
             <div class="detail-section">
-                <h4 class="detail-section-title">应用领域</h4>
-                <div class="detail-content">${escapeHtml(paper.application)}</div>
+                <h4 class="detail-section-title">${labels.application}</h4>
+                <div class="detail-content">${escapeHtml(application)}</div>
             </div>
             ` : ''}
 
             <!-- 文章脉络 -->
-            ${paper.structure ? `
+            ${structure ? `
             <div class="detail-section">
-                <h4 class="detail-section-title">文章脉络</h4>
-                <div class="detail-content">${escapeHtml(paper.structure)}</div>
+                <h4 class="detail-section-title">${labels.structure}</h4>
+                <div class="detail-content">${escapeHtml(structure)}</div>
             </div>
             ` : ''}
 
             <!-- 表征技术 -->
-            ${paper.methods ? `
+            ${methods ? `
             <div class="detail-section">
-                <h4 class="detail-section-title">表征技术与数据分析</h4>
-                <div class="detail-content">${escapeHtml(paper.methods)}</div>
+                <h4 class="detail-section-title">${labels.methods}</h4>
+                <div class="detail-content">${escapeHtml(methods)}</div>
             </div>
             ` : ''}
 
