@@ -686,14 +686,36 @@ function completeStudy() {
  * 渲染单词卡片
  */
 function renderWordCard(word) {
-    // 如果是正在学的词且已有卡片进度，跳过卡片直接进入英选中
+    // 如果是正在学的词且已完成英选中阶段，跳过卡片直接进入下一个题型
     if (word.status === WordStatus.STUDYING && vocabularyData[word.id].phase_en_cn) {
-        vocabularyData[word.id].current_phase = StudyPhase.EN_SELECT_CN;
-        saveVocabularyData();
-        currentPhase = StudyPhase.EN_SELECT_CN;
-        renderQuizCard(word);
+        // 该词已完成卡片阶段，进入下一个题型
+        currentWordIndex++;
+        moveToNextPhase();
         return;
     }
+    
+    // 初始化该词的学习进度（如果还没有）
+    if (!vocabularyData[word.id]) {
+        vocabularyData[word.id] = {
+            ...word,
+            status: WordStatus.NEW,
+            correct_count: 0,
+            error_count: 0,
+            phase_en_cn: false,
+            phase_cn_en: false,
+            phase_en_def: false,
+            phase_def_en: false,
+            current_phase: StudyPhase.SHOW_CARD,
+            last_practice_date: ''
+        };
+    }
+    
+    // 标记该词状态为正在学
+    if (vocabularyData[word.id].status === WordStatus.NEW) {
+        vocabularyData[word.id].status = WordStatus.STUDYING;
+    }
+    vocabularyData[word.id].current_phase = StudyPhase.EN_SELECT_CN;
+    saveVocabularyData();
     
     elements.studyArea.innerHTML = `
         <div class="word-card-display">
@@ -715,37 +737,10 @@ function renderWordCard(word) {
     `;
     
     document.getElementById('continueBtn').addEventListener('click', () => {
-        // 初始化该词的学习进度（如果还没有）
-        if (!vocabularyData[word.id]) {
-            vocabularyData[word.id] = {
-                ...word,
-                status: WordStatus.NEW,
-                correct_count: 0,
-                error_count: 0,
-                phase_en_cn: false,
-                phase_cn_en: false,
-                phase_en_def: false,
-                phase_def_en: false,
-                current_phase: StudyPhase.SHOW_CARD,
-                last_practice_date: ''
-            };
-        }
+        // 不改变全局 currentPhase，保持 SHOW_CARD
+        // 这样下一个词会继续显示卡片
         
-        // 标记该词状态为正在学
-        if (vocabularyData[word.id].status === WordStatus.NEW) {
-            vocabularyData[word.id].status = WordStatus.STUDYING;
-        }
-        vocabularyData[word.id].current_phase = StudyPhase.EN_SELECT_CN;
-        saveVocabularyData();
-        
-        // 新学模式：卡片后直接进入该词的英选中
-        currentPhase = StudyPhase.EN_SELECT_CN;
-        
-        // 移动到下一个词（下一个词显示卡片）
-        currentWordIndex++;
-        
-        // 但当前词需要做英选中
-        // 英选中做错的不显示卡片，直接再做一次英选中
+        // 显示该词的英选中
         renderQuizCard(word);
     });
 }
