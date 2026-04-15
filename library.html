@@ -71,7 +71,7 @@
             gap: 12px;
         }
         
-        /* 文献项 - 可滑动 */
+        /* 文献项 */
         .paper-item {
             position: relative;
             background: var(--card-bg);
@@ -166,52 +166,6 @@
         .status-badge.gray {
             background: rgba(107, 114, 128, 0.2);
             color: #6b7280;
-        }
-        
-        /* 滑动操作 */
-        .swipe-actions {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            pointer-events: none;
-        }
-        
-        .swipe-action {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 500;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        
-        .swipe-left {
-            background: rgba(239, 68, 68, 0.9);
-        }
-        
-        .swipe-right {
-            background: rgba(16, 185, 129, 0.9);
-        }
-        
-        .paper-item.swiped-left .swipe-left {
-            opacity: 1;
-        }
-        
-        .paper-item.swiped-right .swipe-right {
-            opacity: 1;
-        }
-        
-        .paper-item.swiped-left .paper-content {
-            transform: translateX(80px);
-        }
-        
-        .paper-item.swiped-right .paper-content {
-            transform: translateX(-80px);
         }
         
         /* 批量操作栏 */
@@ -357,9 +311,6 @@ https://doi.org/10.1002/adma.202306789"></textarea>
             
             <!-- 操作栏 -->
             <div class="library-actions">
-                <button class="btn btn-primary" onclick="batchMakeCards()" id="batchCardBtn" disabled>
-                    📝 批量制作卡片
-                </button>
                 <button class="btn btn-outline" onclick="batchDelete()" id="batchDeleteBtn" disabled>
                     🗑️ 批量删除
                 </button>
@@ -370,11 +321,6 @@ https://doi.org/10.1002/adma.202306789"></textarea>
             
             <!-- 筛选 -->
             <div class="filter-bar">
-                <select id="statusFilter" onchange="filterPapers()">
-                    <option value="">全部状态</option>
-                    <option value="pending">待制卡片</option>
-                    <option value="completed">已制卡片</option>
-                </select>
                 <select id="journalFilter" onchange="filterPapers()">
                     <option value="">全部期刊</option>
                 </select>
