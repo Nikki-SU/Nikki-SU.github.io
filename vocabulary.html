@@ -25,19 +25,24 @@
                 <h3 class="section-title">📝 生词学习</h3>
                 
                 <div class="vocab-tabs">
-                    <button class="tab-btn active" data-tab="study">生词本</button>
+                    <button class="tab-btn active" data-tab="study">学习</button>
                     <button class="tab-btn" data-tab="wrong">错词本</button>
+                    <button class="tab-btn" data-tab="studying">正在学</button>
                     <button class="tab-btn" data-tab="learned">已学</button>
                     <button class="tab-btn" data-tab="mastered">已掌握</button>
-                    <button class="tab-btn" data-tab="all">全部单词</button>
+                    <button class="tab-btn" data-tab="all">全部</button>
                 </div>
 
-                <!-- 生词本（学习区） -->
+                <!-- 学习区 -->
                 <div id="studyMode" class="vocab-content">
                     <div class="study-stats-bar">
                         <div class="stat-item">
                             <span class="stat-num" id="newCount">0</span>
-                            <span class="stat-label">生词</span>
+                            <span class="stat-label">新词</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-num" id="studyingCount">0</span>
+                            <span class="stat-label">正在学</span>
                         </div>
                         <div class="stat-item">
                             <span class="stat-num" id="wrongCount">0</span>
@@ -54,11 +59,16 @@
                     </div>
                     
                     <div class="study-buttons" id="studyButtons">
+                        <div class="study-count-setting">
+                            <label for="studyCountInput">每次学习:</label>
+                            <input type="number" id="studyCountInput" value="50" min="1" max="200">
+                            <span>个词</span>
+                        </div>
                         <button class="btn btn-primary study-btn" id="newStudyBtn">
-                            📚 新学 (<span id="newStudyCount">0</span>)
+                            📚 开始学习 (<span id="newStudyCount">0</span>)
                         </button>
                         <button class="btn btn-secondary study-btn" id="reviewBtn">
-                            🔄 复习 (<span id="reviewCount">0</span>)
+                            🔄 复习已学 (<span id="reviewCount">0</span>)
                         </button>
                     </div>
                     
@@ -82,7 +92,7 @@
                     </div>
 
                     <div class="study-hint" id="studyHint">
-                        <p>选择「新学」学习新单词，或选择「复习」巩固已学内容</p>
+                        <p>选择「开始学习」学习新词和正在学的词，或选择「复习」巩固已学内容</p>
                     </div>
                 </div>
 
@@ -94,9 +104,17 @@
                     </div>
                 </div>
 
+                <!-- 正在学列表 -->
+                <div id="studyingMode" class="vocab-content hidden">
+                    <p class="section-desc">展示了卡片但尚未完成所有题型的单词</p>
+                    <div class="studying-list" id="studyingList">
+                        <p class="empty-message">暂无正在学习的单词</p>
+                    </div>
+                </div>
+
                 <!-- 已学列表 -->
                 <div id="learnedMode" class="vocab-content hidden">
-                    <p class="section-desc">已练习过但未掌握的单词（可复习）</p>
+                    <p class="section-desc">已完成所有题型但未掌握的单词（可复习）</p>
                     <div class="learned-list" id="learnedList">
                         <p class="empty-message">暂无已学的单词，继续学习新词吧！</p>
                     </div>
@@ -170,7 +188,7 @@
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary">添加单词</button>
-                    <p class="form-hint">提示：本地添加的单词需要联系小科同步到云端</p>
+                    <p class="form-hint">提示：本地添加的单词需要同步到云端</p>
                 </form>
             </section>
         </div>
