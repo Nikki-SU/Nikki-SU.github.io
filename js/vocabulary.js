@@ -131,6 +131,36 @@ function initEventListeners() {
     
     document.getElementById('allStatusFilter')?.addEventListener('change', renderAllWords);
     document.getElementById('allSearchInput')?.addEventListener('input', debounce(renderAllWords, 300));
+    
+    // 补全翻译按钮
+    document.getElementById('btnTranslateAll')?.addEventListener('click', translateAllMissing);
+}
+
+// ===== 补全翻译 =====
+async function translateAllMissing() {
+    const btn = document.getElementById('btnTranslateAll');
+    const originalText = btn.textContent;
+    
+    btn.disabled = true;
+    btn.textContent = '🔄 正在翻译...';
+    
+    try {
+        const updated = await VocabularyStore.translateMissingFields((msg) => {
+            btn.textContent = `🔄 ${msg}`;
+        });
+        
+        // 重新加载数据
+        vocabulary = VocabularyStore.getAll();
+        updateStats();
+        
+        showToast(`已完成，更新了 ${updated} 个词汇`, 'success');
+    } catch (error) {
+        console.error('翻译失败:', error);
+        showToast('翻译失败，请检查API设置', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
 }
 
 function switchTab(tab) {
@@ -387,13 +417,18 @@ function renderCard(word) {
 }
 
 function renderQuestion(word, type, typeName) {
-    let others = vocabulary.filter(w => w.en !== word.en);
+    // 获取其他词汇作为干扰项，过滤掉字段为空的词汇
+    let others = vocabulary.filter(w => {
+        if (w.en === word.en) return false;
+        // 根据题型过滤
+        if (type === 1 || type === 5) return w.cn && w.cn.trim(); // 英选中、句选中需要cn
+        if (type === 2 || type === 4) return w.en && w.en.trim(); // 中选英、义选英需要en
+        if (type === 3 || type === 6) return (w.defCn || w.cn) && (w.defCn || w.cn).trim(); // 英选义、句选义需要定义
+        return true;
+    });
+    
     others.sort(() => Math.random() - 0.5);
     others = others.slice(0, 3);
-    
-    while (others.length < 3) {
-        others.push({ en: 'N/A', cn: '选项', defCn: '选项', defEn: 'option', ex: '' });
-    }
     
     let question, options, correct;
     
@@ -447,6 +482,18 @@ function renderQuestion(word, type, typeName) {
             correct = def6;
             if (word.ex) speak(word.ex.replace(/\*\*/g, '').replace(/<[^>]*>/g, ''));
             break;
+    }
+    
+    // 确保至少有4个选项（如果干扰项不够，提示用户）
+    if (options.length < 4) {
+        // 显示提示信息
+        const shortage = 4 - options.length;
+        const hint = `<div class="alert alert-warning" style="margin-bottom:12px;">⚠️ 当前词库词汇不足，建议添加更多词汇或使用"补全翻译"功能</div>`;
+        question = hint + question;
+        // 用占位符填充
+        while (options.length < 4) {
+            options.push(`[选项${options.length + 1}]`);
+        }
     }
     
     let html = `
