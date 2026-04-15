@@ -507,6 +507,15 @@ function saveCard(card, paper) {
 }
 
 // 打开卡片详情
+let cardLangCN = true; // 默认显示中文
+
+function toggleCardLang() {
+    cardLangCN = document.getElementById('cardLangSwitch').checked;
+    if (currentCardId) {
+        openCardDetail(currentCardId);
+    }
+}
+
 function openCardDetail(cardId) {
     const card = PapersStore.getById(cardId);
     if (!card) {
@@ -516,53 +525,170 @@ function openCardDetail(cardId) {
     
     currentCardId = cardId;
     
-    document.getElementById('cardDetailTitle').textContent = card.title || '文献卡片';
-    document.getElementById('cardDetailBody').innerHTML = `
-        <div style="margin-bottom: 24px;">
-            <h4 style="margin-bottom: 8px;">📝 摘要</h4>
-            <p>${escapeHtml(card.summary || '无')}</p>
+    // 设置开关状态
+    document.getElementById('cardLangSwitch').checked = cardLangCN;
+    
+    // 根据语言选择内容
+    const lang = cardLangCN ? 'cn' : 'en';
+    
+    // 标题
+    const title = cardLangCN ? (card.title_cn || card.title) : card.title;
+    document.getElementById('cardDetailTitle').textContent = title || '文献卡片';
+    
+    // 构建内容
+    let html = '';
+    
+    // 元信息
+    html += `
+        <div class="card-meta">
+            ${card.journal ? `<span>📖 ${escapeHtml(card.journal)}</span>` : ''}
+            ${card.publish_date ? `<span>📅 ${escapeHtml(card.publish_date)}</span>` : ''}
+            ${card.doi ? `<span>🔗 <a href="https://doi.org/${escapeHtml(card.doi)}" target="_blank" style="color:var(--primary);">${escapeHtml(card.doi)}</a></span>` : ''}
+            ${card.category ? `<span>🏷️ ${escapeHtml(card.category)}</span>` : ''}
         </div>
-        
-        ${card.keywords?.length ? `
-            <div style="margin-bottom: 24px;">
-                <h4 style="margin-bottom: 8px;">🏷️ 关键词</h4>
-                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+    `;
+    
+    // 作者
+    if (card.authors) {
+        html += `
+            <div class="card-section">
+                <h4>👥 ${cardLangCN ? '作者' : 'Authors'}</h4>
+                <p style="font-size:13px;">${escapeHtml(card.authors)}</p>
+            </div>
+        `;
+    }
+    
+    // 摘要
+    const abstract = cardLangCN ? (card.abstract_cn || card.abstract) : card.abstract;
+    if (abstract) {
+        html += `
+            <div class="card-section">
+                <h4>📝 ${cardLangCN ? '摘要' : 'Abstract'}</h4>
+                <p>${escapeHtml(abstract)}</p>
+            </div>
+        `;
+    }
+    
+    // 关键词
+    if (card.keywords?.length) {
+        html += `
+            <div class="card-section">
+                <h4>🏷️ ${cardLangCN ? '关键词' : 'Keywords'}</h4>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
                     ${card.keywords.map(kw => `<span class="badge badge-primary">${escapeHtml(kw)}</span>`).join('')}
                 </div>
             </div>
-        ` : ''}
-        
-        ${card.keyPoints?.length ? `
-            <div style="margin-bottom: 24px;">
-                <h4 style="margin-bottom: 8px;">💡 关键要点</h4>
-                <ul style="padding-left: 20px;">
-                    ${card.keyPoints.map(p => `<li style="margin-bottom: 8px;">${escapeHtml(p)}</li>`).join('')}
-                </ul>
+        `;
+    }
+    
+    // 工作总结
+    const summary = cardLangCN ? (card.summary_cn || card.summary) : card.summary;
+    if (summary) {
+        html += `
+            <div class="card-section">
+                <h4>💡 ${cardLangCN ? '工作总结' : 'Summary'}</h4>
+                <p>${escapeHtml(summary)}</p>
             </div>
-        ` : ''}
-        
-        ${card.vocabulary?.length ? `
-            <div>
-                <h4 style="margin-bottom: 8px;">📖 学术词汇 (${card.vocabulary.length})</h4>
-                <div class="list">
+        `;
+    }
+    
+    // 创新点
+    const innovations = cardLangCN ? (card.innovation_cn || card.innovation) : card.innovation;
+    if (innovations) {
+        const items = Array.isArray(innovations) ? innovations : [innovations];
+        if (items.length && items[0]) {
+            html += `
+                <div class="card-section">
+                    <h4>⭐ ${cardLangCN ? '创新点' : 'Innovation'}</h4>
+                    <ul>
+                        ${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+    }
+    
+    // 应用领域
+    const application = cardLangCN ? (card.application_cn || card.application) : card.application;
+    if (application) {
+        html += `
+            <div class="card-section">
+                <h4>🎯 ${cardLangCN ? '应用领域' : 'Application'}</h4>
+                <p>${escapeHtml(application)}</p>
+            </div>
+        `;
+    }
+    
+    // 论证思路
+    const structure = cardLangCN ? (card.structure_cn || card.structure) : card.structure;
+    if (structure) {
+        html += `
+            <div class="card-section">
+                <h4>📊 ${cardLangCN ? '论证思路' : 'Structure'}</h4>
+                <p>${escapeHtml(structure)}</p>
+            </div>
+        `;
+    }
+    
+    // 表征技术
+    const methods = cardLangCN ? (card.methods_cn || card.methods) : card.methods;
+    if (methods) {
+        const methodItems = Array.isArray(methods) ? methods : methods.split(',').map(m => m.trim());
+        if (methodItems.length && methodItems[0]) {
+            html += `
+                <div class="card-section">
+                    <h4>🔬 ${cardLangCN ? '表征技术' : 'Methods'}</h4>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                        ${methodItems.map(m => `<span class="badge" style="background:var(--bg);color:var(--text);">${escapeHtml(m)}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    // 学术词汇
+    if (card.vocabulary?.length) {
+        html += `
+            <div class="card-section">
+                <h4>📖 ${cardLangCN ? '学术词汇' : 'Vocabulary'} (${card.vocabulary.length})</h4>
+                <div class="vocab-list">
                     ${card.vocabulary.map(v => {
                         const wordEn = v.en || v.word || '';
                         const wordCn = v.cn || v.word_cn || '';
                         const defCn = v.defCn || v.definition_cn || '';
+                        const defEn = v.defEn || v.definition_en || '';
+                        const ex = v.ex || v.example || '';
+                        const def = cardLangCN ? defCn : defEn;
+                        
+                        // 格式化例句（标粗词汇）
+                        let exFormatted = ex;
+                        if (ex && ex.includes('**')) {
+                            exFormatted = ex.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                        } else if (ex && wordEn) {
+                            const regex = new RegExp(`\\b(${wordEn})\\b`, 'gi');
+                            exFormatted = ex.replace(regex, '<strong>$1</strong>');
+                        }
+                        
                         return `
-                        <div class="list-item">
-                            <div class="list-item-main">
-                                <div class="list-item-title">${escapeHtml(wordEn)} <span class="text-muted">- ${escapeHtml(wordCn)}</span></div>
-                                <div class="list-item-sub">${escapeHtml(defCn)}</div>
+                            <div class="vocab-item" style="flex-direction:column;align-items:flex-start;">
+                                <div style="width:100%;display:flex;justify-content:space-between;align-items:center;">
+                                    <div>
+                                        <span class="word">${escapeHtml(wordEn)}</span>
+                                        <span class="cn">${escapeHtml(wordCn)}</span>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy('${wordEn.replace(/'/g, "\\'")}')">📚 加入学习</button>
+                                </div>
+                                ${def ? `<div class="def">${escapeHtml(def)}</div>` : ''}
+                                ${ex ? `<div class="ex">${exFormatted}</div>` : ''}
                             </div>
-                            <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy('${wordEn.replace(/'/g, "\\'")}')">📚 加入学习</button>
-                        </div>
-                    `;}).join('')}
+                        `;
+                    }).join('')}
                 </div>
             </div>
-        ` : ''}
-    `;
+        `;
+    }
     
+    document.getElementById('cardDetailBody').innerHTML = html;
     document.getElementById('cardDetailModal').classList.remove('hidden');
 }
 
