@@ -152,19 +152,29 @@ function checkUrlParams() {
  * 加载文献数据
  */
 async function loadPapers() {
-    try {
-        const response = await fetch(CONFIG.papersUrl);
-        if (response.ok) {
-            papers = await response.json();
-        }
-    } catch (error) {
-        console.error('加载文献失败:', error);
-        const stored = localStorage.getItem('papersData');
-        if (stored) {
+    // 优先从localStorage读取（这是用户的数据）
+    const stored = localStorage.getItem('papersData');
+    if (stored) {
+        try {
             papers = JSON.parse(stored);
+        } catch (e) {
+            papers = [];
         }
     }
 
+    // 如果localStorage没有数据，尝试从文件读取
+    if (papers.length === 0) {
+        try {
+            const response = await fetch(CONFIG.papersUrl);
+            if (response.ok) {
+                papers = await response.json();
+            }
+        } catch (error) {
+            console.error('加载文献失败:', error);
+        }
+    }
+
+    // 如果还是没有数据，使用示例数据
     if (papers.length === 0) {
         papers = getSamplePapers();
     }
