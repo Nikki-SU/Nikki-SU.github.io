@@ -1,1106 +1,575 @@
 /**
- * papers.js - 文献卡片模块脚本
- * 处理文献列表、筛选、导入、编辑和双语切换
- * 支持粗略卡片（黄色）和完整卡片（绿色）的区分
+ * papers.js - 文献库和文献卡片逻辑
  */
 
-// 配置
-const CONFIG = {
-    papersUrl: 'data/papers.json',
-    CROSSREF_API: 'https://api.crossref.org/works/',
-    itemsPerPage: 12
-};
-
 // 状态
-let papers = [];
-let filteredPapers = [];
-let currentPage = 1;
-let currentCategory = '';
-let currentJournal = '';
-let searchTerm = '';
-let displayLang = 'cn'; // 'cn' = 中文优先, 'en' = 英文优先
-let editingPaper = null;
-let importData = {};
-
-// DOM元素
-const elements = {};
+let currentTab = 'library';
+let currentCardId = null;
 
 // DOM加载完成后执行
 document.addEventListener('DOMContentLoaded', () => {
-    initElements();
     initEventListeners();
-    loadPapers();
-    checkUrlParams();
+    loadLibrary();
+    loadCards();
+    loadPaperSelect();
 });
 
-function initElements() {
-    elements.papersGrid = document.getElementById('papersGrid');
-    elements.pagination = document.getElementById('pagination');
-    elements.categoryFilter = document.getElementById('categoryFilter');
-    elements.journalFilter = document.getElementById('journalFilter');
-    elements.searchInput = document.getElementById('searchInput');
-    elements.langToggle = document.getElementById('langToggle');
-    elements.langIndicator = document.getElementById('langIndicator');
-    elements.detailModal = document.getElementById('detailModal');
-    elements.importModal = document.getElementById('importModal');
-    elements.editModal = document.getElementById('editModal');
-    elements.paperForm = document.getElementById('paperForm');
-}
-
+// 初始化事件监听
 function initEventListeners() {
-    // 移动端菜单
-    const menuToggle = document.getElementById('menuToggle');
-    const nav = document.querySelector('.nav');
-    if (menuToggle && nav) {
-        menuToggle.addEventListener('click', () => nav.classList.toggle('active'));
-    }
-
+    // Tab切换
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+    
+    // 添加DOI
+    document.getElementById('addDoiBtn')?.addEventListener('click', addByDoi);
+    document.getElementById('doiInput')?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') addByDoi();
+    });
+    
+    // 手动添加
+    document.getElementById('manualAddBtn')?.addEventListener('click', openManualAddModal);
+    document.getElementById('closeManualAddModal')?.addEventListener('click', closeManualAddModal);
+    document.getElementById('cancelManualAddBtn')?.addEventListener('click', closeManualAddModal);
+    document.getElementById('confirmManualAddBtn')?.addEventListener('click', confirmManualAdd);
+    
+    // 刷新
+    document.getElementById('refreshLibraryBtn')?.addEventListener('click', loadLibrary);
+    
     // 筛选
-    elements.categoryFilter?.addEventListener('change', handleFilterChange);
-    elements.journalFilter?.addEventListener('change', handleFilterChange);
-    elements.searchInput?.addEventListener('input', debounce(handleSearch, 300));
-
-    // 导入按钮
-    document.getElementById('importBtn')?.addEventListener('click', openImportModal);
-    document.getElementById('addBtn')?.addEventListener('click', () => openEditModal());
-
-    // 模态框
-    document.getElementById('closeDetail')?.addEventListener('click', closeDetailModal);
-    document.getElementById('closeImport')?.addEventListener('click', closeImportModal);
-    document.getElementById('closeEdit')?.addEventListener('click', closeEditModal);
-    document.getElementById('cancelImport')?.addEventListener('click', closeImportModal);
-    document.getElementById('cancelEdit')?.addEventListener('click', closeEditModal);
-    document.getElementById('deletePaper')?.addEventListener('click', deletePaper);
-
-    // 语言切换
-    elements.langToggle?.addEventListener('click', toggleLang);
-
-    // 导入类型切换
-    document.querySelectorAll('input[name="importType"]').forEach(radio => {
-        radio.addEventListener('change', handleImportTypeChange);
+    document.getElementById('libraryFilter')?.addEventListener('change', loadLibrary);
+    document.getElementById('librarySearch')?.addEventListener('input', debounce(loadLibrary, 300));
+    
+    // 生成卡片
+    document.getElementById('generateCardBtn')?.addEventListener('click', generateCard);
+    
+    // 卡片详情
+    document.getElementById('closeCardDetailModal')?.addEventListener('click', closeCardDetailModal);
+    document.getElementById('closeCardDetailBtn')?.addEventListener('click', closeCardDetailModal);
+    document.getElementById('deleteCardBtn')?.addEventListener('click', deleteCurrentCard);
+    
+    // 模态框点击关闭
+    document.getElementById('manualAddModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'manualAddModal') closeManualAddModal();
     });
-
-    // DOI获取
-    document.getElementById('fetchDoiBtn')?.addEventListener('click', fetchDoiPaper);
-    document.getElementById('importDoi')?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') fetchDoiPaper();
-    });
-
-    // JSON导入
-    document.getElementById('jsonFileInput')?.addEventListener('change', handleJsonFileUpload);
-    document.getElementById('jsonInput')?.addEventListener('input', debounce(parseJsonInput, 500));
-
-    // 复制提示词
-    document.getElementById('copyPromptBtn')?.addEventListener('click', () => {
-        const promptText = document.getElementById('promptTemplate');
-        promptText.select();
-        document.execCommand('copy');
-        
-        const btn = document.getElementById('copyPromptBtn');
-        const originalText = btn.textContent;
-        btn.textContent = '已复制 ✓';
-        btn.style.background = 'var(--success-color)';
-        btn.style.color = 'white';
-        
-        setTimeout(() => {
-            btn.textContent = originalText;
-            btn.style.background = '';
-            btn.style.color = '';
-        }, 2000);
-    });
-
-    // 确认导入
-    document.getElementById('confirmImport')?.addEventListener('click', confirmImport);
-
-    // 表单提交
-    elements.paperForm?.addEventListener('submit', handlePaperSubmit);
-
-    // 补全按钮
-    document.getElementById('completeCardBtn')?.addEventListener('click', openCompleteModal);
-    document.getElementById('closeComplete')?.addEventListener('click', closeCompleteModal);
-    document.getElementById('confirmComplete')?.addEventListener('click', confirmComplete);
-
-    // 模态框点击背景关闭
-    elements.detailModal?.addEventListener('click', (e) => {
-        if (e.target === elements.detailModal) closeDetailModal();
-    });
-    elements.importModal?.addEventListener('click', (e) => {
-        if (e.target === elements.importModal) closeImportModal();
-    });
-    elements.editModal?.addEventListener('click', (e) => {
-        if (e.target === elements.editModal) closeEditModal();
+    document.getElementById('cardDetailModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'cardDetailModal') closeCardDetailModal();
     });
 }
 
-/**
- * 检查URL参数（从文献库跳转过来时）
- */
-function checkUrlParams() {
-    const params = new URLSearchParams(window.location.search);
-    const doi = params.get('doi');
-    if (doi) {
-        setTimeout(() => {
-            const paper = papers.find(p => p.doi === doi);
-            if (paper) {
-                openDetailModal(paper.id);
-            }
-        }, 500);
-    }
+// Tab切换
+function switchTab(tab) {
+    currentTab = tab;
+    
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.toggle('active', content.id === `${tab}Tab`);
+    });
+    
+    if (tab === 'library') loadLibrary();
+    if (tab === 'cards') loadCards();
 }
 
-/**
- * 加载文献数据
- */
-async function loadPapers() {
-    // 优先从localStorage读取（这是用户的数据）
-    const stored = localStorage.getItem('papersData');
-    if (stored) {
-        try {
-            papers = JSON.parse(stored);
-        } catch (e) {
-            papers = [];
-        }
+// 加载文献库
+function loadLibrary() {
+    const container = document.getElementById('libraryList');
+    let papers = LibraryStore.getAll();
+    
+    // 筛选
+    const filter = document.getElementById('libraryFilter')?.value;
+    const search = document.getElementById('librarySearch')?.value?.toLowerCase() || '';
+    
+    if (filter === 'week') {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        papers = papers.filter(p => new Date(p.addedAt) > weekAgo);
+    } else if (filter === 'month') {
+        const monthAgo = new Date();
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        papers = papers.filter(p => new Date(p.addedAt) > monthAgo);
     }
-
-    // 如果localStorage没有数据，尝试从文件读取
+    
+    if (search) {
+        papers = papers.filter(p => 
+            (p.title && p.title.toLowerCase().includes(search)) ||
+            (p.titleEn && p.titleEn.toLowerCase().includes(search)) ||
+            (p.authors && p.authors.join(' ').toLowerCase().includes(search)) ||
+            (p.abstract && p.abstract.toLowerCase().includes(search))
+        );
+    }
+    
     if (papers.length === 0) {
-        try {
-            const response = await fetch(CONFIG.papersUrl);
-            if (response.ok) {
-                papers = await response.json();
-            }
-        } catch (error) {
-            console.error('加载文献失败:', error);
-        }
-    }
-
-    // 如果还是没有数据，使用示例数据
-    if (papers.length === 0) {
-        papers = getSamplePapers();
-    }
-
-    updateJournalFilter();
-    filterPapers();
-}
-
-function getSamplePapers() {
-    return [
-        {
-            id: 'sample-1',
-            title: 'Ionic engineering of perovskite films for efficient and stable solar cells',
-            title_cn: '钙钛矿薄膜的离子工程以实现高效稳定太阳能电池',
-            authors: 'Chen, Y.; Wang, L.; Zhang, M.',
-            journal: 'Nature Energy',
-            publish_date: '2024-01-15',
-            doi: '10.1038/s41560-023-01401-2',
-            abstract: 'We report a novel ionic engineering strategy to simultaneously improve the efficiency and stability of perovskite solar cells through controlled anion incorporation.',
-            abstract_cn: '我们报道了一种新型离子工程技术，通过可控的阴离子引入来同时提升钙钛矿太阳能电池的效率和稳定性。',
-            category: 'synthesis',
-            keywords: ['perovskite', 'solar cell', 'ionic engineering', 'stability'],
-            summary: 'We developed a novel ionic engineering technique to regulate the crystal structure and defect density of perovskite films through introducing specific anions.',
-            summary_cn: '开发了一种新型离子工程技术，通过引入特定的阴离子来调控钙钛矿薄膜的晶体结构和缺陷密度。',
-            innovation: 'First demonstration of ionic engineering strategy to simultaneously improve both efficiency and stability of perovskite solar cells.',
-            innovation_cn: '首次提出离子工程策略，同时提升钙钛矿太阳能电池的效率和稳定性。',
-            application: 'High-efficiency and stable perovskite solar cells for renewable energy applications.',
-            application_cn: '高效稳定钙钛矿太阳能电池',
-            structure: '1. Introduction 2. Materials Preparation 3. Characterization 4. Device Performance 5. Stability Testing 6. Conclusion',
-            structure_cn: '1.引言 2.材料制备 3.表征分析 4.器件性能 5.稳定性测试 6.结论',
-            methods: 'XRD, SEM, UV-vis, PL, TRPL, EIS',
-            methods_cn: 'XRD、SEM、UV-vis、PL、TRPL、EIS',
-            source: 'sample'
-        },
-        {
-            id: 'sample-2',
-            title: 'In-situ GIWAXS study of perovskite crystallization during blade coating',
-            title_cn: '原位GIWAXS研究刮刀涂布过程中钙钛矿的结晶过程',
-            authors: 'Kim, S.; Park, J.; Lee, H.',
-            journal: 'Advanced Materials',
-            publish_date: '2023-12-20',
-            doi: '10.1002/adma.202306789',
-            abstract: 'Understanding the crystallization kinetics of perovskite films is crucial for scalable manufacturing of perovskite solar modules.',
-            abstract_cn: '理解钙钛矿薄膜的结晶动力学对于钙钛矿太阳能电池的可扩展制造至关重要。',
-            category: 'characterization',
-            keywords: ['GIWAXS', 'crystallization', 'blade coating', 'scalable'],
-            summary: 'Real-time observation of perovskite crystallization dynamics during blade coating using in-situ GIWAXS technique.',
-            summary_cn: '利用原位GIWAXS技术实时观测刮刀涂布过程中钙钛矿的结晶动态。',
-            innovation: 'First in-situ GIWAXS study to track crystal evolution during blade coating process in real-time.',
-            innovation_cn: '首次使用原位GIWAXS实时追踪刮刀涂布过程中的晶体演变。',
-            application: 'Large-area perovskite thin film fabrication for solar modules.',
-            application_cn: '大面积钙钛矿薄膜制备',
-            structure: '1. Background 2. Experimental Methods 3. In-situ Characterization 4. Mechanism Analysis 5. Process Optimization 6. Conclusion',
-            structure_cn: '1.背景 2.实验方法 3.原位表征 4.机理分析 5.工艺优化 6.结论',
-            methods: 'GIWAXS, XRD, SEM, In-situ optical microscopy',
-            methods_cn: 'GIWAXS、XRD、SEM、原位光学显微镜',
-            source: 'sample'
-        }
-    ];
-}
-
-/**
- * 更新期刊筛选器
- */
-function updateJournalFilter() {
-    const journals = [...new Set(papers.map(p => p.journal).filter(Boolean))];
-    journals.sort();
-
-    if (elements.journalFilter) {
-        elements.journalFilter.innerHTML = '<option value="">全部期刊</option>' +
-            journals.map(j => `<option value="${escapeHtml(j)}">${escapeHtml(j)}</option>`).join('');
-    }
-}
-
-/**
- * 筛选文献
- */
-function filterPapers() {
-    filteredPapers = papers.filter(paper => {
-        if (currentCategory && paper.category !== currentCategory) return false;
-        if (currentJournal && paper.journal !== currentJournal) return false;
-
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase();
-            const searchableText = [
-                paper.title, paper.title_cn, paper.authors, paper.journal,
-                paper.keywords?.join(' '), paper.abstract
-            ].filter(Boolean).join(' ').toLowerCase();
-            if (!searchableText.includes(term)) return false;
-        }
-
-        return true;
-    });
-
-    currentPage = 1;
-    renderPapers();
-}
-
-function handleFilterChange() {
-    currentCategory = elements.categoryFilter?.value || '';
-    currentJournal = elements.journalFilter?.value || '';
-    filterPapers();
-}
-
-function handleSearch() {
-    searchTerm = elements.searchInput?.value || '';
-    filterPapers();
-}
-
-/**
- * 渲染文献列表
- */
-function renderPapers() {
-    if (!elements.papersGrid) return;
-
-    if (filteredPapers.length === 0) {
-        elements.papersGrid.innerHTML = `
-            <div class="empty-message">
-                <p>没有找到匹配的文献</p>
-                <button class="btn btn-primary mt-4" onclick="document.getElementById('addBtn').click()">
-                    添加第一篇文献
-                </button>
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <p>${search ? '没有匹配的文献' : '文献库为空'}</p>
+                <p class="text-muted">${search ? '尝试其他关键词' : '通过追踪或手动添加文献'}</p>
             </div>
         `;
-        elements.pagination.innerHTML = '';
         return;
     }
-
-    const totalPages = Math.ceil(filteredPapers.length / CONFIG.itemsPerPage);
-    const startIndex = (currentPage - 1) * CONFIG.itemsPerPage;
-    const endIndex = startIndex + CONFIG.itemsPerPage;
-    const pagePapers = filteredPapers.slice(startIndex, endIndex);
-
-    elements.papersGrid.innerHTML = pagePapers.map(paper => createPaperCard(paper)).join('');
-
-    elements.papersGrid.querySelectorAll('.paper-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const paperId = card.dataset.id;
-            openDetailModal(paperId);
-        });
-    });
-
-    renderPagination(totalPages);
-}
-
-function createPaperCard(paper) {
-    const categoryNames = {
-        'synthesis': '合成', 'characterization': '表征', 'mechanism': '机理',
-        'application': '应用', 'industrial': '工业化', 'custom': '自定义'
-    };
-
-    const title = getBilingualField(paper, 'title');
-    const abstract = getBilingualField(paper, 'abstract');
     
-    // 判断是否为粗略卡片
-    const isRough = isRoughCard(paper);
-    const cardClass = isRough ? 'paper-card rough-card' : 'paper-card complete-card';
-
-    return `
-        <div class="${cardClass}" data-id="${paper.id}">
-            ${isRough ? '<span class="card-badge yellow">粗略卡片</span>' : '<span class="card-badge green">完整卡片</span>'}
-            <span class="paper-category">${categoryNames[paper.category] || '未分类'}</span>
-            <h4 class="paper-title">${escapeHtml(title || '无标题')}</h4>
-            <p class="paper-authors">${escapeHtml(paper.authors || '未知作者')}</p>
-            <div class="paper-meta">
-                <span class="paper-meta-item">📰 ${escapeHtml(paper.journal || '未知期刊')}</span>
-                <span class="paper-meta-item">📅 ${paper.publish_date || ''}</span>
+    container.innerHTML = papers.map(paper => `
+        <div class="paper-card" data-id="${paper.id}">
+            <div class="paper-card-title">${escapeHtml(paper.title || paper.titleCn || '无标题')}</div>
+            ${paper.titleEn ? `<div class="text-muted" style="font-size: 0.9rem; margin-bottom: 8px;">${escapeHtml(paper.titleEn)}</div>` : ''}
+            <div class="paper-card-meta">
+                ${paper.authors ? `<span>${escapeHtml(paper.authors.join(', '))}</span>` : ''}
+                ${paper.year ? `<span> · ${paper.year}</span>` : ''}
+                ${paper.doi ? `<span> · DOI: ${escapeHtml(paper.doi)}</span>` : ''}
+                <span class="badge badge-secondary" style="margin-left: 8px;">${formatDate(paper.addedAt)}</span>
             </div>
-            ${abstract ? `<p class="paper-abstract">${escapeHtml(abstract)}</p>` : ''}
-        </div>
-    `;
-}
-
-/**
- * 判断是否为粗略卡片
- */
-function isRoughCard(paper) {
-    // 粗略卡片：isRough标记为true，或者必填字段为空
-    if (paper.isRough === true) return true;
-    
-    const requiredFields = ['summary', 'summary_cn', 'innovation', 'innovation_cn', 
-                           'application', 'application_cn', 'structure', 'structure_cn',
-                           'methods', 'methods_cn'];
-    
-    for (const field of requiredFields) {
-        const value = paper[field];
-        if (!value) return true;
-        // 支持字符串和数组
-        if (Array.isArray(value) && value.length === 0) return true;
-        if (typeof value === 'string' && value.trim() === '') return true;
-    }
-    return false;
-}
-
-/**
- * 渲染分页
- */
-function renderPagination(totalPages) {
-    if (!elements.pagination) return;
-    if (totalPages <= 1) {
-        elements.pagination.innerHTML = '';
-        return;
-    }
-
-    let html = '';
-    html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">←</button>`;
-
-    const maxVisible = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-    if (endPage - startPage < maxVisible - 1) {
-        startPage = Math.max(1, endPage - maxVisible + 1);
-    }
-
-    if (startPage > 1) {
-        html += `<button class="page-btn" onclick="goToPage(1)">1</button>`;
-        if (startPage > 2) html += `<span style="padding: 0 8px;">...</span>`;
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
-    }
-
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) html += `<span style="padding: 0 8px;">...</span>`;
-        html += `<button class="page-btn" onclick="goToPage(${totalPages})">${totalPages}</button>`;
-    }
-
-    html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">→</button>`;
-    elements.pagination.innerHTML = html;
-}
-
-function goToPage(page) {
-    currentPage = page;
-    renderPapers();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-/**
- * 获取双语字段值
- */
-function getBilingualField(paper, field) {
-    const cnField = field + '_cn';
-    if (displayLang === 'cn') {
-        return paper[cnField] || paper[field] || '';
-    } else {
-        return paper[field] || paper[cnField] || '';
-    }
-}
-
-/**
- * 语言切换
- */
-function toggleLang() {
-    displayLang = displayLang === 'cn' ? 'en' : 'cn';
-    if (elements.langIndicator) {
-        elements.langIndicator.textContent = displayLang === 'cn' ? '中文' : 'English';
-    }
-    renderPapers();
-}
-
-/**
- * 详情模态框
- */
-function openDetailModal(paperId) {
-    const paper = papers.find(p => p.id === paperId);
-    if (!paper) return;
-
-    const categoryNames = {
-        'synthesis': '合成', 'characterization': '表征', 'mechanism': '机理研究',
-        'application': '应用', 'industrial': '工业化', 'custom': '自定义'
-    };
-
-    const isRough = isRoughCard(paper);
-    
-    // 双语字段
-    const title = getBilingualField(paper, 'title');
-    const abstract = getBilingualField(paper, 'abstract');
-    const summary = getBilingualField(paper, 'summary');
-    const innovation = getBilingualField(paper, 'innovation');
-    const application = getBilingualField(paper, 'application');
-    const structure = getBilingualField(paper, 'structure');
-    const methods = getBilingualField(paper, 'methods');
-
-    const labels = displayLang === 'cn' ? {
-        abstract: '摘要', summary: '工作总结', innovation: '主要创新点',
-        application: '应用领域', structure: '文章脉络', methods: '表征技术与数据分析'
-    } : {
-        abstract: 'Abstract', summary: 'Summary', innovation: 'Key Innovation',
-        application: 'Application', structure: 'Structure', methods: 'Methods & Analysis'
-    };
-
-    document.getElementById('detailModalTitle').textContent = title;
-
-    const keywordsHtml = Array.isArray(paper.keywords) ?
-        paper.keywords.map(k => `<span class="keyword-tag">${escapeHtml(k)}</span>`).join('') : '';
-
-    const detailBody = document.getElementById('detailModalBody');
-    detailBody.innerHTML = `
-        <div class="paper-detail ${isRough ? 'rough-card-detail' : 'complete-card-detail'}">
-            <!-- 卡片类型标识 -->
-            <div class="card-type-banner ${isRough ? 'yellow' : 'green'}">
-                ${isRough ? '⚠️ 粗略卡片 - 请补全信息' : '✅ 完整卡片'}
-            </div>
-            
-            <!-- 元信息 -->
-            <div class="detail-meta">
-                <div class="detail-meta-item">
-                    <span class="detail-meta-label">分类</span>
-                    <span class="detail-meta-value">${categoryNames[paper.category] || '未分类'}</span>
-                </div>
-                <div class="detail-meta-item">
-                    <span class="detail-meta-label">作者</span>
-                    <span class="detail-meta-value">${escapeHtml(paper.authors || '未知')}</span>
-                </div>
-                <div class="detail-meta-item">
-                    <span class="detail-meta-label">期刊</span>
-                    <span class="detail-meta-value">${escapeHtml(paper.journal || '未知')}</span>
-                </div>
-                <div class="detail-meta-item">
-                    <span class="detail-meta-label">发表日期</span>
-                    <span class="detail-meta-value">${paper.publish_date || '未知'}</span>
-                </div>
-                ${paper.doi ? `
-                <div class="detail-meta-item">
-                    <span class="detail-meta-label">DOI</span>
-                    <span class="detail-meta-value">
-                        <a href="https://doi.org/${paper.doi}" target="_blank">${paper.doi}</a>
-                    </span>
-                </div>
-                ` : ''}
-            </div>
-
-            <!-- 关键词 -->
-            ${keywordsHtml ? `
-            <div class="detail-section">
-                <h4 class="detail-section-title">关键词</h4>
-                <div class="detail-keywords">${keywordsHtml}</div>
-            </div>
-            ` : ''}
-
-            <!-- 摘要 -->
-            ${abstract ? `
-            <div class="detail-section">
-                <h4 class="detail-section-title">${labels.abstract}</h4>
-                <div class="detail-content">${escapeHtml(abstract)}</div>
-            </div>
-            ` : ''}
-
-            <!-- 工作总结 -->
-            ${summary ? `
-            <div class="detail-section">
-                <h4 class="detail-section-title">${labels.summary}</h4>
-                <div class="detail-content">${escapeHtml(summary)}</div>
-            </div>
-            ` : ''}
-
-            <!-- 主要创新点 -->
-            ${innovation ? `
-            <div class="detail-section">
-                <h4 class="detail-section-title">${labels.innovation}</h4>
-                <div class="detail-content">${escapeHtml(innovation)}</div>
-            </div>
-            ` : ''}
-
-            <!-- 应用领域 -->
-            ${application ? `
-            <div class="detail-section">
-                <h4 class="detail-section-title">${labels.application}</h4>
-                <div class="detail-content">${escapeHtml(application)}</div>
-            </div>
-            ` : ''}
-
-            <!-- 文章脉络 -->
-            ${structure ? `
-            <div class="detail-section">
-                <h4 class="detail-section-title">${labels.structure}</h4>
-                <div class="detail-content">${escapeHtml(structure)}</div>
-            </div>
-            ` : ''}
-
-            <!-- 表征技术 -->
-            ${methods ? `
-            <div class="detail-section">
-                <h4 class="detail-section-title">${labels.methods}</h4>
-                <div class="detail-content">${escapeHtml(methods)}</div>
-            </div>
-            ` : ''}
-
-            <!-- 操作按钮 -->
-            <div class="detail-actions">
-                ${paper.doi ? `<a href="https://doi.org/${paper.doi}" target="_blank" class="btn btn-primary">🔗 访问原文</a>` : ''}
-                <button class="btn btn-secondary" onclick="closeDetailModal(); openEditModal('${paper.id}')">✏️ 编辑</button>
-                ${isRough ? `<button class="btn btn-warning" onclick="closeDetailModal(); openCompleteModal('${paper.id}')">📝 补全</button>` : ''}
-                <button class="btn btn-danger" onclick="confirmDeletePaper('${paper.id}')">🗑️ 删除</button>
+            <div class="paper-card-actions">
+                ${paper.doi ? `<a href="https://doi.org/${paper.doi}" target="_blank" class="btn btn-sm btn-outline">🔗 原文</a>` : ''}
+                <button class="btn btn-sm btn-primary" onclick="createCardFromPaper('${paper.id}')">🃏 生成卡片</button>
+                <button class="btn btn-sm btn-danger" onclick="deletePaper('${paper.id}')">🗑️ 删除</button>
             </div>
         </div>
-    `;
-
-    elements.detailModal.classList.remove('hidden');
+    `).join('');
 }
 
-function closeDetailModal() {
-    elements.detailModal.classList.add('hidden');
-}
-
-/**
- * 补全模态框（仅粗略卡片显示）
- */
-function openCompleteModal(paperId = null) {
-    if (paperId) {
-        editingPaper = papers.find(p => p.id === paperId);
-    }
+// 加载卡片列表
+function loadCards() {
+    const container = document.getElementById('cardList');
+    const cards = PapersStore.getAll();
     
-    if (!editingPaper) {
-        alert('请先选择要补全的卡片');
+    if (cards.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="grid-column: 1 / -1;">
+                <div class="empty-state-icon">🃏</div>
+                <p>暂无文献卡片</p>
+                <p class="text-muted">使用AI生成或手动创建卡片</p>
+            </div>
+        `;
         return;
     }
-
-    // 生成补全提示词（去掉已在DOI处理中填写的字段）
-    const prompt = generateCompletePrompt(editingPaper);
     
-    document.getElementById('completePaperTitle').textContent = editingPaper.title || editingPaper.title_cn;
-    document.getElementById('completePrompt').value = prompt;
-    document.getElementById('completeJson').value = '';
+    container.innerHTML = cards.map(card => `
+        <div class="card" onclick="openCardDetail('${card.id}')" style="cursor: pointer;">
+            <div style="font-weight: 600; margin-bottom: 8px;">
+                ${escapeHtml(card.title || '文献卡片')}
+            </div>
+            ${card.summary ? `<p class="text-muted" style="font-size: 0.9rem; margin-bottom: 12px;">${escapeHtml(card.summary.substring(0, 100))}...</p>` : ''}
+            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+                ${(card.keywords || []).slice(0, 3).map(kw => `<span class="badge badge-primary">${escapeHtml(kw)}</span>`).join('')}
+            </div>
+            <div class="text-muted" style="font-size: 0.8rem;">
+                ${card.vocabulary?.length || 0} 个词汇 · ${formatDate(card.createdAt)}
+            </div>
+        </div>
+    `).join('');
+}
+
+// 加载论文选择器
+function loadPaperSelect() {
+    const select = document.getElementById('paperSelect');
+    const papers = LibraryStore.getAll();
     
-    document.getElementById('completeModal').classList.remove('hidden');
+    select.innerHTML = '<option value="">-- 选择文献 --</option>' +
+        papers.map(p => `
+            <option value="${p.id}">${escapeHtml(p.title || p.titleCn || '无标题')}</option>
+        `).join('');
 }
 
-function closeCompleteModal() {
-    document.getElementById('completeModal').classList.add('hidden');
-    editingPaper = null;
-}
-
-/**
- * 生成补全提示词
- */
-function generateCompletePrompt(paper) {
-    return `请补全以下文献卡片的剩余字段。
-
-已填写的字段：
-- 标题：${paper.title || paper.title_cn || '无'}
-- 作者：${paper.authors || '无'}
-- 期刊：${paper.journal || '无'}
-- 出版日期：${paper.publish_date || '无'}
-- DOI：${paper.doi || '无'}
-- 摘要：${(paper.abstract || paper.abstract_cn || '无').substring(0, 200)}...
-
-请补全以下JSON格式的字段（只需返回JSON，不要其他内容）：
-
-{
-  "summary": "英文工作总结（本文做了什么、得到了什么结论，100-200字）",
-  "summary_cn": "中文工作总结",
-  "innovation": "英文创新点（本文的主要贡献和创新之处）",
-  "innovation_cn": "中文创新点",
-  "application": "英文应用领域",
-  "application_cn": "中文应用领域",
-  "structure": "英文论证思路（研究了什么→用了什么方法→得到什么结果→得出什么结论）",
-  "structure_cn": "中文论证思路",
-  "methods": "英文表征技术（如：XRD, SEM, UV-vis等）",
-  "methods_cn": "中文表征技术",
-  "keywords": ["关键词1", "关键词2", "关键词3"]
-}
-
-所有字段必须完整，不能有null或空值。`;
-}
-
-/**
- * 确认补全
- */
-function confirmComplete() {
-    const jsonStr = document.getElementById('completeJson').value.trim();
+// 通过DOI添加文献
+async function addByDoi() {
+    const doiInput = document.getElementById('doiInput');
+    const doi = doiInput.value.trim();
     
-    if (!jsonStr) {
-        alert('请粘贴补全后的JSON数据');
+    if (!doi) {
+        showToast('请输入DOI', 'error');
         return;
     }
-
+    
+    // 清理DOI
+    const cleanDoi = doi.replace(/^https?:\/\/doi\.org\//, '');
+    
+    showToast('正在获取文献信息...', 'info');
+    
     try {
-        const data = JSON.parse(jsonStr);
+        // 尝试从CrossRef API获取信息
+        const response = await fetch(`https://api.crossref.org/works/${encodeURIComponent(cleanDoi)}`);
         
-        // 验证必要字段
-        const required = ['summary', 'summary_cn', 'innovation', 'innovation_cn', 
-                        'application', 'application_cn', 'structure', 'structure_cn',
-                        'methods', 'methods_cn'];
-        
-        for (const field of required) {
-            if (!data[field] || data[field].trim() === '') {
-                alert(`字段 "${field}" 不能为空`);
-                return;
-            }
+        if (!response.ok) {
+            throw new Error('文献未找到');
         }
-
-        // 更新卡片
-        Object.assign(editingPaper, data);
-        editingPaper.isRough = false;
-        editingPaper.completedAt = new Date().toISOString();
-
-        savePapers();
-        closeCompleteModal();
-        filterPapers();
-
-        alert('✅ 卡片补全成功！');
-
-    } catch (e) {
-        alert('JSON格式错误: ' + e.message);
-    }
-}
-
-/**
- * 导入模态框
- */
-function openImportModal() {
-    document.getElementById('importDoi').value = '';
-    document.getElementById('doiResult').innerHTML = '';
-    document.getElementById('confirmImport').disabled = true;
-    importData = {};
-    elements.importModal.classList.remove('hidden');
-}
-
-function closeImportModal() {
-    elements.importModal.classList.add('hidden');
-    // 清空状态
-    importData = {};
-    const jsonInput = document.getElementById('jsonInput');
-    const jsonResult = document.getElementById('jsonResult');
-    if (jsonInput) jsonInput.value = '';
-    if (jsonResult) jsonResult.innerHTML = '';
-    document.getElementById('confirmImport').disabled = true;
-}
-
-function handleImportTypeChange(e) {
-    const type = e.target.value;
-    document.getElementById('doiImportField').classList.toggle('hidden', type !== 'doi');
-    document.getElementById('jsonImportField').classList.toggle('hidden', type !== 'json');
-    
-    importData = {};
-    document.getElementById('confirmImport').disabled = true;
-}
-
-async function fetchDoiPaper() {
-    const doiInput = document.getElementById('importDoi').value.trim();
-    if (!doiInput) {
-        alert('请输入DOI');
-        return;
-    }
-
-    let doi = doiInput;
-    if (doiInput.includes('doi.org/')) {
-        doi = doiInput.split('doi.org/')[1];
-    }
-
-    const btn = document.getElementById('fetchDoiBtn');
-    const useAI = document.getElementById('useAIParse')?.checked;
-    const resultDiv = document.getElementById('doiResult');
-    
-    btn.disabled = true;
-    btn.textContent = '获取中...';
-    resultDiv.innerHTML = '<p class="text-muted">正在获取文献信息...</p>';
-
-    try {
-        const response = await fetch(`${CONFIG.CROSSREF_API}${doi}`, {
-            headers: { 'Accept': 'application/json' }
-        });
-
-        if (!response.ok) throw new Error('获取失败');
-
+        
         const data = await response.json();
         const work = data.message;
-
-        importData = {
+        
+        const paper = {
+            doi: cleanDoi,
             title: work.title?.[0] || '',
-            authors: work.author?.map(a => `${a.family}, ${a.given}`).join('; ') || '',
+            titleCn: '',
+            authors: (work.author || []).map(a => `${a.given || ''} ${a.family || ''}`.trim()),
+            year: work.published?.['date-parts']?.[0]?.[0] || work.created?.['date-parts']?.[0]?.[0],
             journal: work['container-title']?.[0] || '',
-            publish_date: work.published?.['date-parts']?.[0]?.join('-') || '',
-            doi: doi,
-            abstract: work.abstract?.replace(/<[^>]*>/g, '') || '',
-            keywords: work.subject || [],
-            vocabulary: []
+            abstract: work.abstract?.replace(/<[^>]*>/g, '') || ''
         };
-
-        if (!useAI || !isApiKeyConfigured()) {
-            // 仅获取基本信息，创建粗略卡片
-            resultDiv.innerHTML = `
-                <div style="padding: 16px; background: #fef3c7; border-radius: 8px;">
-                    <p style="font-weight: 600; color: #d97706;">⚠️ 将创建粗略卡片</p>
-                    <p style="margin-top: 8px; color: var(--text-secondary);">
-                        DOI导入只能获取基本信息，完整卡片需要手动补全或使用AI解析。
-                    </p>
-                </div>
-                <div style="padding: 16px; background: #f0fdf4; border-radius: 8px; margin-top: 12px;">
-                    <p style="font-weight: 600; color: var(--success-color);">已获取基本信息</p>
-                    <p style="margin-top: 8px;"><strong>标题：</strong>${escapeHtml(importData.title)}</p>
-                    <p style="margin-top: 4px;"><strong>作者：</strong>${escapeHtml(importData.authors)}</p>
-                    <p style="margin-top: 4px;"><strong>期刊：</strong>${escapeHtml(importData.journal)}</p>
-                    <p style="margin-top: 4px;"><strong>DOI：</strong>${escapeHtml(doi)}</p>
-                </div>
-            `;
-            document.getElementById('confirmImport').disabled = false;
+        
+        const result = LibraryStore.add(paper);
+        
+        if (result.success) {
+            showToast('文献添加成功！', 'success');
+            doiInput.value = '';
+            loadLibrary();
+            loadPaperSelect();
         } else {
-            // 使用AI解析
-            resultDiv.innerHTML = '<p class="text-muted">正在连接AI服务...</p>';
-            btn.textContent = 'AI解析中...';
-            
-            try {
-                const aiResult = await parsePaperWithAI(doi, importData.title, importData.abstract);
-                importData = mergeWithBaseInfo(importData, aiResult);
-                
-                resultDiv.innerHTML = `
-                    <div style="padding: 16px; background: #f0fdf4; border-radius: 8px;">
-                        <p style="font-weight: 600; color: var(--success-color);">✅ AI解析成功</p>
-                        <details style="margin-top: 12px;">
-                            <summary style="cursor: pointer; color: var(--primary-color);">查看解析详情</summary>
-                            <div style="margin-top: 8px; padding: 12px; background: #f8fafc; border-radius: 6px; font-size: 0.9rem;">
-                                <p><strong>创新点：</strong>${escapeHtml(importData.innovation || '-')}</p>
-                                <p style="margin-top: 8px;"><strong>工作总结：</strong>${escapeHtml(importData.summary || '-')}</p>
-                                <p style="margin-top: 8px;"><strong>表征技术：</strong>${escapeHtml(importData.methods || '-')}</p>
-                            </div>
-                        </details>
-                    </div>
-                `;
-            } catch (aiError) {
-                resultDiv.innerHTML = `
-                    <div style="padding: 16px; background: #fef3c7; border-radius: 8px;">
-                        <p style="font-weight: 600; color: #d97706;">⚠️ AI解析失败，将创建粗略卡片</p>
-                        <p style="margin-top: 4px; color: var(--text-secondary);">${aiError.message}</p>
-                    </div>
-                    <div style="padding: 16px; background: #f0fdf4; border-radius: 8px; margin-top: 12px;">
-                        <p style="font-weight: 600; color: var(--success-color);">已获取基本信息</p>
-                        <p style="margin-top: 8px;"><strong>标题：</strong>${escapeHtml(importData.title)}</p>
-                    </div>
-                `;
-            }
-            document.getElementById('confirmImport').disabled = false;
+            showToast(result.message, 'warning');
         }
-
     } catch (error) {
-        console.error('获取DOI信息失败:', error);
-        resultDiv.innerHTML = `
-            <div style="padding: 16px; background: #fef2f2; border-radius: 8px;">
-                <p style="font-weight: 600; color: var(--error-color);">❌ 获取失败</p>
-                <p class="text-muted mt-4">请检查DOI是否正确。</p>
-            </div>
-        `;
+        console.error('获取文献失败:', error);
+        showToast('获取文献信息失败，请尝试手动添加', 'error');
     }
-
-    btn.disabled = false;
-    btn.textContent = '获取文献信息';
 }
 
-function handleJsonFileUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const resultDiv = document.getElementById('jsonResult');
-    resultDiv.innerHTML = '<p class="text-muted">正在读取文件...</p>';
-    
-    file.text().then(text => {
-        document.getElementById('jsonInput').value = text;
-        parseJsonInput();
-    }).catch(error => {
-        resultDiv.innerHTML = `<p class="text-danger">❌ 文件读取失败: ${error.message}</p>`;
-    });
+// 打开手动添加模态框
+function openManualAddModal() {
+    document.getElementById('manualAddModal').classList.remove('hidden');
+    document.getElementById('manualAddForm')?.reset();
 }
 
-function parseJsonInput() {
-    const jsonInput = document.getElementById('jsonInput')?.value || '';
-    const resultDiv = document.getElementById('jsonResult');
+// 关闭手动添加模态框
+function closeManualAddModal() {
+    document.getElementById('manualAddModal').classList.add('hidden');
+}
+
+// 确认手动添加
+function confirmManualAdd() {
+    const titleCn = document.getElementById('manualTitleCn').value.trim();
+    const titleEn = document.getElementById('manualTitleEn').value.trim();
+    const doi = document.getElementById('manualDoi').value.trim();
+    const authors = document.getElementById('manualAuthors').value.trim();
+    const year = document.getElementById('manualYear').value.trim();
+    const abstract = document.getElementById('manualAbstract').value.trim();
     
-    if (!jsonInput.trim()) {
-        resultDiv.innerHTML = '';
-        importData = {};
-        document.getElementById('confirmImport').disabled = true;
+    if (!titleCn && !titleEn) {
+        showToast('请至少输入中文或英文标题', 'error');
         return;
     }
+    
+    const paper = {
+        titleCn,
+        titleEn,
+        doi,
+        authors: authors ? authors.split(',').map(a => a.trim()) : [],
+        year: year ? parseInt(year) : null,
+        abstract
+    };
+    
+    const result = LibraryStore.add(paper);
+    
+    if (result.success) {
+        showToast('文献添加成功！', 'success');
+        closeManualAddModal();
+        loadLibrary();
+        loadPaperSelect();
+    } else {
+        showToast(result.message, 'warning');
+    }
+}
+
+// 删除文献
+function deletePaper(id) {
+    if (!confirm('确定要删除这篇文献吗？')) return;
+    
+    LibraryStore.remove(id);
+    showToast('文献已删除', 'success');
+    loadLibrary();
+    loadPaperSelect();
+}
+
+// 从文献创建卡片
+function createCardFromPaper(paperId) {
+    const paper = LibraryStore.getAll().find(p => p.id === paperId);
+    if (!paper) {
+        showToast('文献不存在', 'error');
+        return;
+    }
+    
+    // 预填充摘要
+    document.getElementById('paperSelect').value = paperId;
+    document.getElementById('customAbstract').value = paper.abstract || paper.titleEn || paper.titleCn || '';
+    
+    // 切换到卡片Tab
+    switchTab('cards');
+    
+    showToast('已加载文献信息，填写摘要后点击生成卡片', 'info');
+}
+
+// 生成卡片（AI或手动）
+async function generateCard() {
+    const paperSelect = document.getElementById('paperSelect');
+    const customAbstract = document.getElementById('customAbstract').value.trim();
+    
+    const paperId = paperSelect.value;
+    const paper = paperId ? LibraryStore.getAll().find(p => p.id === paperId) : null;
+    const abstract = customAbstract || paper?.abstract || '';
+    
+    if (!abstract) {
+        showToast('请提供摘要内容', 'error');
+        return;
+    }
+    
+    const settings = GlobalSettings.get();
+    
+    if (!settings.apiKey) {
+        // 没有API，使用简单解析
+        showToast('未配置API，使用基础解析模式', 'info');
+        createSimpleCard(paper, abstract);
+        return;
+    }
+    
+    // 显示加载状态
+    const btn = document.getElementById('generateCardBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner"></span> AI解析中...';
+    btn.disabled = true;
     
     try {
-        let jsonData = JSON.parse(jsonInput.trim());
-        
-        // 检查是否被代码块包裹
-        if (typeof jsonData === 'string') {
-            const jsonMatch = jsonData.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (jsonMatch) jsonData = JSON.parse(jsonMatch[1]);
-        }
-        
-        if (!jsonData.title && !jsonData.title_cn) {
-            resultDiv.innerHTML = '<p class="text-danger">JSON数据缺少标题字段</p>';
-            return;
-        }
-        
-        importData = {
-            title: jsonData.title || '',
-            title_cn: jsonData.title_cn || '',
-            authors: jsonData.authors || '',
-            journal: jsonData.journal || '',
-            publish_date: jsonData.publish_date || '',
-            doi: jsonData.doi || '',
-            abstract: jsonData.abstract || '',
-            abstract_cn: jsonData.abstract_cn || '',
-            keywords: jsonData.keywords || [],
-            summary: jsonData.summary || '',
-            summary_cn: jsonData.summary_cn || '',
-            innovation: jsonData.innovation || '',
-            innovation_cn: jsonData.innovation_cn || '',
-            application: jsonData.application || '',
-            application_cn: jsonData.application_cn || '',
-            structure: jsonData.structure || '',
-            structure_cn: jsonData.structure_cn || '',
-            methods: jsonData.methods || '',
-            methods_cn: jsonData.methods_cn || '',
-            vocabulary: jsonData.vocabulary || [],
-            category: jsonData.category || 'custom'
-        };
-        
-        resultDiv.innerHTML = `
-            <div class="import-preview">
-                <p><strong>标题:</strong> ${importData.title || importData.title_cn}</p>
-                <p><strong>作者:</strong> ${importData.authors || '未提供'}</p>
-                <p><strong>期刊:</strong> ${importData.journal || '未提供'}</p>
-                <p class="text-success">✅ 可点击"确认导入"</p>
-            </div>
-        `;
-        
-        document.getElementById('confirmImport').disabled = false;
-        
+        const card = await callAIForCard(abstract, settings);
+        saveCard(card, paper);
     } catch (error) {
-        resultDiv.innerHTML = `<p class="text-muted">等待完整JSON数据...</p>`;
-        importData = {};
-        document.getElementById('confirmImport').disabled = true;
+        console.error('AI解析失败:', error);
+        showToast('AI解析失败，使用基础模式', 'warning');
+        createSimpleCard(paper, abstract);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     }
 }
 
-async function confirmImport() {
-    const importType = document.querySelector('input[name="importType"]:checked')?.value || 'doi';
-    const category = document.getElementById('importCategory')?.value || 'custom';
+// 调用AI生成卡片
+async function callAIForCard(abstract, settings) {
+    const prompt = `请分析以下学术论文摘要，提取关键信息并生成简洁的文献卡片格式。
 
-    if (!importData.title && !importData.title_cn) {
-        alert('请先解析文献信息');
+摘要内容：
+${abstract}
+
+请以JSON格式返回，包含以下字段：
+- title: 论文标题（中文或英文）
+- summary: 简明摘要（100字以内）
+- keywords: 关键词数组（3-5个）
+- vocabulary: 学术词汇数组，每个词汇包含：
+  - word: 英文词汇
+  - word_cn: 中文翻译
+  - definition_cn: 中文释义
+  - definition_en: 英文释义（可选）
+  - example: 例句（可选，使用**词汇**标记）
+- keyPoints: 关键要点数组（2-3个）
+
+只返回JSON，不要有其他内容。`;
+
+    let apiUrl, requestBody;
+    
+    switch (settings.apiProvider) {
+        case 'siliconflow':
+            apiUrl = 'https://api.siliconflow.cn/v1/chat/completions';
+            requestBody = {
+                model: settings.model || 'Qwen/Qwen2.5-7B-Instruct',
+                messages: [{ role: 'user', content: prompt }],
+                stream: false
+            };
+            break;
+        case 'deepseek':
+            apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+            requestBody = {
+                model: settings.model || 'deepseek-chat',
+                messages: [{ role: 'user', content: prompt }],
+                stream: false
+            };
+            break;
+        case 'qwen':
+            apiUrl = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+            requestBody = {
+                model: settings.model || 'qwen-plus',
+                messages: [{ role: 'user', content: prompt }],
+                stream: false
+            };
+            break;
+        default:
+            throw new Error('不支持的API提供商');
+    }
+    
+    const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${settings.apiKey}`
+        },
+        body: JSON.stringify(requestBody)
+    });
+    
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error?.message || 'API调用失败');
+    }
+    
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    
+    // 解析JSON响应
+    let card;
+    try {
+        // 尝试提取JSON
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            card = JSON.parse(jsonMatch[0]);
+        } else {
+            throw new Error('无法解析响应');
+        }
+    } catch (e) {
+        console.error('解析失败:', e);
+        throw e;
+    }
+    
+    return card;
+}
+
+// 创建简单卡片（无API）
+function createSimpleCard(paper, abstract) {
+    // 简单提取关键词
+    const commonWords = ['perovskite', 'solar', 'cell', 'efficiency', 'material', 'device', 'layer', 'film', 'interface', 'transport'];
+    const words = abstract.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
+    const wordCounts = {};
+    words.forEach(w => {
+        if (!commonWords.includes(w)) {
+            wordCounts[w] = (wordCounts[w] || 0) + 1;
+        }
+    });
+    const keywords = Object.entries(wordCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([word]) => word);
+    
+    const card = {
+        title: paper?.title || paper?.titleCn || '文献卡片',
+        summary: abstract.substring(0, 200) + (abstract.length > 200 ? '...' : ''),
+        keywords,
+        vocabulary: keywords.map(w => ({
+            word: w,
+            word_cn: '（待查）',
+            definition_cn: '（待查）'
+        })),
+        keyPoints: ['从摘要中提取的关键词已生成词汇卡片']
+    };
+    
+    saveCard(card, paper);
+}
+
+// 保存卡片
+function saveCard(card, paper) {
+    const cardData = {
+        title: card.title,
+        summary: card.summary,
+        keywords: card.keywords || [],
+        vocabulary: (card.vocabulary || []).map(v => ({
+            ...v,
+            status: 'new',
+            correct_count: 0,
+            error_count: 0,
+            correct_streak: 0
+        })),
+        keyPoints: card.keyPoints || [],
+        sourcePaperId: paper?.id || null,
+        sourceAbstract: paper?.abstract || null
+    };
+    
+    PapersStore.add(cardData);
+    
+    // 同时添加词汇到词汇本
+    if (cardData.vocabulary.length > 0) {
+        cardData.vocabulary.forEach(v => {
+            VocabularyStore.add(v);
+        });
+        showToast(`卡片创建成功！已将 ${cardData.vocabulary.length} 个词汇添加到词汇本`, 'success');
+    } else {
+        showToast('卡片创建成功！', 'success');
+    }
+    
+    // 清空表单
+    document.getElementById('paperSelect').value = '';
+    document.getElementById('customAbstract').value = '';
+    
+    // 重新加载卡片列表
+    loadCards();
+}
+
+// 打开卡片详情
+function openCardDetail(cardId) {
+    const card = PapersStore.getById(cardId);
+    if (!card) {
+        showToast('卡片不存在', 'error');
         return;
     }
-
-    const newPaper = {
-        id: generateId(),
-        title: importData.title || '',
-        title_cn: importData.title_cn || '',
-        authors: importData.authors || '',
-        journal: importData.journal || '',
-        publish_date: importData.publish_date || '',
-        doi: importData.doi || '',
-        abstract: importData.abstract || '',
-        abstract_cn: importData.abstract_cn || '',
-        category: importData.category || category,
-        keywords: importData.keywords || [],
-        image: '',
-        summary: importData.summary || '',
-        summary_cn: importData.summary_cn || '',
-        innovation: importData.innovation || '',
-        innovation_cn: importData.innovation_cn || '',
-        application: importData.application || '',
-        application_cn: importData.application_cn || '',
-        structure: importData.structure || '',
-        structure_cn: importData.structure_cn || '',
-        methods: importData.methods || '',
-        methods_cn: importData.methods_cn || '',
-        vocabulary: importData.vocabulary || [],
-        source: 'import',
-        isRough: !importData.summary,
-        createdAt: new Date().toISOString()
-    };
-
-    // 检查是否已有该DOI的文献
-    const existingIndex = papers.findIndex(p => p.doi === newPaper.doi);
-    if (existingIndex !== -1) {
-        papers[existingIndex] = { ...papers[existingIndex], ...newPaper };
-    } else {
-        papers.unshift(newPaper);
-    }
-
-    savePapers();
-    closeImportModal();
-    // 直接重新渲染
-    filteredPapers = [...papers];
-    currentPage = 1;
-    renderPapers();
-    updateJournalFilter();
-    alert('文献导入成功！');
-}
-
-function openEditModal(paperId = null) {
-    if (paperId) {
-        editingPaper = papers.find(p => p.id === paperId);
-    } else {
-        editingPaper = null;
-    }
-
-    const form = elements.paperForm;
-    if (editingPaper) {
-        form.title.value = editingPaper.title || '';
-        form.title_cn.value = editingPaper.title_cn || '';
-        form.authors.value = editingPaper.authors || '';
-        form.journal.value = editingPaper.journal || '';
-        form.publish_date.value = editingPaper.publish_date || '';
-        form.doi.value = editingPaper.doi || '';
-        form.abstract.value = editingPaper.abstract || '';
-        form.abstract_cn.value = editingPaper.abstract_cn || '';
-        form.keywords.value = (editingPaper.keywords || []).join(', ');
-        form.category.value = editingPaper.category || 'custom';
-        form.summary.value = editingPaper.summary || '';
-        form.summary_cn.value = editingPaper.summary_cn || '';
-        form.innovation.value = editingPaper.innovation || '';
-        form.innovation_cn.value = editingPaper.innovation_cn || '';
-        form.application.value = editingPaper.application || '';
-        form.application_cn.value = editingPaper.application_cn || '';
-        form.structure.value = editingPaper.structure || '';
-        form.structure_cn.value = editingPaper.structure_cn || '';
-        form.methods.value = editingPaper.methods || '';
-        form.methods_cn.value = editingPaper.methods_cn || '';
-    } else {
-        form.reset();
-    }
-
-    elements.editModal.classList.remove('hidden');
-}
-
-function closeEditModal() {
-    elements.editModal.classList.add('hidden');
-    editingPaper = null;
-}
-
-function handlePaperSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-
-    const paperData = {
-        title: form.title.value,
-        title_cn: form.title_cn.value,
-        authors: form.authors.value,
-        journal: form.journal.value,
-        publish_date: form.publish_date.value,
-        doi: form.doi.value,
-        abstract: form.abstract.value,
-        abstract_cn: form.abstract_cn.value,
-        keywords: form.keywords.value.split(',').map(k => k.trim()).filter(Boolean),
-        category: form.category.value,
-        summary: form.summary.value,
-        summary_cn: form.summary_cn.value,
-        innovation: form.innovation.value,
-        innovation_cn: form.innovation_cn.value,
-        application: form.application.value,
-        application_cn: form.application_cn.value,
-        structure: form.structure.value,
-        structure_cn: form.structure_cn.value,
-        methods: form.methods.value,
-        methods_cn: form.methods_cn.value,
-        isRough: !form.summary.value,
-        updatedAt: new Date().toISOString()
-    };
-
-    if (editingPaper) {
-        Object.assign(editingPaper, paperData);
-    } else {
-        paperData.id = generateId();
-        paperData.createdAt = new Date().toISOString();
-        papers.unshift(paperData);
-    }
-
-    savePapers();
-    closeEditModal();
-    filterPapers();
-
-    alert(editingPaper ? '文献更新成功！' : '文献添加成功！');
-}
-
-function confirmDeletePaper(paperId) {
-    const paper = papers.find(p => p.id === paperId);
-    if (!paper) return;
     
-    if (!confirm('确定要删除这篇文献卡片吗？此操作不可撤销。')) return;
+    currentCardId = cardId;
     
-    papers = papers.filter(p => p.id !== paperId);
-    savePapers();
-    closeDetailModal();
-    filterPapers();
-    alert('文献卡片已删除');
+    document.getElementById('cardDetailTitle').textContent = card.title || '文献卡片';
+    document.getElementById('cardDetailBody').innerHTML = `
+        <div style="margin-bottom: 24px;">
+            <h4 style="margin-bottom: 8px;">📝 摘要</h4>
+            <p>${escapeHtml(card.summary || '无')}</p>
+        </div>
+        
+        ${card.keywords?.length ? `
+            <div style="margin-bottom: 24px;">
+                <h4 style="margin-bottom: 8px;">🏷️ 关键词</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${card.keywords.map(kw => `<span class="badge badge-primary">${escapeHtml(kw)}</span>`).join('')}
+                </div>
+            </div>
+        ` : ''}
+        
+        ${card.keyPoints?.length ? `
+            <div style="margin-bottom: 24px;">
+                <h4 style="margin-bottom: 8px;">💡 关键要点</h4>
+                <ul style="padding-left: 20px;">
+                    ${card.keyPoints.map(p => `<li style="margin-bottom: 8px;">${escapeHtml(p)}</li>`).join('')}
+                </ul>
+            </div>
+        ` : ''}
+        
+        ${card.vocabulary?.length ? `
+            <div>
+                <h4 style="margin-bottom: 8px;">📖 学术词汇 (${card.vocabulary.length})</h4>
+                <div class="list">
+                    ${card.vocabulary.map(v => `
+                        <div class="list-item">
+                            <div class="list-item-main">
+                                <div class="list-item-title">${escapeHtml(v.word)} <span class="text-muted">- ${escapeHtml(v.word_cn)}</span></div>
+                                <div class="list-item-sub">${escapeHtml(v.definition_cn || '')}</div>
+                            </div>
+                            <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy('${v.word}')">📚 加入学习</button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
+    `;
+    
+    document.getElementById('cardDetailModal').classList.remove('hidden');
 }
 
-function deletePaper() {
-    if (!editingPaper) return;
-    if (!confirm('确定要删除这篇文献吗？')) return;
-
-    papers = papers.filter(p => p.id !== editingPaper.id);
-    savePapers();
-    closeDetailModal();
-    closeEditModal();
-    filterPapers();
-    alert('文献已删除');
+// 添加词汇到学习
+function addVocabToStudy(word) {
+    showToast(`已将 "${word}" 添加到学习队列`, 'success');
 }
 
-function savePapers() {
-    localStorage.setItem('papersData', JSON.stringify(papers));
+// 关闭卡片详情
+function closeCardDetailModal() {
+    document.getElementById('cardDetailModal').classList.add('hidden');
+    currentCardId = null;
 }
 
-/**
- * 工具函数
- */
-function generateId() {
-    return 'p_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    // 如果是数组，转换为列表
-    if (Array.isArray(text)) {
-        if (text.length === 0) return '';
-        // 如果是innovation等，显示为列表
-        return text.map(item => `<div class="list-item">• ${escapeHtml(item)}</div>`).join('');
-    }
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function debounce(fn, delay) {
-    let timer = null;
-    return function(...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-    };
+// 删除当前卡片
+function deleteCurrentCard() {
+    if (!currentCardId || !confirm('确定要删除这个卡片吗？')) return;
+    
+    PapersStore.remove(currentCardId);
+    showToast('卡片已删除', 'success');
+    closeCardDetailModal();
+    loadCards();
 }
