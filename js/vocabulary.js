@@ -570,11 +570,15 @@ function renderWordCard(word, isInitialCard = true) {
  * 渲染选择题
  */
 function renderQuiz(word) {
+    // 判断是学习还是复习模式
+    const useChineseDef = currentMode === 'new'; // 学习用中文释义，复习用英文释义
+    const defToShow = useChineseDef ? (word.definition_cn || word.definition || word.word_cn) : (word.definition || word.word_cn);
+
     const phaseConfig = {
         [StudyPhase.EN_CN]: { prompt: '选择中文释义', main: word.word, type: 'word-en' },
         [StudyPhase.CN_EN]: { prompt: '选择英文单词', main: word.word_cn, type: 'word-cn' },
         [StudyPhase.EN_DEF]: { prompt: '选择正确释义', main: word.word, type: 'word-en' },
-        [StudyPhase.DEF_EN]: { prompt: '选择对应单词', main: word.definition || word.word_cn, type: 'definition' }
+        [StudyPhase.DEF_EN]: { prompt: '选择对应单词', main: defToShow, type: 'definition' }
     };
 
     const config = phaseConfig[currentPhase];
@@ -607,8 +611,11 @@ function generateOptions(word, phase) {
     const shuffled = shuffleArray([...others]).slice(0, 3);
 
     while (shuffled.length < 3) {
-        shuffled.push({ word: 'placeholder', word_cn: '占位选项', definition: '占位选项' });
+        shuffled.push({ word: 'placeholder', word_cn: '占位选项', definition: '占位选项', definition_cn: '占位选项' });
     }
+
+    // 判断是学习还是复习模式
+    const useChineseDef = currentMode === 'new'; // 学习用中文释义，复习用英文释义
 
     let correct, distractors;
     switch (phase) {
@@ -622,8 +629,9 @@ function generateOptions(word, phase) {
             distractors = shuffled.map(w => w.word);
             break;
         case StudyPhase.EN_DEF:
-            correct = word.definition || word.word_cn;
-            distractors = shuffled.map(w => w.definition || w.word_cn);
+            // 学习用中文释义，复习用英文释义
+            correct = useChineseDef ? (word.definition_cn || word.definition || word.word_cn) : (word.definition || word.word_cn);
+            distractors = shuffled.map(w => useChineseDef ? (w.definition_cn || w.definition || w.word_cn) : (w.definition || w.word_cn));
             break;
         default:
             return [];
@@ -633,6 +641,8 @@ function generateOptions(word, phase) {
 }
 
 function getCorrectAnswer(word, phase) {
+    const useChineseDef = currentMode === 'new'; // 学习用中文释义，复习用英文释义
+
     switch (phase) {
         case StudyPhase.EN_CN:
             return word.word_cn;
@@ -640,7 +650,7 @@ function getCorrectAnswer(word, phase) {
         case StudyPhase.DEF_EN:
             return word.word;
         case StudyPhase.EN_DEF:
-            return word.definition || word.word_cn;
+            return useChineseDef ? (word.definition_cn || word.definition || word.word_cn) : (word.definition || word.word_cn);
         default:
             return '';
     }
