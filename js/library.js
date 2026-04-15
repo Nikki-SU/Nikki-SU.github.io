@@ -148,11 +148,23 @@ function isCompleteCard(card) {
  */
 function updateStats() {
     const total = libraryPapers.length;
-    const completed = libraryPapers.filter(p => cardStatusCache[p.doi] === true).length;
-    const pending = total - completed;
+    let completed = 0;  // 完整卡片
+    let rough = 0;      // 粗略卡片
+    let noCard = 0;     // 无卡片
+    
+    libraryPapers.forEach(p => {
+        const card = paperCards.find(c => c.doi === p.doi);
+        if (!card) {
+            noCard++;
+        } else if (card.isRough || !isCompleteCard(card)) {
+            rough++;
+        } else {
+            completed++;
+        }
+    });
 
     if (elements.totalCount) elements.totalCount.textContent = total;
-    if (elements.pendingCount) elements.pendingCount.textContent = pending;
+    if (elements.pendingCount) elements.pendingCount.textContent = noCard + rough;  // 待制 = 无卡片 + 粗略
     if (elements.completedCount) elements.completedCount.textContent = completed;
 }
 
@@ -233,10 +245,20 @@ function createPaperItem(paper) {
     const originalTitle = displayLang === 'cn' ? paper.title : paper.title_cn;
     const hasAltTitle = originalTitle && originalTitle !== title;
 
-    const isComplete = cardStatusCache[paper.doi] === true;
-    const statusBadge = isComplete 
-        ? '<span class="status-badge green">✓ 完整卡片</span>'
-        : '<span class="status-badge yellow">待制卡片</span>';
+    // 检查卡片状态：无卡片、粗略卡片、完整卡片
+    const existingCard = paperCards.find(c => c.doi === paper.doi);
+    let statusBadge = '';
+    
+    if (!existingCard) {
+        // 无卡片 - 无颜色标识
+        statusBadge = '';
+    } else if (existingCard.isRough || !isCompleteCard(existingCard)) {
+        // 粗略卡片 - 黄色
+        statusBadge = '<span class="status-badge yellow">📝 粗略卡片</span>';
+    } else {
+        // 完整卡片 - 绿色
+        statusBadge = '<span class="status-badge green">✓ 完整卡片</span>';
+    }
 
     return `
         <div class="paper-item" data-doi="${escapeHtml(paper.doi || '')}">
@@ -258,9 +280,7 @@ function createPaperItem(paper) {
                         <span class="paper-meta-item">📅 ${paper.publish_date || ''}</span>
                         <span class="paper-meta-item">🔗 DOI: ${escapeHtml(paper.doi || '')}</span>
                     </div>
-                    <div class="paper-status" style="margin-top: 8px;">
-                        ${statusBadge}
-                    </div>
+                    ${statusBadge ? `<div class="paper-status" style="margin-top: 8px;">${statusBadge}</div>` : ''}
                 </div>
             </div>
         </div>
