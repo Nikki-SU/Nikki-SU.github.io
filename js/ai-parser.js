@@ -231,6 +231,10 @@ async function callGeminiAPI(apiKey, model, prompt) {
  * 构建解析提示词
  */
 function buildParsePrompt(doi, title, abstractText) {
+    const vocabCount = getVocabCount();
+    const minCount = Math.max(5, vocabCount - 5);
+    const maxCount = vocabCount + 5;
+    
     return `请分析以下学术文献，生成完整的文献卡片信息。
 
 文献DOI: ${doi || '未知'}
@@ -272,7 +276,7 @@ function buildParsePrompt(doi, title, abstractText) {
 1. structure字段必须描述论证思路，而不是简单列出章节标题。需要说明：研究了什么问题→用了什么方法→得到什么结果→得出什么结论的逻辑流程
 2. 如果摘要不完整或缺失，必须根据DOI和标题进行合理推断，生成完整的工作总结
 3. vocabulary提取规范：
-   - 提取10-30个该文献中出现的专业术语和学术表达
+   - 提取${minCount}-${maxCount}个该文献中出现的专业术语和学术表达
    - 只提取专业术语，不要提取普通日常词汇（如study, result, method等通用词）
    - 优先提取：材料名称、实验技术、表征方法、专业概念、反应机理、特殊结构等专业内容
    - 每个词汇必须有准确的中英文翻译和专业的定义解释
