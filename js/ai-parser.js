@@ -177,7 +177,7 @@ function buildParsePrompt(doi, title, abstractText) {
 重要要求：
 1. structure字段必须描述论证思路，而不是简单列出章节标题。需要说明：研究了什么问题→用了什么方法→得到什么结果→得出什么结论的逻辑流程
 2. 如果摘要不完整或缺失，必须根据DOI和标题进行合理推断，生成完整的工作总结
-3. vocabulary数组需要提取5-10个该文献中最重要的专业术语
+3. vocabulary数组需要提取10-30个该文献中最重要的专业术语
 4. category必须从以下选项中选择：synthesis（合成）、characterization（表征）、mechanism（机理）、application（应用）、industrial（工业化）、custom（自定义）
 5. 所有字段必须完整，不能有null或空值
 6. 返回的必须是有效的JSON格式，不要包含任何其他文字`;
