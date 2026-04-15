@@ -259,7 +259,7 @@
                                     <h4 style="margin: 0;">📝 复制提示词</h4>
                                     <button class="btn btn-sm btn-secondary" id="copyPromptBtn">复制提示词</button>
                                 </div>
-                                <textarea id="promptTemplate" readonly style="width: 100%; height: 280px; font-size: 12px; font-family: monospace; resize: vertical; border: 1px solid var(--border-color); border-radius: 4px; padding: 8px;">请解析这篇文献：[这里填DOI或文献内容]
+                                <textarea id="promptTemplate" readonly style="width: 100%; height: 350px; font-size: 12px; font-family: monospace; resize: vertical; border: 1px solid var(--border-color); border-radius: 4px; padding: 8px;">请解析这篇文献：[这里填DOI或文献内容]
 	
 返回一个完整的JSON格式文献卡片数据，要求：
 
@@ -283,11 +283,21 @@
   "structure_cn": "中文论证思路",
   "methods": "表征技术（如XRD, SEM, UV-vis等）",
   "methods_cn": "中文表征技术",
-  "category": "分类（synthesis/characterization/mechanism/application/industrial/custom）"
+  "category": "分类（synthesis/characterization/mechanism/application/industrial/custom）",
+  "vocabulary": [
+    {
+      "en": "专业术语英文",
+      "cn": "中文翻译",
+      "defCn": "中文释义（50字内）",
+      "defEn": "英文释义（50字内）",
+      "ex": "例句（词汇标粗）"
+    }
+  ]
 }
 
 注意：
 - structure要描述论证逻辑，不是章节标题
+- vocabulary提取10-30个专业术语
 - 只返回JSON，不要其他文字</textarea>
                             </div>
                             
