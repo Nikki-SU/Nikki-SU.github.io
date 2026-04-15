@@ -680,6 +680,9 @@ function handleCorrectAnswer(word) {
     wordInVocab.correct_count = (wordInVocab.correct_count || 0) + 1;
     wordInVocab.last_practice = new Date().toISOString();
 
+    // 检查是否是第一次英选中正确（在更新进度之前检查）
+    const isFirstTimeEnCn = currentMode === 'new' && currentPhase === StudyPhase.EN_CN && !wordInVocab.phase_en_cn;
+
     // 更新阶段进度
     updatePhaseProgress(wordInVocab);
 
@@ -691,8 +694,8 @@ function handleCorrectAnswer(word) {
     saveVocabulary();
     isWaiting = true;
 
-    // 新学模式下，英选中完成后立即弹出该单词的卡片
-    if (currentMode === 'new' && currentPhase === StudyPhase.EN_CN) {
+    // 新学模式下，第一次英选中正确后弹出卡片
+    if (isFirstTimeEnCn) {
         setTimeout(() => {
             isWaiting = false;
             renderWordCard(word, false); // false 表示是答题后的卡片，不是初始卡片
