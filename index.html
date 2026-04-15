@@ -2,14 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#4f46e5">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="学术站">
-    <title>小N学术站 - 钙钛矿太阳能电池研究</title>
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 - 小N学术站</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -21,22 +15,16 @@
             </h1>
             <nav class="nav" id="navMenu">
                 <a href="index.html" class="nav-link active">
-                    <span class="icon">🏠</span> 首页
-                </a>
-                <a href="weekly.html" class="nav-link">
-                    <span class="icon">📅</span> 周报
-                </a>
-                <a href="library.html" class="nav-link">
-                    <span class="icon">📚</span> 文献库
+                    <span>🏠</span> 首页
                 </a>
                 <a href="papers.html" class="nav-link">
-                    <span class="icon">📝</span> 文献卡片
+                    <span>📚</span> 文献库
                 </a>
                 <a href="vocabulary.html" class="nav-link">
-                    <span class="icon">📖</span> 词汇本
+                    <span>📖</span> 词汇本
                 </a>
                 <a href="settings.html" class="nav-link">
-                    <span class="icon">⚙️</span> 设置
+                    <span>⚙️</span> 设置
                 </a>
             </nav>
             <button class="menu-toggle" id="menuToggle">☰</button>
@@ -45,116 +33,167 @@
 
     <main class="main">
         <div class="container">
-            <!-- Hero Section -->
-            <section class="hero">
-                <div class="hero-content">
-                    <h2>欢迎来到小N的学术学习站</h2>
-                    <p>专注钙钛矿太阳能电池研究 | 化学专业本科</p>
-                </div>
-            </section>
-
-            <!-- Quick Stats -->
-            <section class="section">
+            <!-- 页面标题 -->
+            <div class="section-header">
                 <h3 class="section-title">
-                    <span class="icon">📊</span>
-                    学习概览
+                    <span>📡</span>
+                    文献追踪
                 </h3>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">📄</div>
-                        <div class="stat-value" id="paperCount">-</div>
-                        <div class="stat-label">文献数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📝</div>
-                        <div class="stat-value" id="wordCount">-</div>
-                        <div class="stat-label">生词数量</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">✅</div>
-                        <div class="stat-value" id="masteredCount">-</div>
-                        <div class="stat-label">已掌握</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon">📅</div>
-                        <div class="stat-value" id="weekCount">-</div>
-                        <div class="stat-label">学习周数</div>
-                    </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-secondary" id="configBtn">
+                        <span>⚙️</span> 追踪配置
+                    </button>
+                    <button class="btn btn-primary" id="trackBtn">
+                        <span>🔍</span> 开始追踪
+                    </button>
                 </div>
-            </section>
+            </div>
 
-            <!-- Weekly Reports Preview -->
-            <section class="section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <span class="icon">📅</span>
-                        最新周报
-                    </h3>
-                    <a href="weekly.html" class="btn btn-outline btn-sm">查看全部 →</a>
+            <!-- 追踪状态卡片 -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📰</div>
+                    <div class="stat-value" id="journalCount">0</div>
+                    <div class="stat-label">追踪刊物</div>
                 </div>
-                <div id="recentReports" class="weekly-reports">
-                    <div class="loading">加载中...</div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔑</div>
+                    <div class="stat-value" id="keywordCount">0</div>
+                    <div class="stat-label">关键词</div>
                 </div>
-            </section>
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-value" id="lastTrackingTime">--</div>
+                    <div class="stat-label">上次追踪</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-value" id="totalResults">0</div>
+                    <div class="stat-label">累计结果</div>
+                </div>
+            </div>
 
-            <!-- Recent Papers -->
-            <section class="section">
-                <div class="section-header">
-                    <h3 class="section-title">
-                        <span class="icon">📚</span>
-                        最近文献
-                    </h3>
-                    <a href="papers.html" class="btn btn-outline btn-sm">查看全部 →</a>
+            <!-- 追踪进度区域 -->
+            <div id="trackingProgress" class="card hidden" style="margin-bottom: 24px;">
+                <div class="card-title">
+                    <span>🔄</span> 追踪进度
                 </div>
-                <div id="recentPapers" class="papers-grid">
-                    <div class="loading">加载中...</div>
+                <div class="tracking-progress">
+                    <div class="progress">
+                        <div class="progress-bar" id="trackingBar" style="width: 0%"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                        <span id="trackingStatus">准备中...</span>
+                        <span id="trackingPercent">0%</span>
+                    </div>
                 </div>
-            </section>
+                <div id="currentJournal" style="margin-top: 16px; padding: 12px; background: var(--bg); border-radius: 8px;">
+                    等待开始...
+                </div>
+            </div>
 
-            <!-- Quick Actions -->
-            <section class="section">
-                <h3 class="section-title">
-                    <span class="icon">⚡</span>
-                    快捷操作
-                </h3>
-                <div class="stats-grid">
-                    <a href="weekly.html" class="stat-card" style="text-decoration: none;">
-                        <div class="stat-icon">➕</div>
-                        <div class="stat-value" style="font-size: 1.5rem;">新建周报</div>
-                        <div class="stat-label">创建本周学术总结</div>
-                    </a>
-                    <a href="papers.html" class="stat-card" style="text-decoration: none;">
-                        <div class="stat-icon">📥</div>
-                        <div class="stat-value" style="font-size: 1.5rem;">导入文献</div>
-                        <div class="stat-label">通过DOI或PDF导入</div>
-                    </a>
-                    <a href="vocabulary.html" class="stat-card" style="text-decoration: none;">
-                        <div class="stat-icon">📖</div>
-                        <div class="stat-value" style="font-size: 1.5rem;">开始学习</div>
-                        <div class="stat-label">继续单词学习</div>
-                    </a>
+            <!-- 追踪结果区域 -->
+            <div id="trackingResults" class="card hidden" style="margin-bottom: 24px;">
+                <div class="card-title">
+                    <span>📊</span> 追踪结果
+                    <button class="btn btn-sm btn-primary" id="importAllBtn" style="margin-left: auto;">
+                        📥 全部导入
+                    </button>
                 </div>
-            </section>
+                <div id="resultsList" class="list"></div>
+            </div>
+
+            <!-- 追踪历史 -->
+            <div class="card">
+                <div class="card-title">
+                    <span>📜</span> 追踪历史
+                </div>
+                <div id="historyList" class="list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>暂无追踪记录</p>
+                        <p class="text-muted">点击"开始追踪"获取最新文献</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
-    <footer class="footer">
-        <div class="container">
-            <p>© 2024 小N学术学习站 | 钙钛矿太阳能电池研究方向</p>
-            <p class="footer-link">托管于 GitHub Pages</p>
+    <!-- 追踪配置模态框 -->
+    <div id="configModal" class="modal hidden">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3>📡 追踪配置</h3>
+                <button class="modal-close" id="closeConfigModal">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- 关键词配置 -->
+                <div class="settings-section">
+                    <div class="settings-section-title">🔑 关键词配置</div>
+                    <div class="form-group">
+                        <label class="form-label">添加关键词（支持 AND/OR/NOT）</label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                            <input type="text" class="form-input" id="keywordInput" placeholder="输入关键词，如: perovskite AND solar">
+                            <select class="form-select" id="keywordLogic" style="width: 120px;">
+                                <option value="AND">AND</option>
+                                <option value="OR">OR</option>
+                                <option value="NOT">NOT</option>
+                            </select>
+                            <button class="btn btn-primary" id="addKeywordBtn">添加</button>
+                        </div>
+                        <div id="keywordTags" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+                    </div>
+                </div>
+
+                <!-- 刊物配置 -->
+                <div class="settings-section">
+                    <div class="settings-section-title">📰 选择追踪刊物</div>
+                    <div id="journalList" class="list" style="max-height: 400px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- 自动追踪设置 -->
+                <div class="settings-section">
+                    <div class="settings-section-title">⏰ 自动追踪</div>
+                    <div class="settings-row">
+                        <span class="settings-label">每周一自动追踪</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoTrackToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn btn-secondary" id="cancelConfigBtn">取消</button>
+                <button class="btn btn-primary" id="saveConfigBtn">保存配置</button>
+            </div>
         </div>
-    </footer>
+    </div>
+
+    <!-- 导入确认模态框 -->
+    <div id="importModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📥 导入文献</h3>
+                <button class="modal-close" id="closeImportModal">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px;">即将导入 <strong id="importCount">0</strong> 篇文献到文献库</p>
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="dedupToggle" checked>
+                        自动去重（跳过已存在的文献）
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn btn-secondary" id="cancelImportBtn">取消</button>
+                <button class="btn btn-success" id="confirmImportBtn">确认导入</button>
+            </div>
+        </div>
+    </div>
 
     <script src="js/main.js"></script>
-    <script>
-        // 注册 Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('Service Worker 注册成功'))
-                    .catch(err => console.log('Service Worker 注册失败:', err));
-            });
-        }
-    </script>
+    <script src="js/tracking.js"></script>
 </body>
 </html>
