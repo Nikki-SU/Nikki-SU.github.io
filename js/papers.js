@@ -636,10 +636,11 @@ async function fetchDoiPaper() {
     }
 
     const btn = document.getElementById('fetchDoiBtn');
+    const useAI = document.getElementById('useAIParse')?.checked;
+    const resultDiv = document.getElementById('doiResult');
+    
     btn.disabled = true;
     btn.textContent = '获取中...';
-
-    const resultDiv = document.getElementById('doiResult');
     resultDiv.innerHTML = '<p class="text-muted">正在获取文献信息...</p>';
 
     try {
@@ -662,17 +663,84 @@ async function fetchDoiPaper() {
                 work.published['date-parts'][0].join('-') : '',
             doi: doi,
             abstract: work.abstract?.replace(/<[^>]*>/g, '') || '',
-            keywords: work.subject || []
+            keywords: work.subject || [],
+            vocabulary: []
         };
 
-        resultDiv.innerHTML = `
-            <div style="padding: 16px; background: #f0fdf4; border-radius: 8px;">
-                <p style="font-weight: 600; color: var(--success-color);">✅ 成功获取文献信息</p>
-                <p style="margin-top: 8px;"><strong>标题：</strong>${escapeHtml(importData.title)}</p>
-                <p style="margin-top: 4px;"><strong>作者：</strong>${escapeHtml(importData.authors)}</p>
-                <p style="margin-top: 4px;"><strong>期刊：</strong>${escapeHtml(importData.journal)}</p>
-            </div>
-        `;
+        // 如果勾选了AI解析
+        if (useAI && isApiKeyConfigured()) {
+            resultDiv.innerHTML = '<p class="text-muted">正在连接AI服务...</p>';
+            btn.textContent = 'AI解析中...';
+            
+            try {
+                const aiResult = await parsePaperWithAI(
+                    doi,
+                    importData.title,
+                    importData.abstract,
+                    (progress) => {
+                        resultDiv.innerHTML = `<p class="text-muted">${progress}</p>`;
+                    }
+                );
+                
+                // 合并AI解析结果
+                importData = mergeWithBaseInfo(importData, aiResult);
+                
+                resultDiv.innerHTML = `
+                    <div style="padding: 16px; background: #f0fdf4; border-radius: 8px;">
+                        <p style="font-weight: 600; color: var(--success-color);">✅ 成功获取并AI深度解析</p>
+                        <p style="margin-top: 8px;"><strong>标题：</strong>${escapeHtml(importData.title)}</p>
+                        <p style="margin-top: 4px;"><strong>中文标题：</strong>${escapeHtml(importData.title_cn || '（待翻译）')}</p>
+                        <p style="margin-top: 4px;"><strong>作者：</strong>${escapeHtml(importData.authors)}</p>
+                        <p style="margin-top: 4px;"><strong>期刊：</strong>${escapeHtml(importData.journal)}</p>
+                        <details style="margin-top: 12px;">
+                            <summary style="cursor: pointer; color: var(--primary-color);">查看AI解析详情</summary>
+                            <div style="margin-top: 8px; padding: 12px; background: #f8fafc; border-radius: 6px; font-size: 0.9rem;">
+                                <p><strong>创新点：</strong>${escapeHtml(importData.innovation || '-')}</p>
+                                <p style="margin-top: 8px;"><strong>工作总结：</strong>${escapeHtml(importData.summary || '-')}</p>
+                                <p style="margin-top: 8px;"><strong>表征技术：</strong>${escapeHtml(importData.methods || '-')}</p>
+                                <p style="margin-top: 8px;"><strong>分类：</strong>${escapeHtml(importData.category || '-')}</p>
+                                ${importData.vocabulary && importData.vocabulary.length > 0 ? 
+                                    `<p style="margin-top: 8px;"><strong>提取词汇：</strong>${importData.vocabulary.map(v => v.word).join(', ')}</p>` : ''}
+                            </div>
+                        </details>
+                    </div>
+                `;
+            } catch (aiError) {
+                console.error('AI解析失败:', aiError);
+                resultDiv.innerHTML = `
+                    <div style="padding: 16px; background: #fef3c7; border-radius: 8px;">
+                        <p style="font-weight: 600; color: var(--warning-color);">⚠️ DOI信息获取成功，但AI解析失败</p>
+                        <p style="margin-top: 4px; color: var(--text-secondary);">${aiError.message}</p>
+                        <p style="margin-top: 8px;">将使用基本信息导入，您可以稍后手动编辑补充。</p>
+                    </div>
+                    <div style="padding: 16px; background: #f0fdf4; border-radius: 8px; margin-top: 12px;">
+                        <p style="font-weight: 600; color: var(--success-color);">已获取基本信息</p>
+                        <p style="margin-top: 8px;"><strong>标题：</strong>${escapeHtml(importData.title)}</p>
+                        <p style="margin-top: 4px;"><strong>作者：</strong>${escapeHtml(importData.authors)}</p>
+                    </div>
+                `;
+            }
+        } else if (useAI && !isApiKeyConfigured()) {
+            // 勾选了AI但没有配置API Key
+            resultDiv.innerHTML = `
+                <div style="padding: 16px; background: #fef3c7; border-radius: 8px;">
+                    <p style="font-weight: 600; color: var(--warning-color);">⚠️ 尚未配置API Key</p>
+                    <p style="margin-top: 8px;">已获取基本信息，请前往 <a href="settings.html">设置页面</a> 配置API Key以启用AI深度解析。</p>
+                    <p style="margin-top: 8px; margin-bottom: 8px;"><strong>已获取：</strong></p>
+                    <p><strong>标题：</strong>${escapeHtml(importData.title)}</p>
+                    <p><strong>作者：</strong>${escapeHtml(importData.authors)}</p>
+                </div>
+            `;
+        } else {
+            resultDiv.innerHTML = `
+                <div style="padding: 16px; background: #f0fdf4; border-radius: 8px;">
+                    <p style="font-weight: 600; color: var(--success-color);">✅ 成功获取文献信息</p>
+                    <p style="margin-top: 8px;"><strong>标题：</strong>${escapeHtml(importData.title)}</p>
+                    <p style="margin-top: 4px;"><strong>作者：</strong>${escapeHtml(importData.authors)}</p>
+                    <p style="margin-top: 4px;"><strong>期刊：</strong>${escapeHtml(importData.journal)}</p>
+                </div>
+            `;
+        }
 
         document.getElementById('confirmImport').disabled = false;
 
@@ -716,19 +784,27 @@ async function confirmImport() {
     const newPaper = {
         id: generateId(),
         title: importData.title || document.getElementById('paperTitle')?.value || '',
+        title_cn: importData.title_cn || '',
         authors: importData.authors || '',
         journal: importData.journal || '',
         publish_date: importData.publish_date || '',
         doi: importData.doi || '',
         abstract: importData.abstract || '',
-        category: category,
+        abstract_cn: importData.abstract_cn || '',
+        category: importData.category || category,
         keywords: importData.keywords || [],
         image: '',
-        summary: '',
-        innovation: '',
-        application: '',
-        structure: '',
-        methods: '',
+        summary: importData.summary || '',
+        summary_cn: importData.summary_cn || '',
+        innovation: importData.innovation || '',
+        innovation_cn: importData.innovation_cn || '',
+        application: importData.application || '',
+        application_cn: importData.application_cn || '',
+        structure: importData.structure || '',
+        structure_cn: importData.structure_cn || '',
+        methods: importData.methods || '',
+        methods_cn: importData.methods_cn || '',
+        vocabulary: importData.vocabulary || [],
         source: 'import'
     };
 
@@ -737,6 +813,39 @@ async function confirmImport() {
 
     // 保存
     await savePapers();
+
+    // 如果有提取的词汇，提示用户
+    if (newPaper.vocabulary && newPaper.vocabulary.length > 0) {
+        const vocabCount = newPaper.vocabulary.length;
+        const confirmMsg = `文献导入成功！\n\n已提取 ${vocabCount} 个专业词汇。\n是否需要将新词汇添加到词汇本？`;
+        
+        if (confirm(confirmMsg)) {
+            // 获取已有词汇并去重合并
+            const existingVocab = JSON.parse(localStorage.getItem('vocabularyData') || '[]');
+            const existingWords = new Set(existingVocab.map(v => v.word.toLowerCase()));
+            
+            const newWords = newPaper.vocabulary.filter(v => !existingWords.has(v.word.toLowerCase()));
+            
+            if (newWords.length > 0) {
+                // 为新词汇设置默认状态为"新词"
+                const wordsToAdd = newWords.map(w => ({
+                    ...w,
+                    status: 'new',
+                    added_date: new Date().toISOString(),
+                    review_count: 0,
+                    last_review: null
+                }));
+                
+                // 合并并保存
+                const updatedVocab = [...wordsToAdd, ...existingVocab];
+                localStorage.setItem('vocabularyData', JSON.stringify(updatedVocab));
+                
+                alert(`已将 ${newWords.length} 个新词汇添加到词汇本！`);
+            } else {
+                alert('这些词汇都已在词汇本中，无需重复添加。');
+            }
+        }
+    }
 
     closeImportModal();
     filterPapers();
