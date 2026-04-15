@@ -121,6 +121,9 @@ function switchTab(tab) {
 function loadData() {
     vocabulary = VocabularyStore.getAll();
     
+    // 标准化词汇格式（兼容新旧两种字段名）
+    vocabulary = vocabulary.map(v => normalizeWord(v));
+    
     if (vocabulary.length === 0) {
         vocabulary = getSampleVocabulary();
         VocabularyStore.key && Storage.set(VocabularyStore.key, vocabulary);
@@ -129,6 +132,24 @@ function loadData() {
     loadSettings();
     updateStats();
     updateStudyButtons();
+}
+
+// 标准化词汇格式（兼容新旧两种字段名）
+function normalizeWord(v) {
+    return {
+        id: v.id,
+        // 兼容新格式 (en, cn, defCn, defEn, ex) 和旧格式 (word, word_cn, definition_cn, definition_en, example)
+        word: v.word || v.en || '',
+        word_cn: v.word_cn || v.cn || '',
+        definition_cn: v.definition_cn || v.defCn || '',
+        definition_en: v.definition_en || v.defEn || '',
+        example: v.example || v.ex || '',
+        phonetic: v.phonetic || '',
+        status: v.status || 'new',
+        correct_count: v.correct_count || 0,
+        error_count: v.error_count || 0,
+        correct_streak: v.correct_streak || 0
+    };
 }
 
 // 加载设置
