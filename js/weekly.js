@@ -658,36 +658,55 @@ function deleteReport(reportId) {
  */
 async function trackJournals() {
     const btn = document.getElementById('trackJournalsBtn');
+    const container = document.getElementById('journalTracking');
+    
+    if (!container) {
+        console.error('找不到journalTracking容器');
+        return;
+    }
+    
+    // 确保journals已加载
+    if (!journals || journals.length === 0) {
+        journals = [...DEFAULT_JOURNALS];
+    }
+    
     if (btn) {
         btn.disabled = true;
         btn.innerHTML = '⏳ 检查中...';
     }
     
-    const container = document.getElementById('journalTracking');
     container.innerHTML = `
         <p>正在追踪 ${journals.length} 个期刊...</p>
         <div id="trackingProgress" style="margin-top: 12px;">
-            <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+            <div class="progress-bar" style="background: var(--border-color); border-radius: 4px; height: 8px;">
+                <div class="progress-fill" style="width: 0%; height: 100%; background: var(--primary-color); border-radius: 4px; transition: width 0.3s;"></div>
+            </div>
         </div>
+        <p id="trackingStatus" style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 8px;">准备中...</p>
     `;
     
     const newPapers = [];
+    const checkedDOIs = JSON.parse(localStorage.getItem('checkedDOIs') || '[]');
     
     for (let i = 0; i < journals.length; i++) {
         const journal = journals[i];
         updateTrackingProgress((i / journals.length) * 100);
+        updateTrackingStatus(`正在检查: ${journal.name}`);
         
         try {
             const papers = await searchJournalPapers(journal.name);
-            newPapers.push(...papers);
+            // 过滤已检查过的DOI
+            const filteredPapers = papers.filter(p => !checkedDOIs.includes(p.doi));
+            newPapers.push(...filteredPapers);
             // 避免请求过快
-            await new Promise(r => setTimeout(r, 500));
+            await new Promise(r => setTimeout(r, 300));
         } catch (error) {
             console.error(`搜索${journal.name}失败:`, error);
         }
     }
     
     updateTrackingProgress(100);
+    updateTrackingStatus('检查完成');
     
     if (newPapers.length > 0) {
         // 保存追踪到的文献供后续使用
@@ -695,7 +714,7 @@ async function trackJournals() {
         
         container.innerHTML = `
             <div class="tracking-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                <p style="color: var(--success-color); margin: 0;">🎉 发现 ${newPapers.length} 篇今日新文献！</p>
+                <p style="color: var(--success-color); margin: 0;">🎉 发现 ${newPapers.length} 篇近期新文献！</p>
                 <button class="btn btn-sm btn-outline" onclick="togglePaperList()">
                     <span id="toggleIcon">📂</span> <span id="toggleText">收起</span>
                 </button>
@@ -741,7 +760,7 @@ async function trackJournals() {
         initSwipeHandlers();
     } else {
         container.innerHTML = `
-            <p>✅ 今日暂无新文献</p>
+            <p>✅ 近期暂无新文献</p>
             <p class="text-muted" style="font-size: 0.85rem;">上次检查: ${getLastCheckTime()}</p>
             <button class="btn btn-outline mt-4" onclick="trackJournals()">再次检查</button>
         `;
@@ -925,4 +944,310 @@ function handleSwipeSave(item) {
     let papers = stored ? JSON.parse(stored) : [];
     
     // 检查是否已存在
-    if (!papers.find(p =
+    if (!papers.find(p => p.doi === doi)) {
+        papers.unshift({
+            id: generateId(),
+            title: title,
+            title_cn: '',
+            authors: '',
+            journal: journal,
+            publish_date: date,
+            doi: doi,
+            abstract: '',
+            abstract_cn: '',
+            category: 'custom',
+            keywords: [],
+            summary: '',
+            summary_cn: '',
+            innovation: '',
+            innovation_cn: '',
+            application: '',
+            application_cn: '',
+            structure: '',
+            structure_cn: '',
+            methods: '',
+            methods_cn: '',
+            source: 'tracked',
+            createdAt: new Date().toISOString()
+        });
+        localStorage.setItem('papersData', JSON.stringify(papers));
+    }
+    
+    // 添加到已读列表
+    const checked = JSON.parse(localStorage.getItem('checkedDOIs') || '[]');
+    if (!checked.includes(doi)) {
+        checked.push(doi);
+    }
+    localStorage.setItem('checkedDOIs', JSON.stringify(checked));
+    
+    // 动画移除
+    item.style.transition = 'all 0.3s ease';
+    item.style.transform = 'translateX(100%)';
+    item.style.opacity = '0';
+    item.style.background = 'var(--success-color)';
+    
+    setTimeout(() => {
+        item.remove();
+        updatePaperCount();
+    }, 300);
+}
+
+// 更新文献计数
+function updatePaperCount() {
+    const remaining = document.querySelectorAll('.tracked-paper-item.swipeable').length;
+    const header = document.querySelector('.tracking-header p');
+    if (header && remaining > 0) {
+        header.textContent = `🎉 还剩 ${remaining} 篇待处理`;
+    } else if (remaining === 0) {
+        const container = document.getElementById('journalTracking');
+        container.innerHTML = `
+            <p style="color: var(--success-color);">✅ 全部处理完毕！</p>
+            <p class="text-muted" style="font-size: 0.85rem;">可在「文献卡片」页面查看已保存的文献</p>
+            <a href="papers.html" class="btn btn-primary mt-4">前往文献卡片</a>
+        `;
+    }
+}
+
+// 全部保存
+function saveAllPapers() {
+    const items = document.querySelectorAll('.tracked-paper-item.swipeable');
+    items.forEach(item => handleSwipeSave(item));
+}
+
+// 制作文献卡片 - 跳转到papers页面并预填DOI
+function makePaperCard(doi, title) {
+    // 存储到临时变量，供papers页面使用
+    localStorage.setItem('pendingPaperDOI', doi);
+    localStorage.setItem('pendingPaperTitle', title);
+    // 跳转到文献卡片页面
+    window.location.href = 'papers.html?action=import&doi=' + encodeURIComponent(doi);
+}
+
+// 复制DOI
+function copyDOI(doi) {
+    navigator.clipboard.writeText(doi).then(() => {
+        alert('DOI已复制: ' + doi);
+    }).catch(() => {
+        prompt('复制失败，请手动复制:', doi);
+    });
+}
+
+// 全部标记为已读（全部忽略）
+function markAllAsRead() {
+    const items = document.querySelectorAll('.tracked-paper-item.swipeable');
+    items.forEach(item => handleSwipeIgnore(item));
+}
+
+// 获取上次检查时间
+function getLastCheckTime() {
+    const last = localStorage.getItem('lastJournalCheck');
+    if (!last) return '从未';
+    const date = new Date(last);
+    return date.toLocaleString('zh-CN');
+}
+
+async function searchJournalPapers(journalName) {
+    // 搜索最近一周出版的文献
+    const today = new Date();
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    const weekAgoStr = weekAgo.toISOString().split('T')[0]; // YYYY-MM-DD
+    
+    const query = encodeURIComponent(`${journalName} AND perovskite solar cell`);
+    const url = `https://api.crossref.org/works?query=${query}&filter=from-pub-date:${weekAgoStr},until-pub-date:${todayStr}&rows=20&sort=published&order=desc`;
+    
+    const response = await fetch(url, {
+        headers: { 'Accept': 'application/json' }
+    });
+    
+    if (!response.ok) return [];
+    
+    const data = await response.json();
+    return (data.message?.items || []).map(item => ({
+        title: item.title?.[0] || 'Unknown',
+        authors: item.author?.map(a => `${a.family}, ${a.given}`).join('; ') || 'Unknown',
+        journal: item['container-title']?.[0] || journalName,
+        publish_date: item.published?.['date-parts']?.[0] ? 
+            item.published['date-parts'][0].join('-') : '',
+        doi: item.DOI,
+        abstract: item.abstract?.replace(/<[^>]*>/g, '') || ''
+    }));
+}
+
+function updateTrackingProgress(percent) {
+    const fill = document.querySelector('#trackingProgress .progress-fill');
+    if (fill) fill.style.width = `${percent}%`;
+}
+
+function updateTrackingStatus(text) {
+    const status = document.getElementById('trackingStatus');
+    if (status) status.textContent = text;
+}
+
+async function importTrackedPapers() {
+    const tracked = JSON.parse(localStorage.getItem('trackedPapers') || '[]');
+    if (tracked.length === 0) return;
+    
+    const res = await fetch(CONFIG.papersUrl);
+    let papers = [];
+    if (res.ok) {
+        papers = await res.json();
+    }
+    
+    let added = 0;
+    for (const paper of tracked) {
+        if (!papers.find(p => p.doi === paper.doi)) {
+            papers.unshift({
+                id: generateId(),
+                title: paper.title,
+                authors: paper.authors,
+                journal: paper.journal,
+                publish_date: paper.publish_date,
+                doi: paper.doi,
+                abstract: paper.abstract,
+                category: 'custom',
+                source: 'tracked'
+            });
+            added++;
+        }
+    }
+    
+    localStorage.setItem('papersData', JSON.stringify(papers));
+    
+    alert(`成功导入 ${added} 篇文献！`);
+    localStorage.removeItem('trackedPapers');
+    
+    // 刷新页面
+    window.location.reload();
+}
+
+/**
+ * 期刊管理模态框
+ */
+function openJournalModal() {
+    renderJournalList();
+    elements.journalModal.classList.remove('hidden');
+}
+
+function closeJournalModal() {
+    elements.journalModal.classList.add('hidden');
+}
+
+function renderJournalList() {
+    if (!elements.journalList) return;
+    
+    // 按分类分组
+    const grouped = {};
+    journals.forEach(j => {
+        if (!grouped[j.category]) grouped[j.category] = [];
+        grouped[j.category].push(j);
+    });
+    
+    let html = '';
+    for (const [cat, catJournals] of Object.entries(grouped)) {
+        html += `<div style="margin-bottom: 16px;">
+            <h4 style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px;">${CATEGORY_NAMES[cat] || cat}</h4>`;
+        
+        catJournals.forEach(j => {
+            html += `
+                <div class="journal-item">
+                    <div>
+                        <div class="journal-name">${escapeHtml(j.name)}</div>
+                    </div>
+                    <div class="journal-actions">
+                        <button class="btn btn-sm btn-danger" onclick="removeJournal('${j.name}')">删除</button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+    }
+    
+    elements.journalList.innerHTML = html || '<p class="text-muted">暂无期刊</p>';
+}
+
+function addJournal() {
+    const nameInput = document.getElementById('newJournalName');
+    const categorySelect = document.getElementById('newJournalCategory');
+    
+    const name = nameInput.value.trim();
+    const category = categorySelect.value;
+    
+    if (!name) {
+        alert('请输入期刊名称');
+        return;
+    }
+    
+    if (journals.find(j => j.name.toLowerCase() === name.toLowerCase())) {
+        alert('该期刊已存在');
+        return;
+    }
+    
+    journals.push({ name, category });
+    saveJournals();
+    
+    nameInput.value = '';
+    renderJournalList();
+    alert('期刊添加成功！');
+}
+
+function removeJournal(journalName) {
+    if (!confirm(`确定要删除期刊 "${journalName}" 吗？`)) return;
+    
+    journals = journals.filter(j => j.name !== journalName);
+    saveJournals();
+    renderJournalList();
+}
+
+/**
+ * 更新统计数据
+ */
+function updateStats() {
+    if (elements.totalReports) {
+        elements.totalReports.textContent = weeklyReports.length;
+    }
+    
+    // 本周统计
+    const today = new Date();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay());
+    
+    const thisWeekReports = weeklyReports.filter(r => new Date(r.date) >= weekStart);
+    
+    if (elements.papersThisWeek) {
+        const paperCount = thisWeekReports.reduce((sum, r) => sum + (r.paperIds?.length || 0), 0);
+        elements.papersThisWeek.textContent = paperCount;
+    }
+    
+    if (elements.wordsThisWeek) {
+        const wordCount = thisWeekReports.reduce((sum, r) => sum + (r.newWords?.length || 0), 0);
+        elements.wordsThisWeek.textContent = wordCount;
+    }
+    
+    if (elements.reviewThisWeek) {
+        elements.reviewThisWeek.textContent = thisWeekReports.length;
+    }
+}
+
+/**
+ * 工具函数
+ */
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+function getWeekNumber(date) {
+    const startDate = new Date(date.getFullYear(), 0, 1);
+    const days = Math.floor((date - startDate) / (24 * 60 * 60 * 1000));
+    return Math.ceil((days + startDate.getDay() + 1) / 7);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
