@@ -894,16 +894,19 @@ function parseJsonInput() {
     }
     
     try {
-        let jsonData = JSON.parse(jsonInput.trim());
+        let cleanJson = jsonInput.trim();
         
-        // 检查是否被代码块包裹
-        if (typeof jsonData === 'string') {
-            const jsonMatch = jsonData.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (jsonMatch) jsonData = JSON.parse(jsonMatch[1]);
+        // 先检查是否被代码块包裹
+        const codeBlockMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (codeBlockMatch && typeof codeBlockMatch[1] === 'string') {
+            cleanJson = codeBlockMatch[1].trim();
         }
+        
+        let jsonData = JSON.parse(cleanJson);
         
         if (!jsonData.title && !jsonData.title_cn) {
             resultDiv.innerHTML = '<p class="text-danger">JSON数据缺少标题字段</p>';
+            document.getElementById('confirmImport').disabled = true;
             return;
         }
         
@@ -950,6 +953,8 @@ function parseJsonInput() {
 }
 
 async function confirmImport() {
+    console.log('确认导入开始, importData:', importData);
+    
     const importType = document.querySelector('input[name="importType"]:checked')?.value || 'doi';
     const category = document.getElementById('importCategory')?.value || 'custom';
 
@@ -987,19 +992,26 @@ async function confirmImport() {
         createdAt: new Date().toISOString()
     };
 
+    console.log('新文献:', newPaper);
+
     // 检查是否已有该DOI的文献
     const existingIndex = papers.findIndex(p => p.doi === newPaper.doi);
     if (existingIndex !== -1) {
         papers[existingIndex] = { ...papers[existingIndex], ...newPaper };
+        console.log('更新已有文献, index:', existingIndex);
     } else {
         papers.unshift(newPaper);
+        console.log('添加新文献, 当前总数:', papers.length);
     }
 
+    console.log('保存到localStorage...');
     savePapers();
+    
+    console.log('关闭模态框并刷新列表');
     closeImportModal();
     filterPapers();
 
-    alert('文献导入成功！');
+    alert('文献导入成功！共 ' + papers.length + ' 篇文献');
 }
 
 function openEditModal(paperId = null) {
