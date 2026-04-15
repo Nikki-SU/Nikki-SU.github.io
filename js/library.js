@@ -54,43 +54,64 @@ function initEventListeners() {
 
 /**
  * 加载数据
+ * 核心原则：localStorage中有数据（即使是空数组）就只用localStorage，不再从文件读取
  */
 async function loadData() {
     try {
-        // 优先从localStorage加载文献库（用户数据）
-        const storedLibrary = localStorage.getItem('libraryData');
-        if (storedLibrary) {
+        // 检查是否已初始化（区分"从未有数据"和"数据被清空"）
+        const libraryInitialized = localStorage.getItem('libraryData_initialized');
+        const cardsInitialized = localStorage.getItem('papersData_initialized');
+        
+        // 文献库：优先从localStorage加载
+        if (libraryInitialized === 'true') {
+            // 用户已有数据（包括空数组），只用localStorage
+            const storedLibrary = localStorage.getItem('libraryData');
             try {
                 libraryPapers = JSON.parse(storedLibrary);
+                if (!Array.isArray(libraryPapers)) libraryPapers = [];
             } catch (e) {
                 libraryPapers = [];
             }
-        }
-        
-        // 如果localStorage没有数据，尝试从文件读取
-        if (libraryPapers.length === 0) {
+        } else {
+            // 首次使用：尝试从文件读取，然后标记已初始化
             const libraryRes = await fetch(CONFIG.libraryUrl).catch(() => ({ ok: false }));
             if (libraryRes.ok) {
-                libraryPapers = await libraryRes.json();
+                try {
+                    libraryPapers = await libraryRes.json();
+                    if (!Array.isArray(libraryPapers)) libraryPapers = [];
+                } catch (e) {
+                    libraryPapers = [];
+                }
             }
+            // 保存并标记已初始化
+            localStorage.setItem('libraryData', JSON.stringify(libraryPapers));
+            localStorage.setItem('libraryData_initialized', 'true');
         }
 
-        // 优先从localStorage加载文献卡片（用户数据）
-        const storedCards = localStorage.getItem('papersData');
-        if (storedCards) {
+        // 文献卡片：优先从localStorage加载
+        if (cardsInitialized === 'true') {
+            // 用户已有数据（包括空数组），只用localStorage
+            const storedCards = localStorage.getItem('papersData');
             try {
                 paperCards = JSON.parse(storedCards);
+                if (!Array.isArray(paperCards)) paperCards = [];
             } catch (e) {
                 paperCards = [];
             }
-        }
-        
-        // 如果localStorage没有数据，尝试从文件读取
-        if (paperCards.length === 0) {
+        } else {
+            // 首次使用：尝试从文件读取，然后标记已初始化
             const cardsRes = await fetch(CONFIG.papersUrl).catch(() => ({ ok: false }));
             if (cardsRes.ok) {
-                paperCards = await cardsRes.json();
+                try {
+                    paperCards = await cardsRes.json();
+                    if (!Array.isArray(paperCards)) paperCards = [];
+                } catch (e) {
+                    paperCards = [];
+                }
             }
+            // 保存并标记已初始化
+            localStorage.setItem('papersData', JSON.stringify(paperCards));
+            localStorage.setItem('papersData_initialized', 'true');
         }
 
         // 更新卡片状态缓存
@@ -825,6 +846,7 @@ function batchDelete() {
  */
 function saveLibrary() {
     localStorage.setItem('libraryData', JSON.stringify(libraryPapers));
+    localStorage.setItem('libraryData_initialized', 'true');
 }
 
 /**
@@ -832,6 +854,7 @@ function saveLibrary() {
  */
 function saveCards() {
     localStorage.setItem('papersData', JSON.stringify(paperCards));
+    localStorage.setItem('papersData_initialized', 'true');
 }
 
 /**
