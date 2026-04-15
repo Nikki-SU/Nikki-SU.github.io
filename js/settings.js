@@ -89,6 +89,7 @@ function loadSettings() {
     const apiKey = localStorage.getItem(AI_PARSER_CONFIG.STORAGE_KEYS.API_KEY) || '';
     const model = localStorage.getItem(AI_PARSER_CONFIG.STORAGE_KEYS.MODEL) || '';
     const customModel = localStorage.getItem(AI_PARSER_CONFIG.STORAGE_KEYS.CUSTOM_MODEL) || '';
+    const vocabCount = localStorage.getItem('ai_vocab_count') || '20';
     
     // 设置提供商
     const providerRadio = document.querySelector(`input[name="provider"][value="${provider}"]`);
@@ -108,6 +109,9 @@ function loadSettings() {
     
     // 设置自定义模型
     document.getElementById('customModelInput').value = customModel;
+    
+    // 设置词汇数量
+    document.getElementById('vocabCountInput').value = vocabCount;
 }
 
 // 绑定事件
