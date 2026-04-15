@@ -1,110 +1,138 @@
 /**
  * vocabulary.js - 词汇本核心脚本
- * 实现完整的学习流程、进度保存和复习功能
+ * 完全基于小N单词逻辑重写
+ * 
+ * 核心逻辑：
+ * - 10个词一组，整组做完所有题型再进下一组
+ * - 学习模式：英选中(首次对/错弹卡片) → 中选英 → 英选义(中) → 义选英(中) → 句选英 → 句选义(中)
+ * - 复习模式：英选中 → 中选英 → 英选义(英) → 义选英(英) → 句选英 → 句选义(英)，不弹卡片
+ * - 保存进度，下次继续
  */
 
-// 学习阶段枚举
-const StudyPhase = {
-    CARD: 'card',
-    EN_CN: 'en_cn',
-    CN_EN: 'cn_en',
-    EN_DEF: 'en_def',
-    DEF_EN: 'def_en',
-    SENT_EN: 'sent_en',
-    SENT_DEF: 'sent_def'
-};
-
-// 单词状态
-const WordStatus = {
-    NEW: 'new',
-    STUDYING: 'studying',
-    LEARNED: 'learned',
-    MASTERED: 'mastered'
-};
-
-// 配置
-const VOCAB_CONFIG = {
-    DEFAULT_STUDY_COUNT: 50,
-    DEFAULT_MASTER_COUNT: 12,
-    ERROR_THRESHOLD: 3
-};
-
-// 学习设置
-let SETTINGS = {
-    speakEnabled: false,
-    masterCount: VOCAB_CONFIG.DEFAULT_MASTER_COUNT,
-    phaseEnCn: true,
-    phaseCnEn: true,
-    phaseEnDef: true,
-    phaseDefEn: true
-};
-
-// 状态
+// ===== 状态 =====
 let vocabulary = [];
-let currentMode = null;
-let currentPhase = StudyPhase.EN_CN;
-let studyCount = VOCAB_CONFIG.DEFAULT_STUDY_COUNT;
-let currentWordQueue = [];
-let currentWordIndex = 0;
-let wrongWordsInRound = [];
-let currentRetryWord = null;
-let isWaiting = false;
-let hasShownCardThisWord = false;
+let study = null;
+let pendingWrong = null;
+let settings = {
+    learnCount: 50,
+    reviewCount: 10,
+    masterCount: 12,
+    speak: true,
+    allowZhan: false,
+    types: [1, 2, 3, 4, 5, 6]  // 1英选中 2中选英 3英选义 4义选英 5句选英 6句选义
+};
 
-// DOM加载完成后执行
+const GROUP_SIZE = 10;
+
+// ===== 初始化 =====
 document.addEventListener('DOMContentLoaded', () => {
-    initEventListeners();
     loadData();
+    initEventListeners();
+    updateStats();
 });
 
-// 初始化事件监听
+function loadData() {
+    vocabulary = VocabularyStore.getAll();
+    loadSettings();
+}
+
+function loadSettings() {
+    const stored = Storage.get('vocabSettings', {});
+    settings = { ...settings, ...stored };
+}
+
+function saveSettings() {
+    Storage.set('vocabSettings', settings);
+}
+
+function saveVocabulary() {
+    Storage.set(VocabularyStore.key, vocabulary);
+}
+
+// ===== 进度保存 =====
+function saveProgress() {
+    if (!study) return;
+    const progress = {
+        mode: study.mode,
+        wrongOnly: study.wrongOnly,
+        wordEns: study.allWords.map(w => w.en),
+        groupIndex: study.groupIndex,
+        phase: study.phase,
+        typeIndex: study.typeIndex,
+        idx: study.idx,
+        queueEns: study.queue.map(w => w.en),
+        showingCard: study.showingCard,
+        pendingWrongEn: pendingWrong ? pendingWrong.word.en : null,
+        pendingWrongType: pendingWrong ? pendingWrong.type : null
+    };
+    Storage.set('vocabProgress', progress);
+}
+
+function clearProgress() {
+    Storage.remove('vocabProgress');
+}
+
+// ===== 分类与统计 =====
+function classify(word) {
+    if ((word.streak || 0) >= settings.masterCount) return 'mastered';
+    if ((word.wrongCount || 0) >= 3) return 'wrong';
+    const hasAllCorrect = settings.types.every(t => word.correctTypes && word.correctTypes.includes(t));
+    if (!word.cardShown) return 'new';
+    if (!hasAllCorrect) return 'learning';
+    return 'learned';
+}
+
+function getStats() {
+    let stats = { new: 0, learning: 0, learned: 0, mastered: 0, wrong: 0 };
+    vocabulary.forEach(w => {
+        stats[classify(w)]++;
+    });
+    return stats;
+}
+
+function updateStats() {
+    const s = getStats();
+    
+    document.getElementById('newCount').textContent = s.new;
+    document.getElementById('studyingCount').textContent = s.learning;
+    document.getElementById('learnedCount').textContent = s.learned;
+    document.getElementById('masteredCount').textContent = s.mastered;
+    document.getElementById('wrongCount').textContent = s.wrong;
+    
+    const startLearnBtn = document.getElementById('startStudyBtn');
+    const startReviewBtn = document.getElementById('startReviewBtn');
+    
+    if (startLearnBtn) {
+        const learnable = s.new + s.learning;
+        startLearnBtn.disabled = learnable === 0;
+        startLearnBtn.textContent = `📖 学习 (${learnable})`;
+    }
+    if (startReviewBtn) {
+        startReviewBtn.disabled = s.learned === 0;
+        startReviewBtn.textContent = `🔄 复习 (${s.learned})`;
+    }
+}
+
+// ===== 事件监听 =====
 function initEventListeners() {
-    // Tab切换
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
     
-    // 学习按钮
-    document.getElementById('startStudyBtn')?.addEventListener('click', () => startStudy('new'));
+    document.getElementById('startStudyBtn')?.addEventListener('click', () => startStudy('learn'));
     document.getElementById('startReviewBtn')?.addEventListener('click', () => startStudy('review'));
     document.getElementById('quitStudyBtn')?.addEventListener('click', quitStudy);
     
-    // 学习词数
-    document.getElementById('studyCountSelect')?.addEventListener('change', (e) => {
-        studyCount = parseInt(e.target.value);
-        saveSettings();
-    });
-    
-    // 设置
     document.getElementById('settingsBtn')?.addEventListener('click', openSettings);
     document.getElementById('closeSettingsModal')?.addEventListener('click', closeSettings);
-    document.getElementById('saveSettingsBtn')?.addEventListener('click', saveSettings);
+    document.getElementById('saveSettingsBtn')?.addEventListener('click', saveSettingsAndClose);
     
-    // 添加单词
-    document.getElementById('addWordBtn')?.addEventListener('click', openAddWord);
-    document.getElementById('closeAddWordModal')?.addEventListener('click', closeAddWord);
-    document.getElementById('cancelAddWordBtn')?.addEventListener('click', closeAddWord);
-    document.getElementById('confirmAddWordBtn')?.addEventListener('click', confirmAddWord);
+    document.getElementById('reviewWrongBtn')?.addEventListener('click', () => startStudy('review', true));
     
-    // 错词本
-    document.getElementById('reviewWrongBtn')?.addEventListener('click', reviewWrong);
-    document.getElementById('clearWrongBtn')?.addEventListener('click', clearWrongWords);
-    
-    // 筛选
-    document.getElementById('allCategoryFilter')?.addEventListener('change', renderAllWords);
     document.getElementById('allStatusFilter')?.addEventListener('change', renderAllWords);
     document.getElementById('allSearchInput')?.addEventListener('input', debounce(renderAllWords, 300));
-    
-    // 模态框点击关闭
-    document.getElementById('addWordModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'addWordModal') closeAddWord();
-    });
-    document.getElementById('settingsModal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'settingsModal') closeSettings();
-    });
 }
 
-// Tab切换
 function switchTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tab);
@@ -115,718 +143,660 @@ function switchTab(tab) {
     
     if (tab === 'all') renderAllWords();
     if (tab === 'wrong') renderWrongWords();
+    if (tab === 'mastered') renderMasteredWords();
 }
 
-// 加载数据
-function loadData() {
-    vocabulary = VocabularyStore.getAll();
-    
-    // 标准化词汇格式（兼容新旧两种字段名）
-    vocabulary = vocabulary.map(v => normalizeWord(v));
-    
-    if (vocabulary.length === 0) {
-        vocabulary = getSampleVocabulary();
-        VocabularyStore.key && Storage.set(VocabularyStore.key, vocabulary);
+// ===== 学习核心逻辑 =====
+
+function chunkWords(words, size) {
+    const chunks = [];
+    for (let i = 0; i < words.length; i += size) {
+        chunks.push(words.slice(i, i + size));
     }
-    
-    loadSettings();
-    updateStats();
-    updateStudyButtons();
+    return chunks;
 }
 
-// 标准化词汇格式（兼容新旧两种字段名）
-function normalizeWord(v) {
-    return {
-        id: v.id,
-        // 兼容新格式 (en, cn, defCn, defEn, ex) 和旧格式 (word, word_cn, definition_cn, definition_en, example)
-        word: v.word || v.en || '',
-        word_cn: v.word_cn || v.cn || '',
-        definition_cn: v.definition_cn || v.defCn || '',
-        definition_en: v.definition_en || v.defEn || '',
-        example: v.example || v.ex || '',
-        phonetic: v.phonetic || '',
-        status: v.status || 'new',
-        correct_count: v.correct_count || 0,
-        error_count: v.error_count || 0,
-        correct_streak: v.correct_streak || 0
-    };
+function getLearnWords() {
+    const learning = vocabulary.filter(w => classify(w) === 'learning');
+    const newWords = vocabulary.filter(w => classify(w) === 'new');
+    return [...learning, ...newWords].slice(0, settings.learnCount);
 }
 
-// 加载设置
-function loadSettings() {
-    const stored = Storage.get('vocabSettings', {});
-    SETTINGS = { ...SETTINGS, ...stored };
-    
-    studyCount = SETTINGS.studyCount || VOCAB_CONFIG.DEFAULT_STUDY_COUNT;
-    SETTINGS.masterCount = SETTINGS.masterCount || VOCAB_CONFIG.DEFAULT_MASTER_COUNT;
-    
-    const studyCountSelect = document.getElementById('studyCountSelect');
-    if (studyCountSelect) studyCountSelect.value = studyCount;
-    
-    const masterCountSelect = document.getElementById('settingMasterCount');
-    if (masterCountSelect) masterCountSelect.value = SETTINGS.masterCount;
-}
-
-// 保存设置
-function saveSettings() {
-    SETTINGS.studyCount = studyCount;
-    SETTINGS.speakEnabled = document.getElementById('settingSpeak')?.checked || false;
-    SETTINGS.masterCount = parseInt(document.getElementById('settingMasterCount')?.value || '12');
-    
-    SETTINGS.phaseEnCn = document.getElementById('settingEnCn')?.checked ?? true;
-    SETTINGS.phaseCnEn = document.getElementById('settingCnEn')?.checked ?? true;
-    SETTINGS.phaseEnDef = document.getElementById('settingEnDef')?.checked ?? true;
-    SETTINGS.phaseDefEn = document.getElementById('settingDefEn')?.checked ?? true;
-    
-    Storage.set('vocabSettings', SETTINGS);
-    showToast('设置已保存', 'success');
-}
-
-// 保存词汇
-function saveVocabulary() {
-    Storage.set(VocabularyStore.key, vocabulary);
-}
-
-// 更新统计
-function updateStats() {
-    const newCount = vocabulary.filter(v => v.status === 'new').length;
-    const studyingCount = vocabulary.filter(v => v.status === 'studying').length;
-    const learnedCount = vocabulary.filter(v => v.status === 'learned').length;
-    const masteredCount = vocabulary.filter(v => v.status === 'mastered').length;
-    const wrongCount = vocabulary.filter(v => (v.error_count || 0) >= VOCAB_CONFIG.ERROR_THRESHOLD).length;
-    
-    document.getElementById('newCount').textContent = newCount;
-    document.getElementById('studyingCount').textContent = studyingCount;
-    document.getElementById('learnedCount').textContent = learnedCount;
-    document.getElementById('masteredCount').textContent = masteredCount;
-    document.getElementById('wrongCount').textContent = wrongCount;
-    
-    updateStudyButtons();
-}
-
-function updateStudyButtons() {
-    const newCount = vocabulary.filter(v => v.status === 'new' || v.status === 'studying').length;
-    const learnedCount = vocabulary.filter(v => v.status === 'learned').length;
-    
-    const startStudyBtn = document.getElementById('startStudyBtn');
-    const startReviewBtn = document.getElementById('startReviewBtn');
-    
-    if (startStudyBtn) {
-        startStudyBtn.disabled = newCount === 0;
-        startStudyBtn.textContent = `📖 学习 (${newCount})`;
+function getReviewWords(wrongOnly) {
+    if (wrongOnly) {
+        return vocabulary.filter(w => classify(w) === 'wrong').slice(0, settings.reviewCount);
     }
-    if (startReviewBtn) {
-        startReviewBtn.disabled = learnedCount === 0;
-        startReviewBtn.textContent = `🔄 复习 (${learnedCount})`;
-    }
+    return vocabulary.filter(w => classify(w) === 'learned').slice(0, settings.reviewCount);
 }
 
-// 开始学习/复习
-function startStudy(mode) {
-    currentMode = mode;
-    currentWordIndex = 0;
-    currentPhase = StudyPhase.EN_CN;
-    wrongWordsInRound = [];
-    currentRetryWord = null;
-    hasShownCardThisWord = false;
+function startStudy(mode, wrongOnly = false) {
+    let words = mode === 'learn' ? getLearnWords() : getReviewWords(wrongOnly);
     
-    if (mode === 'new') {
-        currentWordQueue = vocabulary
-            .filter(v => v.status === 'new' || v.status === 'studying')
-            .slice(0, studyCount)
-            .map(v => ({ ...v }));
-    } else {
-        currentWordQueue = vocabulary
-            .filter(v => v.status === 'learned')
-            .slice(0, studyCount)
-            .map(v => ({ ...v }));
-    }
-    
-    if (currentWordQueue.length === 0) {
-        showToast(mode === 'new' ? '没有可学习的词汇' : '没有可复习的词汇', 'error');
+    if (words.length === 0) {
+        showToast(mode === 'learn' ? '没有可学习的单词' : '没有可复习的单词', 'error');
         return;
+    }
+    
+    const groups = chunkWords(words, GROUP_SIZE);
+    
+    // 检查是否有保存的进度
+    const savedProgress = Storage.get('vocabProgress');
+    let shouldResume = false;
+    
+    if (savedProgress && savedProgress.mode === mode && savedProgress.wrongOnly === wrongOnly) {
+        const savedWordEns = savedProgress.wordEns || [];
+        const currentWordEns = words.map(w => w.en);
+        if (savedWordEns.length === currentWordEns.length && 
+            savedWordEns.every((en, i) => en === currentWordEns[i])) {
+            shouldResume = true;
+        }
+    }
+    
+    // 学习模式：检查是否所有词都已展示过卡片（已完成第一阶段）
+    let startPhase = 'first';
+    if (mode === 'learn') {
+        const allCardShown = words.every(w => w.cardShown);
+        if (allCardShown) {
+            startPhase = 'types';
+        }
+    } else {
+        // 复习模式直接从题型开始
+        startPhase = 'types';
+    }
+    
+    study = {
+        mode: mode,
+        wrongOnly: wrongOnly,
+        allWords: words,
+        groups: groups,
+        groupIndex: 0,
+        phase: startPhase,
+        typeIndex: 0,
+        queue: [],
+        idx: 0,
+        wrongQueue: [],
+        showingCard: false
+    };
+    
+    if (shouldResume && savedProgress) {
+        study.groupIndex = savedProgress.groupIndex || 0;
+        study.phase = savedProgress.phase || study.phase;
+        study.typeIndex = savedProgress.typeIndex || 0;
+        study.idx = savedProgress.idx || 0;
+        study.showingCard = savedProgress.showingCard || false;
+        if (savedProgress.queueEns) {
+            study.queue = savedProgress.queueEns.map(en => words.find(w => w.en === en)).filter(w => w);
+        }
+        
+        if (savedProgress.pendingWrongEn) {
+            const wrongWord = words.find(w => w.en === savedProgress.pendingWrongEn);
+            if (wrongWord) {
+                pendingWrong = { word: wrongWord, type: savedProgress.pendingWrongType || 1 };
+            }
+        }
+        
+        if (study.queue.length === 0) initGroup();
+        showToast('继续上次进度', 'info');
+    } else {
+        initGroup();
     }
     
     document.getElementById('studyControls')?.classList.add('hidden');
     document.getElementById('queueInfo')?.classList.remove('hidden');
+    document.getElementById('studyArea')?.classList.remove('hidden');
     
-    renderCurrentQuestion();
+    renderStudy();
 }
 
-// 渲染当前问题
-function renderCurrentQuestion() {
-    const word = currentRetryWord || currentWordQueue[currentWordIndex];
-    if (!word) {
-        finishStudy();
+function initGroup() {
+    const currentGroup = study.groups[study.groupIndex];
+    study.wrongQueue = [];
+    
+    if (study.mode === 'learn' && study.phase === 'first') {
+        // 学习模式第一阶段：只把未展示过卡片的词放入队列做英选中
+        study.queue = currentGroup.filter(w => !w.cardShown);
+        study.idx = 0;
+        study.showingCard = false;
+        
+        if (study.queue.length === 0) {
+            // 这组所有词都展示过卡片，直接进入题型阶段
+            study.phase = 'types';
+            study.typeIndex = 0;
+            if (study.typeIndex >= settings.types.length) {
+                study.groupIndex++;
+                if (study.groupIndex < study.groups.length) {
+                    initGroup();
+                } else {
+                    finishStudy();
+                }
+                return;
+            }
+            study.queue = [...currentGroup];
+            study.idx = 0;
+        }
+    } else {
+        // 题型阶段
+        study.phase = 'types';
+        study.typeIndex = 0;
+        study.queue = [...currentGroup];
+        study.idx = 0;
+    }
+    
+    saveProgress();
+}
+
+function renderStudy() {
+    const area = document.getElementById('studyArea');
+    const totalWords = study.allWords.length;
+    const groupNum = study.groupIndex + 1;
+    const totalGroups = study.groups.length;
+    
+    let done = 0;
+    for (let i = 0; i < study.groupIndex; i++) {
+        done += study.groups[i].length;
+    }
+    done += study.idx;
+    
+    updateProgressDisplay(done, totalWords, groupNum, totalGroups);
+    
+    let html = '';
+    
+    // 显示错题卡片
+    if (pendingWrong) {
+        const word = pendingWrong.word;
+        html = renderCard(word);
+        html += `<div style="text-align:center;margin-top:20px;"><button class="btn btn-primary btn-lg" onclick="retryAfterCard()">重做</button></div>`;
+        area.innerHTML = html;
         return;
     }
     
-    updateProgress();
-    
-    if (currentPhase === StudyPhase.CARD) {
-        renderCard(word);
-    } else {
-        renderQuestion(word);
+    // 显示卡片（学习模式第一阶段做对后）
+    if (study.mode === 'learn' && study.phase === 'first' && study.showingCard) {
+        const word = study.queue[study.idx];
+        html = renderCard(word);
+        html += `<div style="text-align:center;margin-top:20px;"><button class="btn btn-primary btn-lg" onclick="continueAfterCard()">继续</button></div>`;
+        area.innerHTML = html;
+        return;
     }
+    
+    if (study.mode === 'learn' && study.phase === 'first') {
+        // 学习模式第一阶段：英选中
+        const word = study.queue[study.idx];
+        html = renderQuestion(word, 1, '英选中');
+    } else if (study.phase === 'types') {
+        // 题型阶段
+        let currentType = settings.types[study.typeIndex];
+        
+        if (currentType === undefined || study.typeIndex >= settings.types.length) {
+            // 这组所有题型完成，进入下一组
+            study.groupIndex++;
+            if (study.groupIndex < study.groups.length) {
+                initGroup();
+                renderStudy();
+            } else {
+                finishStudy();
+            }
+            return;
+        }
+        
+        const typeNames = { 1: '英选中', 2: '中选英', 3: '英选义', 4: '义选英', 5: '句选英', 6: '句选义' };
+        html = `<div class="stage-hint">${typeNames[currentType]}</div>`;
+        const word = study.queue[study.idx];
+        html += renderQuestion(word, currentType, typeNames[currentType]);
+    }
+    
+    area.innerHTML = html;
 }
 
-// 渲染单词卡片
-function renderCard(word) {
-    const area = document.getElementById('studyArea');
+function updateProgressDisplay(done, total, groupNum, totalGroups) {
+    const progressFill = document.getElementById('progressFill');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressText = document.getElementById('progressText');
+    const wordProgress = document.getElementById('wordProgress');
     
-    area.innerHTML = `
+    const percent = Math.round((done / total) * 100);
+    
+    if (progressFill) progressFill.style.width = `${percent}%`;
+    if (progressPercent) progressPercent.textContent = `${percent}%`;
+    if (progressText) progressText.textContent = `第 ${done + 1}/${total} 个词`;
+    if (wordProgress) wordProgress.textContent = `第 ${groupNum}/${totalGroups} 组`;
+}
+
+function renderCard(word) {
+    const defCn = word.defCn || '';
+    const defEn = word.defEn || '';
+    const ex = word.ex || '';
+    
+    let html = `
         <div class="word-card-display">
-            <div class="word">${escapeHtml(word.word)}</div>
-            ${word.phonetic ? `<div class="phonetic">${escapeHtml(word.phonetic)}</div>` : ''}
-            <div class="translation">${escapeHtml(word.word_cn)}</div>
-            ${word.definition_cn ? `<div class="definition">中文释义: ${escapeHtml(word.definition_cn)}</div>` : ''}
-            ${word.definition_en ? `<div class="definition">英文释义: ${escapeHtml(word.definition_en)}</div>` : ''}
-            ${word.example ? `<div class="example">例句: ${formatExample(word.example, word.word)}</div>` : ''}
-        </div>
-        <div style="text-align: center;">
-            <button class="btn btn-primary btn-lg" onclick="continueAfterCard()">继续</button>
+            <div class="word">${escapeHtml(word.en)}</div>
+            <div class="translation">${escapeHtml(word.cn)}</div>
+            ${defCn ? `<div class="definition">📖 ${escapeHtml(defCn)}</div>` : ''}
+            ${defEn ? `<div class="definition" style="font-size:0.85rem;">📘 ${escapeHtml(defEn)}</div>` : ''}
+            ${ex ? `<div class="example">${formatExample(ex, word.en)}</div>` : ''}
         </div>
     `;
     
-    if (SETTINGS.speakEnabled && 'speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(word.word);
-        utterance.lang = 'en-US';
-        speechSynthesis.speak(utterance);
-    }
-}
-
-function formatExample(example, word) {
-    return example.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-}
-
-function continueAfterCard() {
-    hasShownCardThisWord = true;
-    
-    if (currentRetryWord) {
-        currentRetryWord = null;
-        currentPhase = StudyPhase.EN_CN;
-        nextWord();
-    } else {
-        currentPhase = StudyPhase.EN_CN;
-        renderCurrentQuestion();
-    }
-}
-
-// 渲染选择题
-function renderQuestion(word) {
-    const area = document.getElementById('studyArea');
-    const isReview = currentMode === 'review';
-    
-    let question, options, correctAnswer;
-    
-    switch (currentPhase) {
-        case StudyPhase.EN_CN:
-            question = `<span class="question-word">${escapeHtml(word.word)}</span>`;
-            if (SETTINGS.speakEnabled && 'speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(word.word);
-                utterance.lang = 'en-US';
-                speechSynthesis.speak(utterance);
-            }
-            options = generateOptions(word, 'word_cn');
-            correctAnswer = word.word_cn;
-            break;
-            
-        case StudyPhase.CN_EN:
-            question = `<span class="question-text">${escapeHtml(word.word_cn)}</span>`;
-            options = generateOptions(word, 'word');
-            correctAnswer = word.word;
-            break;
-            
-        case StudyPhase.EN_DEF:
-            question = `<span class="question-word">${escapeHtml(word.word)}</span>`;
-            options = generateOptions(word, 'definition_cn');
-            correctAnswer = word.definition_cn || word.word_cn;
-            break;
-            
-        case StudyPhase.DEF_EN:
-            question = `<span class="question-text">${escapeHtml(word.definition_cn || word.word_cn)}</span>`;
-            options = generateOptions(word, 'word');
-            correctAnswer = word.word;
-            break;
-            
-        default:
-            currentPhase = StudyPhase.EN_CN;
-            renderCurrentQuestion();
-            return;
+    if (settings.speak && 'speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance(word.en);
+        u.lang = 'en-US';
+        speechSynthesis.speak(u);
     }
     
-    updatePhaseBadge();
+    return html;
+}
+
+function renderQuestion(word, type, typeName) {
+    let others = vocabulary.filter(w => w.en !== word.en);
+    others.sort(() => Math.random() - 0.5);
+    others = others.slice(0, 3);
     
-    area.innerHTML = `
+    while (others.length < 3) {
+        others.push({ en: 'N/A', cn: '选项', defCn: '选项', defEn: 'option', ex: '' });
+    }
+    
+    let question, options, correct;
+    
+    // 学习模式用中文定义，复习模式用英文定义
+    const useEnDef = (study.mode === 'review');
+    
+    switch(type) {
+        case 1: // 英选中
+            question = `<span class="question-word">${escapeHtml(word.en)}</span>`;
+            options = [word.cn, ...others.map(o => o.cn)].sort(() => Math.random() - 0.5);
+            correct = word.cn;
+            speak(word.en);
+            break;
+            
+        case 2: // 中选英
+            question = `<span class="question-text">${escapeHtml(word.cn)}</span>`;
+            options = [word.en, ...others.map(o => o.en)].sort(() => Math.random() - 0.5);
+            correct = word.en;
+            break;
+            
+        case 3: // 英选义
+            question = `<span class="question-word">${escapeHtml(word.en)}</span>`;
+            const def3 = (useEnDef && word.defEn) ? word.defEn : (word.defCn || word.cn);
+            const othersDef3 = others.map(o => (useEnDef && o.defEn) ? o.defEn : (o.defCn || o.cn));
+            options = [def3, ...othersDef3].sort(() => Math.random() - 0.5);
+            correct = def3;
+            speak(word.en);
+            break;
+            
+        case 4: // 义选英
+            const def4 = (useEnDef && word.defEn) ? word.defEn : (word.defCn || word.cn);
+            question = `<span class="question-text">${escapeHtml(def4)}</span>`;
+            options = [word.en, ...others.map(o => o.en)].sort(() => Math.random() - 0.5);
+            correct = word.en;
+            break;
+            
+        case 5: // 句选英
+            const ex5 = formatExample(word.ex, word.en);
+            question = ex5 ? ex5 : `<span class="question-word">${escapeHtml(word.en)}</span> <span class="text-muted">(无例句)</span>`;
+            options = [word.en, ...others.map(o => o.en)].sort(() => Math.random() - 0.5);
+            correct = word.en;
+            if (word.ex) speak(word.ex.replace(/\*\*/g, '').replace(/<[^>]*>/g, ''));
+            break;
+            
+        case 6: // 句选义
+            const ex6 = formatExample(word.ex, word.en);
+            question = ex6 ? ex6 : `<span class="question-word">${escapeHtml(word.en)}</span> <span class="text-muted">(无例句)</span>`;
+            const def6 = (useEnDef && word.defEn) ? word.defEn : (word.defCn || word.cn);
+            const othersDef6 = others.map(o => (useEnDef && o.defEn) ? o.defEn : (o.defCn || o.cn));
+            options = [def6, ...othersDef6].sort(() => Math.random() - 0.5);
+            correct = def6;
+            if (word.ex) speak(word.ex.replace(/\*\*/g, '').replace(/<[^>]*>/g, ''));
+            break;
+    }
+    
+    let html = `
         <div class="question-area">
             <div class="question-content">${question}</div>
             <div class="options-grid">
-                ${options.map((opt, i) => `
-                    <button class="option-btn" onclick="checkAnswer('${escapeAttr(opt)}', '${escapeAttr(correctAnswer)}', this)">
+                ${options.map(opt => `
+                    <button class="option-btn" onclick="checkAnswer('${escapeAttr(opt)}', '${escapeAttr(correct)}', ${type}, this)">
                         ${escapeHtml(opt)}
                     </button>
                 `).join('')}
             </div>
         </div>
     `;
-}
-
-// 生成选项
-function generateOptions(word, field) {
-    const correctAnswer = word[field];
-    if (!correctAnswer) return [word.word, word.word_cn];
     
-    const otherWords = vocabulary.filter(v => v.id !== word.id && v[field]);
-    const distractors = otherWords
-        .map(v => v[field])
-        .filter(val => val && val !== correctAnswer)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3);
-    
-    while (distractors.length < 3) {
-        distractors.push(`选项${distractors.length + 2}`);
+    if (settings.allowZhan) {
+        html += `<div style="text-align:center;margin-top:16px;"><button class="btn btn-outline" onclick="zhanWord()">⚔️ 斩（直接掌握）</button></div>`;
     }
     
-    const options = [correctAnswer, ...distractors.slice(0, 3)];
-    return options.sort(() => Math.random() - 0.5);
+    return html;
 }
 
-// 检查答案
-function checkAnswer(selected, correct, btn) {
-    const word = currentRetryWord || currentWordQueue[currentWordIndex];
+function formatExample(ex, word) {
+    if (!ex) return '';
+    let formatted = ex.replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--primary);">$1</strong>');
+    if (!ex.includes('**') && word) {
+        const regex = new RegExp(`\\b(${word})\\b`, 'gi');
+        formatted = ex.replace(regex, '<strong style="color:var(--primary);">$1</strong>');
+    }
+    return formatted;
+}
+
+function speak(text) {
+    if (settings.speak && 'speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US';
+        speechSynthesis.speak(u);
+    }
+}
+
+// ===== 答题逻辑 =====
+
+window.checkAnswer = function(selected, correct, type, btn) {
+    const btns = document.querySelectorAll('.option-btn');
     const isCorrect = selected === correct;
     
-    if (isCorrect) {
-        btn.classList.add('correct');
-        
-        if (currentPhase === StudyPhase.EN_CN && !hasShownCardThisWord && currentMode === 'new') {
-            setTimeout(() => {
-                currentPhase = StudyPhase.CARD;
-                renderCurrentQuestion();
-            }, 500);
-            return;
-        }
-        
-        setTimeout(() => nextPhase(), 500);
-    } else {
-        btn.classList.add('wrong');
-        
-        word.error_count = (word.error_count || 0) + 1;
-        word.correct_streak = 0;
-        
-        if (currentPhase === StudyPhase.EN_CN) {
-            setTimeout(() => {
-                currentPhase = StudyPhase.CARD;
-                currentRetryWord = word;
-                renderCurrentQuestion();
-            }, 500);
-            return;
-        }
-        
-        if (!wrongWordsInRound.find(w => w.id === word.id)) {
-            wrongWordsInRound.push({ ...word, retryPhase: currentPhase });
-        }
-        
-        setTimeout(() => renderCurrentQuestion(), 800);
-    }
-    
-    saveVocabulary();
-}
-
-// 进入下一阶段
-function nextPhase() {
-    const phases = [StudyPhase.EN_CN, StudyPhase.CN_EN, StudyPhase.EN_DEF, StudyPhase.DEF_EN];
-    const availablePhases = phases.filter(p => {
-        if (p === StudyPhase.EN_CN && !SETTINGS.phaseEnCn) return false;
-        if (p === StudyPhase.CN_EN && !SETTINGS.phaseCnEn) return false;
-        if (p === StudyPhase.EN_DEF && !SETTINGS.phaseEnDef) return false;
-        if (p === StudyPhase.DEF_EN && !SETTINGS.phaseDefEn) return false;
-        return true;
+    btns.forEach(b => {
+        b.classList.add('disabled');
+        if (b.textContent === correct) b.classList.add('correct');
+        else if (b.textContent === selected && !isCorrect) b.classList.add('wrong');
     });
     
-    const currentIndex = availablePhases.indexOf(currentPhase);
+    const word = study.queue[study.idx];
+    const idx = vocabulary.findIndex(w => w.en === word.en);
     
-    if (currentIndex < availablePhases.length - 1) {
-        currentPhase = availablePhases[currentIndex + 1];
-        renderCurrentQuestion();
-    } else {
-        wordCompleted();
-    }
-}
-
-// 单词完成一轮
-function wordCompleted() {
-    const word = currentRetryWord || currentWordQueue[currentWordIndex];
-    
-    if (!currentRetryWord) {
-        if (word.status === 'new') {
-            word.status = 'studying';
+    if (idx >= 0) {
+        if (isCorrect) {
+            vocabulary[idx].streak = (vocabulary[idx].streak || 0) + 1;
+            if (!vocabulary[idx].correctTypes) vocabulary[idx].correctTypes = [];
+            if (!vocabulary[idx].correctTypes.includes(type)) vocabulary[idx].correctTypes.push(type);
+        } else {
+            vocabulary[idx].streak = 0;
+            vocabulary[idx].wrongCount = (vocabulary[idx].wrongCount || 0) + 1;
         }
-        
-        word.correct_streak = (word.correct_streak || 0) + 1;
-        
-        if (word.correct_streak >= SETTINGS.masterCount) {
-            word.status = 'mastered';
-        } else if (word.status === 'studying') {
-            word.status = 'learned';
-        }
-        
         saveVocabulary();
     }
     
-    currentRetryWord = null;
-    hasShownCardThisWord = false;
-    currentPhase = StudyPhase.EN_CN;
-    nextWord();
-}
+    setTimeout(() => {
+        // 学习模式第一阶段（英选中）
+        if (study.mode === 'learn' && study.phase === 'first') {
+            if (isCorrect) {
+                // 第一次做对：弹卡片
+                vocabulary[idx].cardShown = true;
+                if (!vocabulary[idx].correctTypes) vocabulary[idx].correctTypes = [];
+                if (!vocabulary[idx].correctTypes.includes(1)) vocabulary[idx].correctTypes.push(1);
+                saveVocabulary();
+                
+                study.showingCard = true;
+                saveProgress();
+                renderStudy();
+            } else {
+                // 做错：弹卡片后重做
+                pendingWrong = { word: word, type: type };
+                saveProgress();
+                renderStudy();
+            }
+        } else {
+            // 题型阶段
+            if (isCorrect) {
+                study.idx++;
+                saveProgress();
+                if (study.idx < study.queue.length) {
+                    renderStudy();
+                } else {
+                    nextTypeOrGroup();
+                }
+            } else {
+                pendingWrong = { word: word, type: type };
+                saveProgress();
+                renderStudy();
+            }
+        }
+    }, 600);
+};
 
-// 下一个单词
-function nextWord() {
-    currentWordIndex++;
+// 卡片后继续（学习模式第一阶段做对后）
+window.continueAfterCard = function() {
+    study.idx++;
+    study.showingCard = false;
+    saveProgress();
     
-    if (currentWordIndex >= currentWordQueue.length) {
-        if (wrongWordsInRound.length > 0) {
-            currentRetryWord = wrongWordsInRound.shift();
-            currentPhase = currentRetryWord.retryPhase || StudyPhase.EN_CN;
-            hasShownCardThisWord = currentMode === 'review';
-            renderCurrentQuestion();
+    if (study.idx < study.queue.length) {
+        renderStudy();
+    } else {
+        // 这组英选中完成，进入题型阶段
+        study.phase = 'types';
+        study.typeIndex = 0;
+        study.queue = [...study.groups[study.groupIndex]];
+        study.idx = 0;
+        saveProgress();
+        renderStudy();
+    }
+};
+
+// 错题卡片后重做
+window.retryAfterCard = function() {
+    if (!pendingWrong) return;
+    study.queue.push(pendingWrong.word);
+    pendingWrong = null;
+    saveProgress();
+    renderStudy();
+};
+
+window.zhanWord = function() {
+    const word = study.queue[study.idx];
+    const idx = vocabulary.findIndex(w => w.en === word.en);
+    
+    if (idx >= 0) {
+        vocabulary[idx].streak = settings.masterCount;
+        vocabulary[idx].wrongCount = 0;
+        vocabulary[idx].cardShown = true;
+        if (!vocabulary[idx].correctTypes) vocabulary[idx].correctTypes = [];
+        settings.types.forEach(t => {
+            if (!vocabulary[idx].correctTypes.includes(t)) vocabulary[idx].correctTypes.push(t);
+        });
+        saveVocabulary();
+    }
+    
+    study.idx++;
+    showToast('已掌握！', 'success');
+    saveProgress();
+    
+    if (study.idx < study.queue.length) {
+        renderStudy();
+    } else {
+        if (study.mode === 'learn' && study.phase === 'first') {
+            study.phase = 'types';
+            study.typeIndex = 0;
+            study.queue = [...study.groups[study.groupIndex]];
+            study.idx = 0;
+            saveProgress();
+            renderStudy();
+        } else {
+            nextTypeOrGroup();
+        }
+    }
+};
+
+function nextTypeOrGroup() {
+    // 进入下一题型
+    study.typeIndex++;
+    
+    if (study.typeIndex < settings.types.length) {
+        // 还有题型，重置队列
+        study.queue = [...study.groups[study.groupIndex]];
+        study.idx = 0;
+        saveProgress();
+        renderStudy();
+    } else {
+        // 这组所有题型完成，进入下一组
+        study.groupIndex++;
+        if (study.groupIndex < study.groups.length) {
+            initGroup();
+            renderStudy();
         } else {
             finishStudy();
         }
-    } else {
-        hasShownCardThisWord = false;
-        currentPhase = StudyPhase.EN_CN;
-        renderCurrentQuestion();
     }
 }
 
-// 更新进度显示
-function updateProgress() {
-    const total = currentWordQueue.length;
-    const current = currentWordIndex + 1;
-    const percent = Math.round((currentWordIndex / total) * 100);
-    
-    const progressText = document.getElementById('progressText');
-    const progressFill = document.getElementById('progressFill');
-    const progressPercent = document.getElementById('progressPercent');
-    const wordProgress = document.getElementById('wordProgress');
-    
-    if (progressText) progressText.textContent = `第 ${current} / ${total} 个词`;
-    if (progressFill) progressFill.style.width = `${percent}%`;
-    if (progressPercent) progressPercent.textContent = `${percent}%`;
-    if (wordProgress) wordProgress.textContent = `第 ${current} / ${total} 个词`;
-}
-
-// 更新阶段徽章
-function updatePhaseBadge() {
-    const phaseNames = {
-        [StudyPhase.EN_CN]: '英选中',
-        [StudyPhase.CN_EN]: '中选英',
-        [StudyPhase.EN_DEF]: '英选义',
-        [StudyPhase.DEF_EN]: '义选英'
-    };
-    
-    const phaseBadge = document.getElementById('phaseBadge');
-    if (phaseBadge) phaseBadge.textContent = phaseNames[currentPhase] || '';
-}
-
-// 完成学习
 function finishStudy() {
-    const area = document.getElementById('studyArea');
-    area.innerHTML = `
-        <div class="study-complete">
-            <div class="complete-icon">🎉</div>
-            <h3>${currentMode === 'new' ? '学习' : '复习'}完成！</h3>
-            <p>已完成 ${currentWordQueue.length} 个词汇</p>
-            ${wrongWordsInRound.length > 0 ? `<p class="text-muted">错题已加入复习队列</p>` : ''}
-            <div class="complete-actions">
-                <button class="btn btn-outline" onclick="quitStudy()">返回</button>
-                <button class="btn btn-primary" onclick="startStudy('${currentMode}')">继续${currentMode === 'new' ? '学习' : '复习'}</button>
-            </div>
-        </div>
-    `;
-    
+    clearProgress();
+    showToast('学习完成！', 'success');
     updateStats();
+    setTimeout(() => quitStudy(), 500);
 }
 
 function quitStudy() {
-    currentMode = null;
-    currentWordQueue = [];
-    currentWordIndex = 0;
-    currentPhase = StudyPhase.EN_CN;
-    wrongWordsInRound = [];
-    currentRetryWord = null;
-    
+    study = null;
+    pendingWrong = null;
     document.getElementById('studyControls')?.classList.remove('hidden');
     document.getElementById('queueInfo')?.classList.add('hidden');
-    
-    const area = document.getElementById('studyArea');
-    area.innerHTML = `
-        <div class="empty-state">
-            <div class="empty-state-icon">📖</div>
-            <p>选择上方按钮开始学习！</p>
-            <p class="text-muted">支持6种题型：英选中、中选英、英选义、义选英、句选中、句选义</p>
-        </div>
-    `;
-    
+    document.getElementById('studyArea')?.classList.add('hidden');
     updateStats();
-    renderAllWords();
 }
 
-// 渲染所有词汇
+// ===== 列表渲染 =====
+
 function renderAllWords() {
-    const container = document.getElementById('allWordList');
+    const container = document.getElementById('allWordsList');
     if (!container) return;
     
-    const categoryFilter = document.getElementById('allCategoryFilter')?.value || '';
-    const statusFilter = document.getElementById('allStatusFilter')?.value || '';
-    const searchTerm = document.getElementById('allSearchInput')?.value?.toLowerCase() || '';
+    const filter = document.getElementById('allStatusFilter')?.value || '';
+    const search = document.getElementById('allSearchInput')?.value?.toLowerCase() || '';
     
-    let filtered = vocabulary.filter(word => {
-        if (categoryFilter && word.category !== categoryFilter) return false;
-        if (statusFilter && word.status !== statusFilter) return false;
-        if (searchTerm) {
-            const searchFields = [word.word, word.word_cn, word.definition_cn, word.definition_en].join(' ').toLowerCase();
-            if (!searchFields.includes(searchTerm)) return false;
-        }
-        return true;
-    });
+    let words = [...vocabulary];
+    if (filter) words = words.filter(w => classify(w) === filter);
+    if (search) {
+        words = words.filter(w => 
+            (w.en && w.en.toLowerCase().includes(search)) ||
+            (w.cn && w.cn.toLowerCase().includes(search))
+        );
+    }
     
-    if (filtered.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>暂无词汇</p></div>';
+    if (words.length === 0) {
+        container.innerHTML = `<div class="empty-state"><p>暂无词汇</p></div>`;
         return;
     }
     
-    container.innerHTML = filtered.map(word => `
-        <div class="list-item" data-id="${word.id}">
+    container.innerHTML = words.map(w => `
+        <div class="list-item">
             <div class="list-item-main">
-                <div class="list-item-title">
-                    ${escapeHtml(word.word)}
-                    <span class="text-muted"> - ${escapeHtml(word.word_cn)}</span>
-                </div>
-                <div class="list-item-sub">
-                    ${getStatusName(word.status)} · 正确 ${word.correct_count || 0} · 错误 ${word.error_count || 0}
-                </div>
+                <div class="list-item-title">${escapeHtml(w.en)}</div>
+                <div class="list-item-sub">${escapeHtml(w.cn)}</div>
             </div>
-            <div class="list-item-actions">
-                <button class="btn btn-sm btn-danger" onclick="deleteWord('${word.id}')">删除</button>
-            </div>
+            <span class="badge ${classify(w) === 'mastered' ? 'badge-success' : classify(w) === 'wrong' ? 'badge-danger' : 'badge-secondary'}">${classify(w)}</span>
         </div>
     `).join('');
 }
 
-function getStatusName(status) {
-    const names = {
-        'new': '新词',
-        'studying': '学习中',
-        'learned': '已学',
-        'mastered': '已掌握'
-    };
-    return names[status] || status;
-}
-
-// 渲染错词本
 function renderWrongWords() {
-    const container = document.getElementById('wrongWordList');
+    const container = document.getElementById('wrongWordsList');
     if (!container) return;
     
-    const wrongWords = vocabulary.filter(v => (v.error_count || 0) >= VOCAB_CONFIG.ERROR_THRESHOLD);
+    const words = vocabulary.filter(w => classify(w) === 'wrong');
+    words.sort((a, b) => (b.wrongCount || 0) - (a.wrongCount || 0));
     
-    if (wrongWords.length === 0) {
-        container.innerHTML = '<div class="empty-state"><p>暂无错词</p></div>';
+    if (words.length === 0) {
+        container.innerHTML = `<div class="empty-state"><p>暂无错词</p></div>`;
         return;
     }
     
-    container.innerHTML = wrongWords.map(word => `
-        <div class="list-item" data-id="${word.id}">
+    container.innerHTML = words.map(w => `
+        <div class="list-item">
             <div class="list-item-main">
-                <div class="list-item-title">${escapeHtml(word.word)} - ${escapeHtml(word.word_cn)}</div>
-                <div class="list-item-sub">错误 ${word.error_count} 次</div>
+                <div class="list-item-title">${escapeHtml(w.en)} <span class="badge badge-danger">错${w.wrongCount}次</span></div>
+                <div class="list-item-sub">${escapeHtml(w.cn)}</div>
             </div>
         </div>
     `).join('');
 }
 
-function reviewWrong() {
-    const wrongWords = vocabulary.filter(v => (v.error_count || 0) >= VOCAB_CONFIG.ERROR_THRESHOLD);
-    if (wrongWords.length === 0) {
-        showToast('没有错词需要复习', 'error');
+function renderMasteredWords() {
+    const container = document.getElementById('masteredWordsList');
+    if (!container) return;
+    
+    const words = vocabulary.filter(w => classify(w) === 'mastered');
+    words.sort((a, b) => a.en.localeCompare(b.en));
+    
+    if (words.length === 0) {
+        container.innerHTML = `<div class="empty-state"><p>暂无已掌握词汇</p></div>`;
         return;
     }
     
-    currentMode = 'review';
-    currentWordIndex = 0;
-    currentPhase = StudyPhase.EN_CN;
-    wrongWordsInRound = [];
-    currentRetryWord = null;
-    hasShownCardThisWord = false;
-    
-    currentWordQueue = wrongWords.map(v => ({ ...v }));
-    
-    document.getElementById('studyControls')?.classList.add('hidden');
-    document.getElementById('queueInfo')?.classList.remove('hidden');
-    
-    renderCurrentQuestion();
+    container.innerHTML = words.map(w => `
+        <div class="list-item">
+            <div class="list-item-main">
+                <div class="list-item-title">${escapeHtml(w.en)}</div>
+                <div class="list-item-sub">${escapeHtml(w.cn)}</div>
+            </div>
+            <button class="btn btn-sm btn-outline" onclick="removeFromMastered('${escapeAttr(w.en)}')">移出</button>
+        </div>
+    `).join('');
 }
 
-function clearWrongWords() {
-    if (!confirm('确定要清空错词本吗？')) return;
-    
-    vocabulary.forEach(v => {
-        v.error_count = 0;
-    });
-    saveVocabulary();
-    renderWrongWords();
-    updateStats();
-    showToast('错词本已清空', 'success');
-}
-
-// 添加单词
-function openAddWord() {
-    document.getElementById('addWordModal').classList.remove('hidden');
-    document.getElementById('wordEn').value = '';
-    document.getElementById('wordCn').value = '';
-    document.getElementById('defCn').value = '';
-    document.getElementById('defEn').value = '';
-    document.getElementById('wordExample').value = '';
-}
-
-function closeAddWord() {
-    document.getElementById('addWordModal').classList.add('hidden');
-}
-
-function confirmAddWord() {
-    const word = document.getElementById('wordEn').value.trim();
-    const word_cn = document.getElementById('wordCn').value.trim();
-    const definition_cn = document.getElementById('defCn').value.trim();
-    const definition_en = document.getElementById('defEn').value.trim();
-    const example = document.getElementById('wordExample').value.trim();
-    const category = document.getElementById('wordCategory').value;
-    
-    if (!word || !word_cn) {
-        showToast('请填写英文词汇和中文翻译', 'error');
-        return;
-    }
-    
-    const result = VocabularyStore.add({
-        word,
-        word_cn,
-        definition_cn,
-        definition_en,
-        example,
-        category,
-        phonetic: ''
-    });
-    
-    if (result.success) {
-        showToast('词汇添加成功！', 'success');
-        closeAddWord();
-        vocabulary = VocabularyStore.getAll();
+window.removeFromMastered = function(en) {
+    const idx = vocabulary.findIndex(w => w.en === en);
+    if (idx >= 0) {
+        vocabulary[idx].streak = 0;
+        vocabulary[idx].cardShown = false;
+        vocabulary[idx].correctTypes = [];
+        saveVocabulary();
+        showToast('已移出已掌握库', 'success');
+        renderMasteredWords();
         updateStats();
-        renderAllWords();
-    } else {
-        showToast(result.message, 'warning');
     }
-}
+};
 
-function deleteWord(id) {
-    if (!confirm('确定要删除这个词汇吗？')) return;
-    
-    VocabularyStore.remove(id);
-    vocabulary = VocabularyStore.getAll();
-    updateStats();
-    renderAllWords();
-    showToast('词汇已删除', 'success');
-}
+// ===== 设置 =====
 
-// 设置模态框
 function openSettings() {
-    document.getElementById('settingsModal').classList.remove('hidden');
+    document.getElementById('settingsModal')?.classList.remove('hidden');
+    document.getElementById('settingSpeak').checked = settings.speak;
+    document.getElementById('settingAllowZhan').checked = settings.allowZhan;
+    document.getElementById('settingMasterCount').value = settings.masterCount;
     
-    document.getElementById('settingSpeak').checked = SETTINGS.speakEnabled;
-    document.getElementById('settingMasterCount').value = SETTINGS.masterCount;
-    document.getElementById('settingEnCn').checked = SETTINGS.phaseEnCn;
-    document.getElementById('settingCnEn').checked = SETTINGS.phaseCnEn;
-    document.getElementById('settingEnDef').checked = SETTINGS.phaseEnDef;
-    document.getElementById('settingDefEn').checked = SETTINGS.phaseDefEn;
+    settings.types.forEach(t => {
+        const cb = document.getElementById(`type${t}`);
+        if (cb) cb.checked = true;
+    });
 }
 
 function closeSettings() {
-    document.getElementById('settingsModal').classList.add('hidden');
+    document.getElementById('settingsModal')?.classList.add('hidden');
 }
 
-// 示例词汇
-function getSampleVocabulary() {
-    return [
-        {
-            id: 'sample-1',
-            word: 'perovskite',
-            word_cn: '钙钛矿',
-            definition_cn: '一种具有ABX3晶体结构的半导体材料',
-            definition_en: 'A semiconductor material with ABX3 crystal structure',
-            example: '**Perovskite** solar cells have shown remarkable efficiency improvements.',
-            phonetic: '/pəˈrɒvskаɪt/',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            correct_streak: 0,
-            category: 'material'
-        },
-        {
-            id: 'sample-2',
-            word: 'photovoltaic',
-            word_cn: '光伏的',
-            definition_cn: '将光能直接转换为电能的',
-            definition_en: 'Converting light directly into electricity',
-            example: 'The **photovoltaic** effect is the basis for solar cell operation.',
-            phonetic: '/ˌfəʊtəʊvɒlˈteɪɪk/',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            correct_streak: 0,
-            category: 'concept'
-        },
-        {
-            id: 'sample-3',
-            word: 'efficiency',
-            word_cn: '效率',
-            definition_cn: '能量转换或工作的有效程度',
-            definition_en: 'The ratio of useful output to input',
-            example: 'The power conversion **efficiency** reached 25% in this device.',
-            phonetic: '/ɪˈfɪʃənsi/',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            correct_streak: 0,
-            category: 'concept'
-        },
-        {
-            id: 'sample-4',
-            word: 'interface',
-            word_cn: '界面',
-            definition_cn: '两种不同材料或相之间的接触面',
-            definition_en: 'The boundary between two different phases or materials',
-            example: 'The **interface** engineering is crucial for device performance.',
-            phonetic: '/ˈɪntəfeɪs/',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            correct_streak: 0,
-            category: 'concept'
-        },
-        {
-            id: 'sample-5',
-            word: 'carrier',
-            word_cn: '载流子',
-            definition_cn: '在半导体中携带电荷的电子或空穴',
-            definition_en: 'Electrons or holes that carry charge in a semiconductor',
-            example: 'The **carrier** mobility determines the transport properties.',
-            phonetic: '/ˈkæriə/',
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            correct_streak: 0,
-            category: 'concept'
-        }
-    ];
+function saveSettingsAndClose() {
+    settings.speak = document.getElementById('settingSpeak')?.checked ?? true;
+    settings.allowZhan = document.getElementById('settingAllowZhan')?.checked ?? false;
+    settings.masterCount = parseInt(document.getElementById('settingMasterCount')?.value) || 12;
+    
+    const types = [];
+    for (let i = 1; i <= 6; i++) {
+        if (document.getElementById(`type${i}`)?.checked) types.push(i);
+    }
+    if (types.length > 0) settings.types = types;
+    
+    saveSettings();
+    showToast('设置已保存', 'success');
+    closeSettings();
+}
+
+// ===== 工具函数 =====
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function escapeAttr(text) {
+    if (!text) return '';
+    return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
 }
