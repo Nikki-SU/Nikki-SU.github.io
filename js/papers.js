@@ -685,12 +685,14 @@ function confirmComplete() {
         
         // 检查是否被 ```json ... ``` 或 ``` ... ``` 包裹
         const codeBlockMatch = cleanJson.match(/```(?:json)?\s*([\s\S]*?)```/);
-        if (codeBlockMatch) {
+        if (codeBlockMatch && typeof codeBlockMatch[1] === 'string') {
             cleanJson = codeBlockMatch[1].trim();
         }
         
         // 移除可能的前后空白和换行
-        cleanJson = cleanJson.trim();
+        if (typeof cleanJson === 'string') {
+            cleanJson = cleanJson.trim();
+        }
         
         // 解析JSON
         const data = JSON.parse(cleanJson);
