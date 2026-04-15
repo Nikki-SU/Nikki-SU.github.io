@@ -57,26 +57,39 @@ function initEventListeners() {
  */
 async function loadData() {
     try {
-        // 加载文献库
-        const libraryRes = await fetch(CONFIG.libraryUrl).catch(() => ({ ok: false }));
-        if (libraryRes.ok) {
-            libraryPapers = await libraryRes.json();
-        } else {
-            // 从localStorage加载
-            const stored = localStorage.getItem('libraryData');
-            if (stored) {
-                libraryPapers = JSON.parse(stored);
+        // 优先从localStorage加载文献库（用户数据）
+        const storedLibrary = localStorage.getItem('libraryData');
+        if (storedLibrary) {
+            try {
+                libraryPapers = JSON.parse(storedLibrary);
+            } catch (e) {
+                libraryPapers = [];
+            }
+        }
+        
+        // 如果localStorage没有数据，尝试从文件读取
+        if (libraryPapers.length === 0) {
+            const libraryRes = await fetch(CONFIG.libraryUrl).catch(() => ({ ok: false }));
+            if (libraryRes.ok) {
+                libraryPapers = await libraryRes.json();
             }
         }
 
-        // 加载文献卡片
-        const cardsRes = await fetch(CONFIG.papersUrl).catch(() => ({ ok: false }));
-        if (cardsRes.ok) {
-            paperCards = await cardsRes.json();
-        } else {
-            const storedCards = localStorage.getItem('papersData');
-            if (storedCards) {
+        // 优先从localStorage加载文献卡片（用户数据）
+        const storedCards = localStorage.getItem('papersData');
+        if (storedCards) {
+            try {
                 paperCards = JSON.parse(storedCards);
+            } catch (e) {
+                paperCards = [];
+            }
+        }
+        
+        // 如果localStorage没有数据，尝试从文件读取
+        if (paperCards.length === 0) {
+            const cardsRes = await fetch(CONFIG.papersUrl).catch(() => ({ ok: false }));
+            if (cardsRes.ok) {
+                paperCards = await cardsRes.json();
             }
         }
 
@@ -437,25 +450,118 @@ async function handleMakeCard(doi) {
         return;
     }
 
-    // 创建粗略卡片
-    const roughCard = createRoughCard(paper);
-    
-    if (existingCard) {
-        // 更新现有卡片
-        Object.assign(existingCard, roughCard);
-    } else {
-        // 添加新卡片
-        paperCards.push(roughCard);
+    // 显示加载提示
+    const loadingMsg = document.createElement('div');
+    loadingMsg.className = 'loading-overlay';
+    loadingMsg.innerHTML = '<div class="loading-spinner"></div><span>正在生成粗略卡片...</span>';
+    document.body.appendChild(loadingMsg);
+
+    try {
+        // 调用API翻译标题和摘要（如果没有中文版）
+        let translatedPaper = { ...paper };
+        if (!paper.title_cn || !paper.abstract_cn) {
+            const translated = await translatePaper(paper);
+            if (translated) {
+                translatedPaper = { ...paper, ...translated };
+                // 更新文献库中的数据
+                const idx = libraryPapers.findIndex(p => p.doi === doi);
+                if (idx >= 0) {
+                    libraryPapers[idx] = translatedPaper;
+                    saveLibrary();
+                }
+            }
+        }
+
+        // 创建粗略卡片
+        const roughCard = createRoughCard(translatedPaper);
+        
+        if (existingCard) {
+            Object.assign(existingCard, roughCard);
+        } else {
+            paperCards.push(roughCard);
+        }
+
+        cardStatusCache[doi] = isCompleteCard(roughCard);
+        saveCards();
+        filterPapers();
+        updateStats();
+
+        alert('✅ 粗略卡片已创建（标黄），可前往文献卡片页编辑完善');
+    } catch (error) {
+        console.error('创建卡片失败:', error);
+        alert('创建失败: ' + error.message);
+    } finally {
+        loadingMsg.remove();
+    }
+}
+
+/**
+ * 调用AI API翻译文献信息
+ */
+async function translatePaper(paper) {
+    // 检查是否有API配置
+    const apiConfig = localStorage.getItem('ai_api_key');
+    if (!apiConfig) {
+        console.log('未配置API，跳过翻译');
+        return null;
     }
 
-    // 更新缓存
-    cardStatusCache[doi] = isCompleteCard(roughCard);
+    const provider = localStorage.getItem('ai_provider') || 'siliconflow';
+    const model = localStorage.getItem('ai_model') || 'deepseek-ai/DeepSeek-V3';
+    
+    // API URL映射
+    const apiUrls = {
+        'siliconflow': 'https://api.siliconflow.cn/v1/chat/completions',
+        'deepseek': 'https://api.deepseek.com/v1/chat/completions',
+        'qwen': 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
+    };
+    
+    const url = apiUrls[provider];
+    if (!url) return null;
 
-    saveCards();
-    filterPapers();
-    updateStats();
+    const prompt = `请翻译以下学术文献信息，返回JSON格式：
 
-    alert('✅ 粗略卡片已创建（标黄），可前往文献卡片页编辑完善');
+标题：${paper.title || ''}
+摘要：${paper.abstract || ''}
+
+返回格式：
+{
+  "title_cn": "中文标题",
+  "abstract_cn": "中文摘要"
+}
+
+只返回JSON，不要其他内容。`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiConfig}`
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [{ role: 'user', content: prompt }],
+                temperature: 0.3,
+                max_tokens: 1000
+            })
+        });
+
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content || '';
+        
+        // 解析JSON
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            return JSON.parse(jsonMatch[0]);
+        }
+    } catch (error) {
+        console.error('翻译失败:', error);
+    }
+    
+    return null;
 }
 
 /**
