@@ -68,6 +68,13 @@ document.addEventListener('DOMContentLoaded', () => {
     updateStats();
 });
 
+// 解决浏览器前进/后退缓存问题
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        loadLibrary();
+    }
+});
+
 function initEventListeners() {
     // 移动端菜单
     const menuToggle = document.getElementById('menuToggle');
