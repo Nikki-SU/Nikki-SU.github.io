@@ -92,6 +92,25 @@ function initEventListeners() {
     // JSON导入（文件+粘贴自动解析）
     document.getElementById('jsonFileInput')?.addEventListener('change', handleJsonFileUpload);
     document.getElementById('jsonInput')?.addEventListener('input', debounce(parseJsonInput, 500));
+    
+    // 复制提示词
+    document.getElementById('copyPromptBtn')?.addEventListener('click', () => {
+        const promptText = document.getElementById('promptTemplate');
+        promptText.select();
+        document.execCommand('copy');
+        
+        const btn = document.getElementById('copyPromptBtn');
+        const originalText = btn.textContent;
+        btn.textContent = '已复制 ✓';
+        btn.style.background = 'var(--success-color)';
+        btn.style.color = 'white';
+        
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = '';
+            btn.style.color = '';
+        }, 2000);
+    });
 
     // 确认导入
     document.getElementById('confirmImport')?.addEventListener('click', confirmImport);
