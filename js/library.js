@@ -54,101 +54,66 @@ function initEventListeners() {
 
 /**
  * 加载数据
- * 核心原则：localStorage中有数据（即使是空数组）就只用localStorage，不再从文件读取
+ * 原则：localStorage有就用localStorage的（即使是空数组），没有才从文件读取
  */
 async function loadData() {
-    try {
-        // 检查是否已初始化（区分"从未有数据"和"数据被清空"）
-        const libraryInitialized = localStorage.getItem('libraryData_initialized');
-        const cardsInitialized = localStorage.getItem('papersData_initialized');
-        
-        // 文献库：优先从localStorage加载
-        if (libraryInitialized === 'true') {
-            // 用户已有数据（包括空数组），只用localStorage
-            const storedLibrary = localStorage.getItem('libraryData');
-            if (storedLibrary) {
-                try {
-                    const parsed = JSON.parse(storedLibrary);
-                    libraryPapers = Array.isArray(parsed) ? parsed : [];
-                } catch (e) {
-                    console.error('文献库数据解析失败，重置:', e);
-                    libraryPapers = [];
-                    localStorage.setItem('libraryData', '[]');
-                }
-            } else {
-                libraryPapers = [];
+    const storedLibrary = localStorage.getItem('libraryData');
+    const storedCards = localStorage.getItem('papersData');
+    
+    // 文献库：localStorage有就用它
+    if (storedLibrary !== null) {
+        try {
+            const parsed = JSON.parse(storedLibrary);
+            if (Array.isArray(parsed)) {
+                libraryPapers = parsed;
             }
-        } else {
-            // 首次使用：尝试从文件读取，然后标记已初始化
-            try {
-                const libraryRes = await fetch(CONFIG.libraryUrl).catch(() => ({ ok: false }));
-                if (libraryRes.ok) {
-                    const data = await libraryRes.json();
-                    libraryPapers = Array.isArray(data) ? data : [];
-                } else {
-                    libraryPapers = [];
-                }
-            } catch (e) {
-                libraryPapers = [];
-            }
-            // 保存并标记已初始化
-            localStorage.setItem('libraryData', JSON.stringify(libraryPapers));
-            localStorage.setItem('libraryData_initialized', 'true');
+        } catch (e) {
+            console.error('文献库localStorage解析失败:', e);
         }
-
-        // 文献卡片：优先从localStorage加载
-        if (cardsInitialized === 'true') {
-            // 用户已有数据（包括空数组），只用localStorage
-            const storedCards = localStorage.getItem('papersData');
-            if (storedCards) {
-                try {
-                    const parsed = JSON.parse(storedCards);
-                    paperCards = Array.isArray(parsed) ? parsed : [];
-                } catch (e) {
-                    console.error('文献卡片数据解析失败，重置:', e);
-                    paperCards = [];
-                    localStorage.setItem('papersData', '[]');
-                }
-            } else {
-                paperCards = [];
+    } else {
+        // localStorage完全没有数据（null），才从文件读取
+        try {
+            const libraryRes = await fetch(CONFIG.libraryUrl);
+            if (libraryRes.ok) {
+                const data = await libraryRes.json();
+                libraryPapers = Array.isArray(data) ? data : [];
             }
-        } else {
-            // 首次使用：尝试从文件读取，然后标记已初始化
-            try {
-                const cardsRes = await fetch(CONFIG.papersUrl).catch(() => ({ ok: false }));
-                if (cardsRes.ok) {
-                    const data = await cardsRes.json();
-                    paperCards = Array.isArray(data) ? data : [];
-                } else {
-                    paperCards = [];
-                }
-            } catch (e) {
-                paperCards = [];
-            }
-            // 保存并标记已初始化
-            localStorage.setItem('papersData', JSON.stringify(paperCards));
-            localStorage.setItem('papersData_initialized', 'true');
+        } catch (e) {
+            console.error('加载文献库文件失败:', e);
         }
-
-        console.log('数据加载成功 - 文献库:', libraryPapers.length, '篇, 卡片:', paperCards.length, '张');
-
-        // 更新卡片状态缓存
-        updateCardStatusCache();
-
-        // 更新期刊筛选器
-        updateJournalFilter();
-
-        // 筛选并渲染
-        filterPapers();
-        updateStats();
-
-    } catch (error) {
-        console.error('加载数据失败:', error);
-        libraryPapers = [];
-        paperCards = [];
-        filterPapers();
-        updateStats();
+        localStorage.setItem('libraryData', JSON.stringify(libraryPapers));
     }
+
+    // 文献卡片：localStorage有就用它
+    if (storedCards !== null) {
+        try {
+            const parsed = JSON.parse(storedCards);
+            if (Array.isArray(parsed)) {
+                paperCards = parsed;
+            }
+        } catch (e) {
+            console.error('文献卡片localStorage解析失败:', e);
+        }
+    } else {
+        // localStorage完全没有数据（null），才从文件读取
+        try {
+            const cardsRes = await fetch(CONFIG.papersUrl);
+            if (cardsRes.ok) {
+                const data = await cardsRes.json();
+                paperCards = Array.isArray(data) ? data : [];
+            }
+        } catch (e) {
+            console.error('加载文献卡片文件失败:', e);
+        }
+        localStorage.setItem('papersData', JSON.stringify(paperCards));
+    }
+
+    console.log('数据加载成功 - 文献库:', libraryPapers.length, '篇, 卡片:', paperCards.length, '张');
+
+    updateCardStatusCache();
+    updateJournalFilter();
+    filterPapers();
+    updateStats();
 }
 
 /**
@@ -868,7 +833,6 @@ function batchDelete() {
  */
 function saveLibrary() {
     localStorage.setItem('libraryData', JSON.stringify(libraryPapers));
-    localStorage.setItem('libraryData_initialized', 'true');
 }
 
 /**
@@ -876,7 +840,6 @@ function saveLibrary() {
  */
 function saveCards() {
     localStorage.setItem('papersData', JSON.stringify(paperCards));
-    localStorage.setItem('papersData_initialized', 'true');
 }
 
 /**
