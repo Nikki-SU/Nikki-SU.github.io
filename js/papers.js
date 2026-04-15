@@ -208,14 +208,34 @@ async function addByDoi() {
         const data = await response.json();
         const work = data.message;
         
+        // 获取英文信息
+        const titleEn = work.title?.[0] || '';
+        const abstract = work.abstract?.replace(/<[^>]*>/g, '') || '';
+        
+        // 尝试翻译标题和摘要
+        let titleCn = '';
+        let abstractCn = '';
+        
+        if (titleEn && window.translateField) {
+            showToast('正在翻译标题...', 'info');
+            titleCn = await translateField(titleEn, 'cn') || '';
+        }
+        
+        if (abstract && window.translateField) {
+            showToast('正在翻译摘要...', 'info');
+            abstractCn = await translateField(abstract, 'defCn') || '';
+        }
+        
         const paper = {
             doi: cleanDoi,
-            title: work.title?.[0] || '',
-            titleCn: '',
+            title: titleCn || titleEn, // 优先显示中文标题
+            titleCn: titleCn,
+            titleEn: titleEn,
             authors: (work.author || []).map(a => `${a.given || ''} ${a.family || ''}`.trim()),
             year: work.published?.['date-parts']?.[0]?.[0] || work.created?.['date-parts']?.[0]?.[0],
             journal: work['container-title']?.[0] || '',
-            abstract: work.abstract?.replace(/<[^>]*>/g, '') || ''
+            abstract: abstract,
+            abstractCn: abstractCn
         };
         
         const result = LibraryStore.add(paper);
