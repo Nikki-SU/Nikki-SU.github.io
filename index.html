@@ -3,91 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小N的学术学习站</title>
+    <title>小N学术站 - 钙钛矿太阳能电池研究</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <header class="header">
         <div class="container">
-            <h1 class="logo">🧪 小N学术站</h1>
-            <nav class="nav">
-                <a href="index.html" class="nav-link active">首页</a>
-                <a href="vocabulary.html" class="nav-link">生词本</a>
-                <a href="papers.html" class="nav-link">文献卡片</a>
+            <h1 class="logo">
+                <span class="logo-icon">🧪</span>
+                小N学术站
+            </h1>
+            <nav class="nav" id="navMenu">
+                <a href="index.html" class="nav-link active">
+                    <span class="icon">🏠</span> 首页
+                </a>
+                <a href="weekly.html" class="nav-link">
+                    <span class="icon">📅</span> 周报
+                </a>
+                <a href="papers.html" class="nav-link">
+                    <span class="icon">📚</span> 文献卡片
+                </a>
+                <a href="vocabulary.html" class="nav-link">
+                    <span class="icon">📝</span> 词汇本
+                </a>
+                <a href="sync.html" class="nav-link">
+                    <span class="icon">🔄</span> 同步
+                </a>
             </nav>
             <button class="menu-toggle" id="menuToggle">☰</button>
         </div>
     </header>
 
     <main class="main">
-        <section class="hero">
-            <div class="container">
-                <h2>欢迎来到小N的学术学习站</h2>
-                <p>专注钙钛矿太阳能电池研究 | 化学专业本科</p>
-            </div>
-        </section>
-
         <div class="container">
-            <section class="section">
-                <h3 class="section-title">📅 周报概览</h3>
-                <div class="weekly-reports">
-                    <div class="report-card">
-                        <div class="report-header">
-                            <span class="report-week">第 12 周</span>
-                            <span class="report-date">2024-03-18</span>
-                        </div>
-                        <div class="report-content">
-                            <h4>本周进展</h4>
-                            <ul>
-                                <li>阅读了3篇关于FAPbI₃钙钛矿的文献</li>
-                                <li>整理了表征方法的新术语</li>
-                                <li>复习了溶剂工程相关词汇</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="report-card">
-                        <div class="report-header">
-                            <span class="report-week">第 11 周</span>
-                            <span class="report-date">2024-03-11</span>
-                        </div>
-                        <div class="report-content">
-                            <h4>本周进展</h4>
-                            <ul>
-                                <li>完成了文献综述第一稿</li>
-                                <li>学习了XRD和SEM表征方法</li>
-                                <li>整理了20个新单词</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="report-card">
-                        <div class="report-header">
-                            <span class="report-week">第 10 周</span>
-                            <span class="report-date">2024-03-04</span>
-                        </div>
-                        <div class="report-content">
-                            <h4>本周进展</h4>
-                            <ul>
-                                <li>确定了研究方向：钙钛矿薄膜制备</li>
-                                <li>开始阅读导师推荐的综述文章</li>
-                                <li>建立了单词本学习计划</li>
-                            </ul>
-                        </div>
-                    </div>
+            <!-- Hero Section -->
+            <section class="hero">
+                <div class="hero-content">
+                    <h2>欢迎来到小N的学术学习站</h2>
+                    <p>专注钙钛矿太阳能电池研究 | 化学专业本科</p>
                 </div>
             </section>
 
+            <!-- Quick Stats -->
             <section class="section">
-                <h3 class="section-title">📚 最近文献卡片</h3>
-                <div id="recentPapers" class="papers-grid">
-                    <div class="loading">加载中...</div>
-                </div>
-                <div class="more-link">
-                    <a href="papers.html" class="btn btn-primary">查看全部文献 →</a>
-                </div>
-            </section>
-
-            <section class="section">
-                <h3 class="section-title">📖 学习统计</h3>
+                <h3 class="section-title">
+                    <span class="icon">📊</span>
+                    学习概览
+                </h3>
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-icon">📄</div>
@@ -104,6 +66,64 @@
                         <div class="stat-value" id="masteredCount">-</div>
                         <div class="stat-label">已掌握</div>
                     </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-value" id="weekCount">-</div>
+                        <div class="stat-label">学习周数</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Weekly Reports Preview -->
+            <section class="section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <span class="icon">📅</span>
+                        最新周报
+                    </h3>
+                    <a href="weekly.html" class="btn btn-outline btn-sm">查看全部 →</a>
+                </div>
+                <div id="recentReports" class="weekly-reports">
+                    <div class="loading">加载中...</div>
+                </div>
+            </section>
+
+            <!-- Recent Papers -->
+            <section class="section">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <span class="icon">📚</span>
+                        最近文献
+                    </h3>
+                    <a href="papers.html" class="btn btn-outline btn-sm">查看全部 →</a>
+                </div>
+                <div id="recentPapers" class="papers-grid">
+                    <div class="loading">加载中...</div>
+                </div>
+            </section>
+
+            <!-- Quick Actions -->
+            <section class="section">
+                <h3 class="section-title">
+                    <span class="icon">⚡</span>
+                    快捷操作
+                </h3>
+                <div class="stats-grid">
+                    <a href="weekly.html" class="stat-card" style="text-decoration: none;">
+                        <div class="stat-icon">➕</div>
+                        <div class="stat-value" style="font-size: 1.5rem;">新建周报</div>
+                        <div class="stat-label">创建本周学术总结</div>
+                    </a>
+                    <a href="papers.html" class="stat-card" style="text-decoration: none;">
+                        <div class="stat-icon">📥</div>
+                        <div class="stat-value" style="font-size: 1.5rem;">导入文献</div>
+                        <div class="stat-label">通过DOI或PDF导入</div>
+                    </a>
+                    <a href="vocabulary.html" class="stat-card" style="text-decoration: none;">
+                        <div class="stat-icon">📖</div>
+                        <div class="stat-value" style="font-size: 1.5rem;">开始学习</div>
+                        <div class="stat-label">继续单词学习</div>
+                    </a>
                 </div>
             </section>
         </div>
