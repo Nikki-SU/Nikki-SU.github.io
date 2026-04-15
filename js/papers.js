@@ -617,40 +617,59 @@ function closeCompleteModal() {
 }
 
 /**
- * 生成补全提示词
+ * 生成补全提示词（完整字段，用于AI解析PDF）
  */
 function generateCompletePrompt(paper) {
-    return `请补全以下文献卡片的剩余字段。
+    return `请解析这篇文献，返回完整的JSON格式文献卡片数据。
 
-已填写的字段：
+文献信息：
+- DOI：${paper.doi || '无'}
 - 标题：${paper.title || paper.title_cn || '无'}
 - 作者：${paper.authors || '无'}
 - 期刊：${paper.journal || '无'}
 - 出版日期：${paper.publish_date || '无'}
-- DOI：${paper.doi || '无'}
-- 摘要：${(paper.abstract || paper.abstract_cn || '无').substring(0, 200)}...
+- 摘要：${paper.abstract || paper.abstract_cn || '无'}
 
-请补全以下JSON格式的字段（只需返回JSON，不要其他内容）：
+请返回以下JSON格式（所有字段必填，只返回JSON，不要其他文字）：
 
 {
-  "summary": "英文工作总结（本文做了什么、得到了什么结论，100-200字）",
+  "title": "英文标题",
+  "title_cn": "中文标题",
+  "authors": "作者列表",
+  "journal": "期刊名",
+  "publish_date": "发表日期",
+  "abstract": "英文摘要",
+  "abstract_cn": "中文摘要翻译",
+  "keywords": ["关键词1", "关键词2", "关键词3"],
+  "summary": "工作总结（本文做了什么、得到了什么结论，100-200字）",
   "summary_cn": "中文工作总结",
-  "innovation": "英文创新点（本文的主要贡献和创新之处）",
+  "innovation": "创新点（列出2-4点主要贡献）",
   "innovation_cn": "中文创新点",
-  "application": "英文应用领域",
+  "application": "应用领域",
   "application_cn": "中文应用领域",
-  "structure": "英文论证思路（研究了什么→用了什么方法→得到什么结果→得出什么结论）",
+  "structure": "论证思路（研究了什么问题→用了什么方法→得到什么结果→得出什么结论）",
   "structure_cn": "中文论证思路",
-  "methods": "英文表征技术（如：XRD, SEM, UV-vis等）",
+  "methods": "表征技术（如XRD, SEM, UV-vis等）",
   "methods_cn": "中文表征技术",
-  "keywords": ["关键词1", "关键词2", "关键词3"]
+  "vocabulary": [
+    {
+      "en": "专业术语英文",
+      "cn": "中文翻译",
+      "defCn": "中文释义（50字内）",
+      "defEn": "英文释义（50字内）",
+      "ex": "例句（词汇标粗）"
+    }
+  ]
 }
 
-所有字段必须完整，不能有null或空值。`;
+注意：
+- vocabulary提取10-30个专业术语
+- structure要描述论证逻辑，不是章节标题
+- 所有字段必须完整，不能有null或空值`;
 }
 
 /**
- * 确认补全
+ * 确认补全（AI返回的JSON覆盖已有字段，DOI除外）
  */
 function confirmComplete() {
     const jsonStr = document.getElementById('completeJson').value.trim();
@@ -661,22 +680,19 @@ function confirmComplete() {
     }
 
     try {
-        const data = JSON.parse(jsonStr);
-        
-        // 验证必要字段
-        const required = ['summary', 'summary_cn', 'innovation', 'innovation_cn', 
-                        'application', 'application_cn', 'structure', 'structure_cn',
-                        'methods', 'methods_cn'];
-        
-        for (const field of required) {
-            if (!data[field] || data[field].trim() === '') {
-                alert(`字段 "${field}" 不能为空`);
-                return;
-            }
+        // 处理可能被代码块包裹的JSON
+        let data = JSON.parse(jsonStr);
+        if (typeof data === 'string') {
+            const jsonMatch = data.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (jsonMatch) data = JSON.parse(jsonMatch[1]);
         }
-
-        // 更新卡片
+        
+        // 保存原始DOI（不被覆盖）
+        const originalDoi = editingPaper.doi;
+        
+        // 更新卡片（AI返回的数据覆盖已有字段，但DOI除外）
         Object.assign(editingPaper, data);
+        editingPaper.doi = originalDoi;  // 恢复原始DOI
         editingPaper.isRough = false;
         editingPaper.completedAt = new Date().toISOString();
 
