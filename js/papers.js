@@ -545,15 +545,19 @@ function openCardDetail(cardId) {
             <div>
                 <h4 style="margin-bottom: 8px;">📖 学术词汇 (${card.vocabulary.length})</h4>
                 <div class="list">
-                    ${card.vocabulary.map(v => `
+                    ${card.vocabulary.map(v => {
+                        const wordEn = v.en || v.word || '';
+                        const wordCn = v.cn || v.word_cn || '';
+                        const defCn = v.defCn || v.definition_cn || '';
+                        return `
                         <div class="list-item">
                             <div class="list-item-main">
-                                <div class="list-item-title">${escapeHtml(v.en || v.word || '')} <span class="text-muted">- ${escapeHtml(v.cn || v.word_cn || '')}</span></div>
-                                <div class="list-item-sub">${escapeHtml(v.defCn || v.definition_cn || '')}</div>
+                                <div class="list-item-title">${escapeHtml(wordEn)} <span class="text-muted">- ${escapeHtml(wordCn)}</span></div>
+                                <div class="list-item-sub">${escapeHtml(defCn)}</div>
                             </div>
-                            <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy('${v.en || v.word || '')')">📚 加入学习</button>
+                            <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy('${wordEn.replace(/'/g, "\\'")}')">📚 加入学习</button>
                         </div>
-                    `).join('')}
+                    `;}).join('')}
                 </div>
             </div>
         ` : ''}
