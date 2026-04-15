@@ -183,7 +183,12 @@ const VocabularyStore = {
     
     add(word) {
         const words = this.getAll();
-        const exists = words.find(w => w.word.toLowerCase() === word.word.toLowerCase());
+        // 兼容新旧两种格式：word 或 en
+        const wordText = (word.word || word.en || '').toLowerCase();
+        const exists = words.find(w => {
+            const existingWord = (w.word || w.en || '').toLowerCase();
+            return existingWord === wordText;
+        });
         if (exists) {
             return { success: false, message: '词汇已存在' };
         }
