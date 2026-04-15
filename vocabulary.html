@@ -3,17 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>生词本 - 小N学术学习站</title>
+    <title>词汇本 - 小N学术站</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <header class="header">
         <div class="container">
-            <h1 class="logo">🧪 小N学术站</h1>
-            <nav class="nav">
-                <a href="index.html" class="nav-link">首页</a>
-                <a href="vocabulary.html" class="nav-link active">生词本</a>
-                <a href="papers.html" class="nav-link">文献卡片</a>
+            <h1 class="logo">
+                <span class="logo-icon">🧪</span>
+                小N学术站
+            </h1>
+            <nav class="nav" id="navMenu">
+                <a href="index.html" class="nav-link">
+                    <span class="icon">🏠</span> 首页
+                </a>
+                <a href="weekly.html" class="nav-link">
+                    <span class="icon">📅</span> 周报
+                </a>
+                <a href="papers.html" class="nav-link">
+                    <span class="icon">📚</span> 文献卡片
+                </a>
+                <a href="vocabulary.html" class="nav-link active">
+                    <span class="icon">📝</span> 词汇本
+                </a>
             </nav>
             <button class="menu-toggle" id="menuToggle">☰</button>
         </div>
@@ -21,182 +33,319 @@
 
     <main class="main">
         <div class="container">
-            <section class="section">
-                <h3 class="section-title">📝 生词学习</h3>
-                
-                <div class="vocab-tabs">
-                    <button class="tab-btn active" data-tab="study">学习</button>
-                    <button class="tab-btn" data-tab="wrong">错词本</button>
-                    <button class="tab-btn" data-tab="studying">正在学</button>
-                    <button class="tab-btn" data-tab="learned">已学</button>
-                    <button class="tab-btn" data-tab="mastered">已掌握</button>
-                    <button class="tab-btn" data-tab="all">全部</button>
-                </div>
+            <!-- Page Header -->
+            <div class="section-header">
+                <h3 class="section-title">
+                    <span class="icon">📝</span>
+                    学术词汇本
+                </h3>
+                <button class="btn btn-secondary" id="settingsBtn">
+                    <span>⚙️</span> 设置
+                </button>
+            </div>
 
-                <!-- 学习区 -->
-                <div id="studyMode" class="vocab-content">
-                    <div class="study-stats-bar">
-                        <div class="stat-item">
-                            <span class="stat-num" id="newCount">0</span>
-                            <span class="stat-label">新词</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-num" id="studyingCount">0</span>
-                            <span class="stat-label">正在学</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-num" id="wrongCount">0</span>
-                            <span class="stat-label">错词</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-num" id="learnedCount">0</span>
-                            <span class="stat-label">已学</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-num" id="masteredCount">0</span>
-                            <span class="stat-label">已掌握</span>
-                        </div>
-                    </div>
-                    
-                    <div class="study-buttons" id="studyButtons">
-                        <div class="study-count-setting">
-                            <label for="studyCountInput">每次学习:</label>
-                            <input type="number" id="studyCountInput" value="50" min="1" max="200">
-                            <span>个词</span>
-                        </div>
-                        <button class="btn btn-primary study-btn" id="newStudyBtn">
-                            📚 开始学习 (<span id="newStudyCount">0</span>)
-                        </button>
-                        <button class="btn btn-secondary study-btn" id="reviewBtn">
-                            🔄 复习已学 (<span id="reviewCount">0</span>)
-                        </button>
-                    </div>
-                    
-                    <div class="queue-info hidden" id="queueInfo"></div>
-                    
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🆕</div>
+                    <div class="stat-value" id="newCount">0</div>
+                    <div class="stat-label">新词</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📖</div>
+                    <div class="stat-value" id="studyingCount">0</div>
+                    <div class="stat-label">正在学</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-value" id="learnedCount">0</div>
+                    <div class="stat-label">已学</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-value" id="masteredCount">0</div>
+                    <div class="stat-label">已掌握</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">❌</div>
+                    <div class="stat-value" id="wrongCount">0</div>
+                    <div class="stat-label">错词本</div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="study">📖 学习</button>
+                <button class="tab-btn" data-tab="all">📚 全部</button>
+                <button class="tab-btn" data-tab="wrong">❌ 错词本</button>
+            </div>
+
+            <!-- Study Mode -->
+            <div id="studyMode" class="tab-content active">
+                <!-- Study Controls -->
+                <div class="vocab-panel" id="studyControls">
                     <div class="study-header">
                         <div class="progress-info">
-                            <span id="progressText">进度: 0/12</span>
+                            <div class="progress-text" id="progressText">
+                                新词: 0 | 正在学: 0 | 已学: 0
+                            </div>
                             <div class="progress-bar">
                                 <div class="progress-fill" id="progressFill"></div>
                             </div>
                         </div>
-                        <div class="study-stats">
-                            <span>当前连续正确: <span id="currentStreak">0</span></span>
-                            <span>今日已学: <span id="todayCount">0</span></span>
-                        </div>
                     </div>
-
-                    <div class="study-area" id="studyArea">
-                        <p class="empty-message">🎯 点击上方按钮开始学习！</p>
-                    </div>
-
-                    <div class="study-hint" id="studyHint">
-                        <p>选择「开始学习」学习新词和正在学的词，或选择「复习」巩固已学内容</p>
-                    </div>
-                </div>
-
-                <!-- 错词本 -->
-                <div id="wrongMode" class="vocab-content hidden">
-                    <p class="section-desc">累计错误3次及以上的单词</p>
-                    <div class="wrong-list" id="wrongList">
-                        <p class="empty-message">暂无错词本中的单词，太棒了！</p>
-                    </div>
-                </div>
-
-                <!-- 正在学列表 -->
-                <div id="studyingMode" class="vocab-content hidden">
-                    <p class="section-desc">展示了卡片但尚未完成所有题型的单词</p>
-                    <div class="studying-list" id="studyingList">
-                        <p class="empty-message">暂无正在学习的单词</p>
-                    </div>
-                </div>
-
-                <!-- 已学列表 -->
-                <div id="learnedMode" class="vocab-content hidden">
-                    <p class="section-desc">已完成所有题型但未掌握的单词（可复习）</p>
-                    <div class="learned-list" id="learnedList">
-                        <p class="empty-message">暂无已学的单词，继续学习新词吧！</p>
-                    </div>
-                </div>
-
-                <!-- 已掌握列表 -->
-                <div id="masteredMode" class="vocab-content hidden">
-                    <p class="section-desc">连续答对12次的单词</p>
-                    <div class="mastered-list" id="masteredList">
-                        <p class="empty-message">暂无已掌握的单词，继续学习吧！</p>
-                    </div>
-                </div>
-
-                <!-- 全部单词 -->
-                <div id="allMode" class="vocab-content hidden">
-                    <div class="filter-bar">
-                        <select id="categoryFilter" class="filter-select">
-                            <option value="">全部分类</option>
-                            <option value="synthesis">合成类</option>
-                            <option value="characterization">表征类</option>
-                            <option value="mechanism">机理类</option>
-                            <option value="application">应用类</option>
-                        </select>
-                        <input type="text" id="searchWords" class="search-input" placeholder="搜索单词...">
-                    </div>
-                    <div class="word-list" id="wordList">
-                        <p class="empty-message">暂无单词数据</p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="section">
-                <h3 class="section-title">➕ 添加新单词</h3>
-                <form id="addWordForm" class="add-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="word">英文单词 *</label>
-                            <input type="text" id="word" required placeholder="如: perovskite">
-                        </div>
-                        <div class="form-group">
-                            <label for="wordCn">中文释义 *</label>
-                            <input type="text" id="wordCn" required placeholder="如: 钙钛矿">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="definition">释义/定义</label>
-                            <input type="text" id="definition" placeholder="详细释义">
-                        </div>
-                        <div class="form-group">
-                            <label for="category">分类</label>
-                            <select id="category">
-                                <option value="synthesis">合成类</option>
-                                <option value="characterization">表征类</option>
-                                <option value="mechanism">机理类</option>
-                                <option value="application">应用类</option>
-                                <option value="custom">自定义</option>
+                    <div class="study-controls">
+                        <div class="form-group" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                            <label style="font-size: 0.9rem;">学习/复习词数:</label>
+                            <select id="studyCountSelect" style="width: 100px; padding: 8px;">
+                                <option value="10">10个</option>
+                                <option value="20">20个</option>
+                                <option value="30">30个</option>
+                                <option value="50" selected>50个</option>
+                                <option value="80">80个</option>
+                                <option value="100">100个</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group full">
-                            <label for="example">例句</label>
-                            <textarea id="example" rows="2" placeholder="英文例句（可选）"></textarea>
+                        <div class="study-btn-group">
+                            <button class="btn btn-primary" id="startStudyBtn">
+                                📖 开始学习
+                            </button>
+                            <button class="btn btn-secondary" id="startReviewBtn">
+                                🔄 开始复习
+                            </button>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group full">
-                            <label for="exampleCn">例句中文</label>
-                            <input type="text" id="exampleCn" placeholder="例句中文翻译（可选）">
+                </div>
+
+                <!-- Queue Info (hidden initially) -->
+                <div class="queue-info hidden" id="queueInfo">
+                    <span class="queue-badge" id="queueBadge">学习中</span>
+                    <span class="phase-badge" id="phaseBadge">卡片展示</span>
+                    <span class="word-progress" id="wordProgress">第 1 / 10 个词</span>
+                    <button class="btn btn-sm btn-danger" id="quitStudyBtn">退出学习</button>
+                </div>
+
+                <!-- Study Area -->
+                <div class="study-area" id="studyArea">
+                    <p class="empty-message">选择上方按钮开始学习！</p>
+                </div>
+
+                <!-- Study Result -->
+                <div class="vocab-panel hidden" id="studyResult">
+                    <div class="completion-message">
+                        <div class="completion-icon">🎉</div>
+                        <h3 id="resultTitle">学习完成！</h3>
+                        <p id="resultText">本次学习了 0 个单词</p>
+                        <button class="btn btn-primary" id="backToStudyBtn">继续学习</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Words Mode -->
+            <div id="allMode" class="tab-content">
+                <div class="vocab-panel">
+                    <div class="filter-bar">
+                        <select id="allCategoryFilter" class="filter-select">
+                            <option value="">全部分类</option>
+                            <option value="synthesis">合成</option>
+                            <option value="characterization">表征</option>
+                            <option value="mechanism">机理</option>
+                            <option value="application">应用</option>
+                            <option value="weekly">周报</option>
+                            <option value="custom">自定义</option>
+                        </select>
+                        <select id="allStatusFilter" class="filter-select">
+                            <option value="">全部状态</option>
+                            <option value="new">新词</option>
+                            <option value="studying">正在学</option>
+                            <option value="learned">已学</option>
+                            <option value="mastered">已掌握</option>
+                        </select>
+                        <input type="text" id="allSearchInput" class="search-input" placeholder="搜索单词...">
+                    </div>
+                    <button class="btn btn-primary mb-4" id="addWordBtn">
+                        <span>➕</span> 添加单词
+                    </button>
+                    <div id="allWordList" class="word-list">
+                        <div class="loading">加载中...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wrong Words Mode -->
+            <div id="wrongMode" class="tab-content">
+                <div class="vocab-panel">
+                    <div class="study-btn-group" style="margin-bottom: 20px;">
+                        <button class="btn btn-secondary" id="reviewWrongBtn">
+                            🔄 复习错词
+                        </button>
+                        <button class="btn btn-outline" id="clearWrongBtn">
+                            🗑️ 清空错词本
+                        </button>
+                    </div>
+                    <div id="wrongWordList" class="word-list">
+                        <div class="empty-message">
+                            <p>暂无错词记录</p>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary">添加单词</button>
-                    <p class="form-hint">提示：本地添加的单词需要同步到云端</p>
-                </form>
-            </section>
+                </div>
+            </div>
+
+            <!-- Settings Modal -->
+            <div id="settingsModal" class="modal hidden">
+                <div class="modal-content modal-lg">
+                    <div class="modal-header">
+                        <h3>学习设置</h3>
+                        <button class="modal-close" id="closeSettings">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="settings-row">
+                            <span class="settings-label">🔊 朗读发音</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="settingSpeak">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">⚡ 允许斩（直接掌握）</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="settingCut">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">🏆 掌握条件（连续正确次数）</span>
+                            <div class="settings-value">
+                                <select id="settingMasterCount" style="padding: 8px;">
+                                    <option value="8">8次</option>
+                                    <option value="12" selected>12次</option>
+                                </select>
+                            </div>
+                        </div>
+                        <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
+                        <h4 style="margin-bottom: 16px;">题型开关</h4>
+                        <div class="settings-row">
+                            <span class="settings-label">🇬🇧 英选中</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="settingEnCn" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">🇨🇳 中选英</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="settingCnEn" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">📖 英选义</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="settingEnDef" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="settings-row">
+                            <span class="settings-label">📝 义选英</span>
+                            <div class="settings-value">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="settingEnDef" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-actions" style="margin-top: 24px;">
+                            <button class="btn btn-primary" id="saveSettingsBtn">保存设置</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Word Modal -->
+            <div id="addWordModal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>添加单词</h3>
+                        <button class="modal-close" id="closeAddWord">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addWordForm">
+                            <div class="form-group">
+                                <label for="wordEn">英文单词 *</label>
+                                <input type="text" id="wordEn" required placeholder="perovskite">
+                            </div>
+                            <div class="form-group">
+                                <label for="wordCn">中文释义 *</label>
+                                <input type="text" id="wordCn" required placeholder="钙钛矿">
+                            </div>
+                            <div class="form-group">
+                                <label for="wordDef">详细定义</label>
+                                <textarea id="wordDef" rows="2" placeholder="更详细的解释或定义"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="wordExample">英文例句</label>
+                                <textarea id="wordExample" rows="2" placeholder="包含该词的英文例句"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="wordExampleCn">中文例句</label>
+                                <textarea id="wordExampleCn" rows="2" placeholder="例句的中文翻译"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="wordCat">分类</label>
+                                <select id="wordCat">
+                                    <option value="synthesis">合成</option>
+                                    <option value="characterization">表征</option>
+                                    <option value="mechanism">机理</option>
+                                    <option value="application">应用</option>
+                                    <option value="weekly">周报</option>
+                                    <option value="custom">自定义</option>
+                                </select>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="cancelAddWord">取消</button>
+                                <button type="submit" class="btn btn-primary">添加</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mastered Library Modal -->
+            <div id="masteredModal" class="modal hidden">
+                <div class="modal-content modal-lg">
+                    <div class="modal-header">
+                        <h3>已掌握库</h3>
+                        <button class="modal-close" id="closeMastered">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="filter-bar">
+                            <input type="text" id="masteredSearchInput" class="search-input" placeholder="搜索已掌握单词（按首字母排序）...">
+                        </div>
+                        <div id="masteredList" class="word-list" style="margin-top: 16px;">
+                            <div class="empty-message">
+                                <p>暂无已掌握的单词</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
     <footer class="footer">
         <div class="container">
             <p>© 2024 小N学术学习站 | 钙钛矿太阳能电池研究方向</p>
+            <p class="footer-link">托管于 GitHub Pages</p>
         </div>
     </footer>
 
