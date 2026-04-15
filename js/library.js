@@ -163,9 +163,6 @@ function renderPaperList() {
     
     container.innerHTML = filtered.map(paper => {
         const title = (displayLang === 'cn' && paper.title_cn) ? paper.title_cn : paper.title;
-        const statusClass = paper.hasPdf ? 'green' : (paper.pdfDeclined ? 'yellow' : 'red');
-        const statusText = paper.hasPdf ? '有PDF' : (paper.pdfDeclined ? '无PDF' : '待上传PDF');
-        const cardStatus = paper.hasCard ? '已制卡片' : '未制卡片';
         
         return `
             <div class="paper-item" data-id="${paper.id}">
@@ -173,35 +170,17 @@ function renderPaperList() {
                     ${selectedPapers.has(paper.id) ? 'checked' : ''} 
                     onchange="toggleSelect('${paper.id}')">
                 <div class="paper-info">
-                    <div class="paper-title" onclick="viewPaper('${paper.id}')">${escapeHtml(title)}</div>
+                    <div class="paper-title">${escapeHtml(title)}</div>
                     <div class="paper-meta">
                         <span>📖 ${escapeHtml(paper.journal || '未知期刊')}</span>
                         <span>📅 ${paper.publishDate || '未知日期'}</span>
                         <span>DOI: ${paper.doi}</span>
                     </div>
-                    <div class="paper-status">
-                        <span class="status-dot ${statusClass}"></span>
-                        <span>${statusText}</span>
-                        <span class="status-dot ${paper.hasCard ? 'green' : 'blue'}" style="margin-left: 12px;"></span>
-                        <span>${cardStatus}</span>
-                    </div>
-                    ${!paper.hasPdf && !paper.pdfDeclined ? `
-                        <div class="pdf-prompt">
-                            <button class="btn btn-sm btn-outline" onclick="promptPdfUpload('${paper.id}')">
-                                📄 上传PDF
-                            </button>
-                            <button class="btn btn-sm btn-outline" onclick="declinePdf('${paper.id}')" style="margin-left: 8px;">
-                                暂不上传
-                            </button>
-                        </div>
-                    ` : ''}
                 </div>
                 <div class="paper-actions">
-                    ${!paper.hasCard ? `
-                        <button class="btn btn-sm btn-primary" onclick="makeCard('${paper.id}')">
-                            📝 制作卡片
-                        </button>
-                    ` : ''}
+                    <button class="btn btn-sm btn-outline" onclick="openDoi('${paper.doi}')">
+                        🔗 原文
+                    </button>
                     <button class="btn btn-sm btn-outline" onclick="deletePaper('${paper.id}')">
                         🗑️
                     </button>
@@ -286,6 +265,13 @@ function updateStats() {
 }
 
 // ===== DOI 导入 =====
+
+// 打开DOI原文链接
+function openDoi(doi) {
+    if (doi) {
+        window.open(`https://doi.org/${doi}`, '_blank');
+    }
+}
 
 function openDoiImport() {
     document.getElementById('doiModal').classList.remove('hidden');
