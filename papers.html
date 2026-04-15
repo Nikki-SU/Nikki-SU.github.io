@@ -181,21 +181,16 @@
                         <div id="jsonImportField" class="import-field hidden">
                             <div class="info-box" style="margin-bottom: 16px;">
                                 <h3>📋 卡片数据导入</h3>
-                                <p>如果网页AI解析较慢，你可以在另一个对话中让AI解析文献，然后把解析好的JSON数据粘贴到这里导入。</p>
-                                <p style="margin-top: 8px;">提示：在另一个对话中发送"请解析这篇文献：[DOI或文献内容]，返回JSON格式的文献卡片数据"</p>
+                                <p>如果网页AI解析较慢，你可以在另一个对话中让AI解析文献，保存为JSON文件后直接导入。</p>
                             </div>
                             <div class="form-group">
-                                <label for="jsonInput">粘贴卡片JSON数据</label>
-                                <textarea id="jsonInput" rows="10" placeholder='粘贴JSON数据，格式如：
-{
-  "title": "...",
-  "title_cn": "...",
-  "abstract": "...",
-  "abstract_cn": "...",
-  ...
-}'></textarea>
+                                <label>选择JSON文件</label>
+                                <input type="file" id="jsonFileInput" accept=".json" style="margin-bottom: 12px;">
                             </div>
-                            <button class="btn btn-primary" id="parseJsonBtn">解析并预览</button>
+                            <div class="form-group">
+                                <label>或粘贴JSON数据</label>
+                                <textarea id="jsonInput" rows="6" placeholder="粘贴JSON数据会自动解析..."></textarea>
+                            </div>
                             <div id="jsonResult" class="mt-4"></div>
                         </div>
                         
