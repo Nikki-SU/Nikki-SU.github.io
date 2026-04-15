@@ -955,8 +955,11 @@ async function confirmImport() {
 
     savePapers();
     closeImportModal();
-    filterPapers();
-
+    // 直接重新渲染
+    filteredPapers = [...papers];
+    currentPage = 1;
+    renderPapers();
+    updateJournalFilter();
     alert('文献导入成功！');
 }
 
