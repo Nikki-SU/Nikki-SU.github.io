@@ -695,6 +695,13 @@ function openImportModal() {
 
 function closeImportModal() {
     elements.importModal.classList.add('hidden');
+    // 清空状态
+    importData = {};
+    const jsonInput = document.getElementById('jsonInput');
+    const jsonResult = document.getElementById('jsonResult');
+    if (jsonInput) jsonInput.value = '';
+    if (jsonResult) jsonResult.innerHTML = '';
+    document.getElementById('confirmImport').disabled = true;
 }
 
 function handleImportTypeChange(e) {
