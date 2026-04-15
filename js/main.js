@@ -181,6 +181,7 @@ const VocabularyStore = {
         return Storage.get(this.key, []);
     },
     
+    // 同步添加（不翻译）
     add(word) {
         const words = this.getAll();
         // 统一转换为新格式：en, cn, defCn, defEn, ex
@@ -216,6 +217,104 @@ const VocabularyStore = {
         });
         Storage.set(this.key, words);
         return { success: true };
+    },
+    
+    // 异步添加（自动翻译缺失字段）
+    async addWithTranslation(word, onProgress) {
+        const words = this.getAll();
+        const en = (word.en || word.word || word.english || '').toLowerCase();
+        
+        // 检查重复
+        const exists = words.find(w => {
+            const existingEn = (w.en || w.word || '').toLowerCase();
+            return existingEn === en;
+        });
+        if (exists) {
+            return { success: false, message: '词汇已存在' };
+        }
+        
+        // 获取现有字段或为空
+        let cn = word.cn || word.word_cn || word.chinese || '';
+        let defCn = word.defCn || word.definition_cn || word.definitionCn || '';
+        let defEn = word.defEn || word.definition_en || word.definitionEn || '';
+        const ex = word.ex || word.example || word.exampleSentence || '';
+        
+        // 翻译缺失字段
+        const tasks = [];
+        
+        if (!cn && en) {
+            tasks.push({ field: 'cn', type: 'cn', text: en });
+        }
+        if (!defCn && en) {
+            tasks.push({ field: 'defCn', type: 'defCn', text: en });
+        }
+        if (!defEn && en) {
+            tasks.push({ field: 'defEn', type: 'defEn', text: en });
+        }
+        
+        // 执行翻译
+        for (const task of tasks) {
+            if (onProgress) onProgress(`正在翻译 ${task.field}...`);
+            const result = await translateField(task.text, task.type);
+            if (result) {
+                if (task.field === 'cn') cn = result;
+                else if (task.field === 'defCn') defCn = result;
+                else if (task.field === 'defEn') defEn = result;
+            }
+        }
+        
+        // 保存词汇
+        words.unshift({
+            id: Date.now().toString(),
+            en: en,
+            cn: cn,
+            defCn: defCn,
+            defEn: defEn,
+            ex: ex,
+            status: 'new',
+            correct_count: 0,
+            error_count: 0,
+            correct_streak: 0,
+            category: word.category || 'custom',
+            addedAt: new Date().toISOString()
+        });
+        Storage.set(this.key, words);
+        return { success: true };
+    },
+    
+    // 翻译补全现有词汇
+    async translateMissingFields(onProgress) {
+        const words = this.getAll();
+        let updated = 0;
+        
+        for (const word of words) {
+            let modified = false;
+            
+            if (!word.cn && word.en) {
+                if (onProgress) onProgress(`翻译: ${word.en}`);
+                const result = await translateField(word.en, 'cn');
+                if (result) { word.cn = result; modified = true; }
+            }
+            if (!word.defCn && word.en) {
+                const result = await translateField(word.en, 'defCn');
+                if (result) { word.defCn = result; modified = true; }
+            }
+            if (!word.defEn && word.en) {
+                const result = await translateField(word.en, 'defEn');
+                if (result) { word.defEn = result; modified = true; }
+            }
+            
+            if (modified) {
+                updated++;
+                // 每更新5个保存一次
+                if (updated % 5 === 0) {
+                    Storage.set(this.key, words);
+                }
+            }
+        }
+        
+        Storage.set(this.key, words);
+        return updated;
     },
     
     update(id, data) {
@@ -281,6 +380,57 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// AI翻译函数（使用硅基流动API）
+async function translateField(text, fieldType = 'word') {
+    const settings = GlobalSettings.get();
+    if (!settings.apiKey) {
+        console.warn('未配置API Key，跳过翻译');
+        return null;
+    }
+    
+    if (!text || text.trim().length === 0) {
+        return null;
+    }
+    
+    let systemPrompt = '';
+    if (fieldType === 'cn') {
+        systemPrompt = '你是一位专业的学术翻译助手。请将用户提供的英文单词或短语翻译成中文，只返回中文翻译结果，不要添加任何解释或拼音。';
+    } else if (fieldType === 'defCn') {
+        systemPrompt = '你是一位专业的学术翻译助手。请将用户提供的英文定义翻译成中文定义，保持专业术语的准确性。只返回翻译结果，不要添加任何解释。';
+    } else if (fieldType === 'defEn') {
+        systemPrompt = 'You are an academic assistant. Please provide a brief English definition (under 50 words) for the given word or phrase. Only return the definition, no examples or explanations.';
+    }
+    
+    try {
+        const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${settings.apiKey}`
+            },
+            body: JSON.stringify({
+                model: settings.model || 'Qwen/Qwen2.5-7B-Instruct',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: text }
+                ],
+                temperature: 0.3,
+                max_tokens: 200
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API错误: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content?.trim() || null;
+    } catch (error) {
+        console.error('翻译失败:', error);
+        return null;
+    }
+}
+
 // 导出全局函数
 window.showToast = showToast;
 window.Storage = Storage;
@@ -294,3 +444,4 @@ window.escapeAttr = escapeAttr;
 window.debounce = debounce;
 window.formatDate = formatDate;
 window.formatDateTime = formatDateTime;
+window.translateField = translateField;
