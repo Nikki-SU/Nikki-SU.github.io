@@ -739,6 +739,8 @@ function confirmComplete() {
 function openImportModal() {
     document.getElementById('importDoi').value = '';
     document.getElementById('doiResult').innerHTML = '';
+    document.getElementById('jsonInput').value = '';  // 清空JSON输入框
+    document.getElementById('jsonResult').innerHTML = '';  // 清空结果
     document.getElementById('confirmImport').disabled = true;
     importData = {};
     elements.importModal.classList.remove('hidden');
@@ -946,7 +948,8 @@ function parseJsonInput() {
         document.getElementById('confirmImport').disabled = false;
         
     } catch (error) {
-        resultDiv.innerHTML = `<p class="text-muted">等待完整JSON数据...</p>`;
+        console.error('JSON解析错误:', error);
+        resultDiv.innerHTML = `<p class="text-danger">❌ JSON格式错误: ${error.message}</p>`;
         importData = {};
         document.getElementById('confirmImport').disabled = true;
     }
