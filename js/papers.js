@@ -567,6 +567,7 @@ function openDetailModal(paperId) {
                 ${paper.doi ? `<a href="https://doi.org/${paper.doi}" target="_blank" class="btn btn-primary">🔗 访问原文</a>` : ''}
                 <button class="btn btn-secondary" onclick="closeDetailModal(); openEditModal('${paper.id}')">✏️ 编辑</button>
                 ${isRough ? `<button class="btn btn-warning" onclick="closeDetailModal(); openCompleteModal('${paper.id}')">📝 补全</button>` : ''}
+                <button class="btn btn-danger" onclick="confirmDeletePaper('${paper.id}')">🗑️ 删除</button>
             </div>
         </div>
     `;
@@ -1033,6 +1034,19 @@ function handlePaperSubmit(e) {
     filterPapers();
 
     alert(editingPaper ? '文献更新成功！' : '文献添加成功！');
+}
+
+function confirmDeletePaper(paperId) {
+    const paper = papers.find(p => p.id === paperId);
+    if (!paper) return;
+    
+    if (!confirm('确定要删除这篇文献卡片吗？此操作不可撤销。')) return;
+    
+    papers = papers.filter(p => p.id !== paperId);
+    savePapers();
+    closeDetailModal();
+    filterPapers();
+    alert('文献卡片已删除');
 }
 
 function deletePaper() {
