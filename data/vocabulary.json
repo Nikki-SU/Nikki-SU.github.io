@@ -1,6 +1,6 @@
 [
   {
-    "id": "vocab-1",
+    "id": "v1",
     "word": "perovskite",
     "word_cn": "钙钛矿",
     "definition": "一种具有ABX₃晶体结构的半导体材料，在太阳能电池中用作光吸收层",
@@ -14,11 +14,10 @@
     "phase_cn_en": false,
     "phase_en_def": false,
     "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
+    "last_practice": ""
   },
   {
-    "id": "vocab-2",
+    "id": "v2",
     "word": "crystallinity",
     "word_cn": "结晶度/结晶性",
     "definition": "材料中原子或分子有序排列的程度，影响材料的光电性质",
@@ -32,11 +31,10 @@
     "phase_cn_en": false,
     "phase_en_def": false,
     "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
+    "last_practice": ""
   },
   {
-    "id": "vocab-3",
+    "id": "v3",
     "word": "passivation",
     "word_cn": "钝化",
     "definition": "通过表面处理减少材料表面缺陷态的过程，可降低载流子复合",
@@ -50,11 +48,10 @@
     "phase_cn_en": false,
     "phase_en_def": false,
     "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
+    "last_practice": ""
   },
   {
-    "id": "vocab-4",
+    "id": "v4",
     "word": "grain boundary",
     "word_cn": "晶界",
     "definition": "多晶材料中不同取向晶粒之间的界面区域",
@@ -68,11 +65,10 @@
     "phase_cn_en": false,
     "phase_en_def": false,
     "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
+    "last_practice": ""
   },
   {
-    "id": "vocab-5",
+    "id": "v5",
     "word": "recombination",
     "word_cn": "复合",
     "definition": "电子和空穴相遇并湮灭释放能量的过程，是太阳能电池中的主要能量损失机制",
@@ -86,11 +82,10 @@
     "phase_cn_en": false,
     "phase_en_def": false,
     "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
+    "last_practice": ""
   },
   {
-    "id": "vocab-6",
+    "id": "v6",
     "word": "XRD",
     "word_cn": "X射线衍射",
     "definition": "X-ray Diffraction，用于分析材料晶体结构的技术",
@@ -104,11 +99,10 @@
     "phase_cn_en": false,
     "phase_en_def": false,
     "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
+    "last_practice": ""
   },
   {
-    "id": "vocab-7",
+    "id": "v7",
     "word": "SEM",
     "word_cn": "扫描电子显微镜",
     "definition": "Scanning Electron Microscopy，用于观察材料表面形貌的高分辨率成像技术",
@@ -122,65 +116,10 @@
     "phase_cn_en": false,
     "phase_en_def": false,
     "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
+    "last_practice": ""
   },
   {
-    "id": "vocab-8",
-    "word": "PL",
-    "word_cn": "光致发光",
-    "definition": "Photoluminescence，材料在光照下发射光的现象，用于研究载流子行为",
-    "example": "PL mapping can reveal spatial variations in film quality.",
-    "example_cn": "PL mapping可以揭示薄膜质量的空间变化。",
-    "category": "characterization",
-    "status": "new",
-    "correct_count": 0,
-    "error_count": 0,
-    "phase_en_cn": false,
-    "phase_cn_en": false,
-    "phase_en_def": false,
-    "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
-  },
-  {
-    "id": "vocab-9",
-    "word": "defect",
-    "word_cn": "缺陷",
-    "definition": "晶体结构中的不完整性，如空位、间隙原子或位错",
-    "example": "Defects can act as traps for charge carriers.",
-    "example_cn": "缺陷可以作为载流子的陷阱。",
-    "category": "mechanism",
-    "status": "new",
-    "correct_count": 0,
-    "error_count": 0,
-    "phase_en_cn": false,
-    "phase_cn_en": false,
-    "phase_en_def": false,
-    "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
-  },
-  {
-    "id": "vocab-10",
-    "word": "efficiency",
-    "word_cn": "效率",
-    "definition": "太阳能电池将入射光能转化为电能的百分比",
-    "example": "The certified efficiency reached 26.2% under standard illumination.",
-    "example_cn": "在标准光照下认证效率达到26.2%。",
-    "category": "application",
-    "status": "new",
-    "correct_count": 0,
-    "error_count": 0,
-    "phase_en_cn": false,
-    "phase_cn_en": false,
-    "phase_en_def": false,
-    "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
-  },
-  {
-    "id": "vocab-11",
+    "id": "v8",
     "word": "spin-coating",
     "word_cn": "旋涂",
     "definition": "通过高速旋转基底使液体均匀铺展成薄膜的制备方法",
@@ -194,17 +133,16 @@
     "phase_cn_en": false,
     "phase_en_def": false,
     "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
+    "last_practice": ""
   },
   {
-    "id": "vocab-12",
-    "word": "annealing",
-    "word_cn": "退火",
-    "definition": "对材料进行热处理以改善晶体结构或完成相变的过程",
-    "example": "Thermal annealing at 100°C for 30 minutes promotes crystallization.",
-    "example_cn": "在100°C下热退火30分钟促进结晶。",
-    "category": "synthesis",
+    "id": "v9",
+    "word": "efficiency",
+    "word_cn": "效率",
+    "definition": "太阳能电池将入射光能转化为电能的百分比",
+    "example": "The certified efficiency reached 26.2% under standard illumination.",
+    "example_cn": "在标准光照下认证效率达到26.2%。",
+    "category": "application",
     "status": "new",
     "correct_count": 0,
     "error_count": 0,
@@ -212,7 +150,23 @@
     "phase_cn_en": false,
     "phase_en_def": false,
     "phase_def_en": false,
-    "current_phase": 0,
-    "last_practice_date": ""
+    "last_practice": ""
+  },
+  {
+    "id": "v10",
+    "word": "defect",
+    "word_cn": "缺陷",
+    "definition": "晶体结构中的不完整性，如空位、间隙原子或位错",
+    "example": "Defects can act as traps for charge carriers.",
+    "example_cn": "缺陷可以作为载流子的陷阱。",
+    "category": "mechanism",
+    "status": "new",
+    "correct_count": 0,
+    "error_count": 0,
+    "phase_en_cn": false,
+    "phase_cn_en": false,
+    "phase_en_def": false,
+    "phase_def_en": false,
+    "last_practice": ""
   }
 ]
