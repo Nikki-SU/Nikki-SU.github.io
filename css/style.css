@@ -787,3 +787,370 @@ a:hover {
 .paper-card, .word-item {
     animation: fadeIn 0.3s ease-out;
 }
+
+/* ===== 单词本新增样式 ===== */
+
+/* 学习统计栏 */
+.study-stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-num {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* 学习按钮 */
+.study-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.study-btn {
+    padding: 16px 32px;
+    font-size: 1.1rem;
+}
+
+/* 队列信息 */
+.queue-info {
+    text-align: center;
+    margin-bottom: 16px;
+    padding: 8px 16px;
+    background: rgba(79, 70, 229, 0.1);
+    border-radius: var(--radius);
+}
+
+.queue-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* 单词卡片展示 */
+.word-card-display {
+    padding: 24px;
+}
+
+.word-card-display .word-main-display {
+    margin-bottom: 24px;
+}
+
+.word-card-display .word-en {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+.word-card-display .word-cn {
+    font-size: 1.5rem;
+    color: var(--text-primary);
+}
+
+.word-card-display .word-definition-section,
+.word-card-display .word-example-section {
+    text-align: left;
+    margin-bottom: 16px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: var(--radius);
+}
+
+.word-card-display .section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.word-card-display .word-definition {
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.word-card-display .word-example {
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.word-card-display .word-example-cn {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.continue-btn {
+    margin-top: 16px;
+    padding: 14px 28px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.continue-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+}
+
+/* 回合指示器 */
+.quiz-header {
+    margin-bottom: 20px;
+}
+
+.round-indicator {
+    display: inline-block;
+    padding: 6px 16px;
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--primary-color);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* 完成消息 */
+.completion-message {
+    text-align: center;
+    padding: 40px;
+}
+
+.completion-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+}
+
+.completion-message h3 {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+    color: var(--success-color);
+}
+
+.completion-message p {
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+
+/* 今日完成徽章 */
+.completed-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+/* 错误提示 */
+.error-hint {
+    color: var(--error-color) !important;
+}
+
+/* 状态徽章 */
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-badge.new {
+    background: rgba(79, 70, 229, 0.1);
+    color: var(--primary-color);
+}
+
+.status-badge.wrong {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error-color);
+}
+
+.status-badge.mastered {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+}
+
+.status-badge.learning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--warning-color);
+}
+
+/* 单词项右侧 */
+.word-item-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* 单词项状态颜色 */
+.word-item.mastered {
+    border-left: 3px solid var(--success-color);
+}
+
+.word-item.wrong {
+    border-left: 3px solid var(--error-color);
+}
+
+/* 错词计数 */
+.error-count {
+    color: var(--error-color);
+}
+
+/* 提示文字 */
+.form-hint {
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.section-desc {
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+/* ===== 文献卡片新增样式 ===== */
+
+/* 传入方式选择 */
+.import-type-selector {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.2s;
+    flex: 1;
+    justify-content: center;
+}
+
+.radio-label:hover {
+    border-color: var(--primary-color);
+}
+
+.radio-label input:checked + span {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.radio-label:has(input:checked) {
+    border-color: var(--primary-color);
+    background: rgba(79, 70, 229, 0.05);
+}
+
+.import-field {
+    margin-bottom: 16px;
+}
+
+.field-hint {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* 详情操作按钮 */
+.detail-actions {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+/* 编辑表单 */
+.edit-form .form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.edit-form .form-row .form-group {
+    flex: 1;
+}
+
+/* 弹窗尺寸 */
+.modal-lg .modal-content {
+    max-width: 800px;
+}
+
+.modal-xl .modal-content {
+    max-width: 900px;
+}
+
+/* 详情项全宽 */
+.paper-detail .detail-item.full {
+    grid-template-columns: 1fr;
+}
+
+.paper-detail .detail-item.full .detail-label {
+    margin-bottom: 4px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .study-stats-bar {
+        gap: 16px;
+        padding: 12px;
+    }
+    
+    .stat-num {
+        font-size: 1.5rem;
+    }
+    
+    .study-buttons {
+        flex-direction: column;
+    }
+    
+    .study-btn {
+        width: 100%;
+    }
+    
+    .word-card-display .word-en {
+        font-size: 2rem;
+    }
+    
+    .import-type-selector {
+        flex-direction: column;
+    }
+    
+    .edit-form .form-row {
+        flex-direction: column;
+    }
+}
