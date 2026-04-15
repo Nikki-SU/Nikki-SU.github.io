@@ -151,14 +151,14 @@ function buildParsePrompt(doi, title, abstractText) {
   "title_cn": "中文标题（如果原文献是中文，保持原样；如果是英文文献，请翻译成中文）",
   "abstract": "英文摘要（尽量完整，如果摘要不完整请根据标题和DOI推断主要内容）",
   "abstract_cn": "中文摘要翻译",
-  "summary": "英文工作总结（本文做了什么、得到了什么结论）",
+  "summary": "英文工作总结（本文做了什么、得到了什么结论，100-200字）",
   "summary_cn": "中文工作总结",
-  "innovation": "英文创新点（本文的主要贡献和创新之处）",
+  "innovation": "英文创新点（本文的主要贡献和创新之处，列出2-4点）",
   "innovation_cn": "中文创新点",
   "application": "英文应用领域（本文工作的潜在应用方向）",
   "application_cn": "中文应用领域",
-  "structure": "英文文章脉络（如：1. Introduction 2. Methods 3. Results 4. Discussion 5. Conclusion）",
-  "structure_cn": "中文文章脉络",
+  "structure": "英文论证思路（各部分的论证逻辑总结，如：首先介绍了...背景，然后通过...方法验证了...，接着分析了...，最后得出...结论）",
+  "structure_cn": "中文论证思路",
   "methods": "英文表征技术（如：XRD, SEM, UV-vis, PL, EIS等具体用到的实验方法）",
   "methods_cn": "中文表征技术",
   "keywords": ["关键词1", "关键词2", "关键词3", "关键词4", "关键词5"],
@@ -175,11 +175,12 @@ function buildParsePrompt(doi, title, abstractText) {
 }
 
 重要要求：
-1. 如果摘要不完整或缺失，必须根据DOI和标题进行合理推断，生成完整的工作总结
-2. vocabulary数组需要提取5-10个该文献中最重要的专业术语
-3. category必须从以下选项中选择：synthesis（合成）、characterization（表征）、mechanism（机理）、application（应用）、industrial（工业化）、custom（自定义）
-4. 所有字段必须完整，不能有null或空值
-5. 返回的必须是有效的JSON格式，不要包含任何其他文字`;
+1. structure字段必须描述论证思路，而不是简单列出章节标题。需要说明：研究了什么问题→用了什么方法→得到什么结果→得出什么结论的逻辑流程
+2. 如果摘要不完整或缺失，必须根据DOI和标题进行合理推断，生成完整的工作总结
+3. vocabulary数组需要提取5-10个该文献中最重要的专业术语
+4. category必须从以下选项中选择：synthesis（合成）、characterization（表征）、mechanism（机理）、application（应用）、industrial（工业化）、custom（自定义）
+5. 所有字段必须完整，不能有null或空值
+6. 返回的必须是有效的JSON格式，不要包含任何其他文字`;
 }
 
 /**
