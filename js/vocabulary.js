@@ -1,19 +1,29 @@
 /**
  * vocabulary.js - 生词本学习脚本
- * 实现四选一学习模式：英选中、中选英、英选义、义选英
+ * 实现顺序学习模式：卡片展示 → 英选中 → 中选英 → 英选义 → 义选英 → 循环
  */
 
 // 学习阶段枚举
 const StudyPhase = {
-    EN_SELECT_CN: 'EN_SELECT_CN',   // 英文 -> 选中文
-    CN_SELECT_EN: 'CN_SELECT_EN',   // 中文 -> 选英文
-    EN_SELECT_DEF: 'EN_SELECT_DEF', // 英文 -> 选释义
-    DEF_SELECT_EN: 'DEF_SELECT_EN'  // 释义 -> 选英文
+    SHOW_CARD: 0,           // 展示单词卡片（首次学习或选错后）
+    EN_SELECT_CN: 1,        // 英文 -> 选中文
+    CN_SELECT_EN: 2,       // 中文 -> 选英文
+    EN_SELECT_DEF: 3,      // 英文 -> 选释义
+    DEF_SELECT_EN: 4       // 释义 -> 选英文
 };
+
+// 阶段循环顺序
+const PHASE_SEQUENCE = [
+    StudyPhase.EN_SELECT_CN,
+    StudyPhase.CN_SELECT_EN,
+    StudyPhase.EN_SELECT_DEF,
+    StudyPhase.DEF_SELECT_EN
+];
 
 // 配置
 const CONFIG = {
-    CORRECT_TO_MASTER: 12,
+    CORRECT_TO_MASTER: 12,  // 需要连续答对12次（3轮完整循环）
+    PHASES_PER_CYCLE: 4,    // 每轮包含4个阶段
     vocabularyUrl: 'data/vocabulary.json',
     STORAGE_KEYS: {
         MASTERED: 'masteredWords',
@@ -27,12 +37,13 @@ const CONFIG = {
 let vocabulary = [];
 let masteredWords = [];
 let currentWord = null;
-let currentPhase = StudyPhase.EN_SELECT_CN;
+let currentPhase = StudyPhase.SHOW_CARD;
 let correctCount = 0;
 let currentStreak = 0;
 let todayCount = 0;
 let options = [];
 let isWaiting = false;
+let currentPhaseIndex = 0;  // 当前在循环中的位置 (0-3)
 
 // DOM元素
 const elements = {};
@@ -162,18 +173,19 @@ function startStudy() {
     // 随机选择一个单词
     currentWord = unmasteredWords[Math.floor(Math.random() * unmasteredWords.length)];
     
-    // 随机选择学习阶段
-    const phases = [
-        StudyPhase.EN_SELECT_CN,
-        StudyPhase.CN_SELECT_EN,
-        StudyPhase.EN_SELECT_DEF,
-        StudyPhase.DEF_SELECT_EN
-    ];
-    currentPhase = phases[Math.floor(Math.random() * phases.length)];
-    
     // 加载进度
-    const progress = JSON.parse(localStorage.getItem(`${CONFIG.STORAGE_KEYS.PROGRESS}_${currentWord.id}`) || '{"count":0}');
+    const progress = JSON.parse(localStorage.getItem(`${CONFIG.STORAGE_KEYS.PROGRESS}_${currentWord.id}`) || '{"count":0,"phaseIndex":0}');
     correctCount = progress.count;
+    currentPhaseIndex = progress.phaseIndex || 0;
+    
+    // 判断是否首次学习（count为0且phaseIndex为0）
+    if (correctCount === 0 && currentPhaseIndex === 0) {
+        // 首次学习该单词，展示卡片
+        currentPhase = StudyPhase.SHOW_CARD;
+    } else {
+        // 继续学习，从选择题开始
+        currentPhase = PHASE_SEQUENCE[currentPhaseIndex];
+    }
     
     // 生成选项
     generateOptions();
@@ -205,13 +217,61 @@ function generateOptions() {
         case StudyPhase.DEF_SELECT_EN:
             options = shuffleArray([currentWord.word, ...shuffled.map(w => w.word)]);
             break;
+        default:
+            options = [];
     }
 }
 
 /**
- * 渲染学习卡片
+ * 渲染学习卡片或选择题
  */
 function renderStudyCard() {
+    if (currentPhase === StudyPhase.SHOW_CARD) {
+        // 展示单词卡片
+        renderWordCard();
+    } else {
+        // 渲染选择题
+        renderQuizCard();
+    }
+}
+
+/**
+ * 渲染单词卡片（首次学习或选错后）
+ */
+function renderWordCard() {
+    elements.studyArea.innerHTML = `
+        <div class="word-card-display">
+            <div class="word-main-display">
+                <div class="word-en">${escapeHtml(currentWord.word)}</div>
+                <div class="word-cn">${escapeHtml(currentWord.word_cn)}</div>
+            </div>
+            <div class="word-definition-section">
+                <div class="section-label">释义</div>
+                <div class="word-definition">${escapeHtml(currentWord.definition || '暂无')}</div>
+            </div>
+            <div class="word-example-section">
+                <div class="section-label">例句</div>
+                <div class="word-example">${escapeHtml(currentWord.example || '暂无')}</div>
+                <div class="word-example-cn">${escapeHtml(currentWord.example_cn || '')}</div>
+            </div>
+            <button class="continue-btn" id="continueBtn">开始练习 →</button>
+        </div>
+    `;
+    
+    // 添加继续按钮点击事件
+    document.getElementById('continueBtn').addEventListener('click', () => {
+        // 进入第一个选择题阶段
+        currentPhase = PHASE_SEQUENCE[0];
+        currentPhaseIndex = 0;
+        generateOptions();
+        renderStudyCard();
+    });
+}
+
+/**
+ * 渲染选择题卡片
+ */
+function renderQuizCard() {
     const phaseInfo = {
         [StudyPhase.EN_SELECT_CN]: { prompt: '选择中文释义', main: currentWord.word, type: 'word' },
         [StudyPhase.CN_SELECT_EN]: { prompt: '选择英文单词', main: currentWord.word_cn, type: 'word-cn' },
@@ -220,8 +280,13 @@ function renderStudyCard() {
     };
     
     const info = phaseInfo[currentPhase];
+    const roundNum = Math.floor(correctCount / CONFIG.PHASES_PER_CYCLE) + 1;
+    const phaseInRound = (correctCount % CONFIG.PHASES_PER_CYCLE) + 1;
     
     elements.studyArea.innerHTML = `
+        <div class="quiz-header">
+            <span class="round-indicator">第 ${roundNum} 轮 · 第 ${phaseInRound} 题</span>
+        </div>
         <div class="word-display">${escapeHtml(currentWord.word)}</div>
         <div class="word-type">${info.prompt}</div>
         <div class="options-grid">
@@ -276,17 +341,20 @@ function handleOptionClick(btn) {
         
         // 重置当前单词进度
         correctCount = 0;
+        currentPhaseIndex = 0;
         saveProgress();
         
         // 显示错误提示
-        elements.studyHint.innerHTML = `<p>❌ 答错了！当前单词进度已重置，请重新开始。</p>`;
+        elements.studyHint.innerHTML = `<p>❌ 答错了！正在展示单词卡片...</p>`;
         elements.studyHint.classList.add('error');
         
         isWaiting = true;
         setTimeout(() => {
             isWaiting = false;
             elements.studyHint.classList.remove('error');
-            elements.studyHint.innerHTML = '<p>🎯 选择正确释义，继续加油！</p>';
+            elements.studyHint.innerHTML = '<p>🎯 记住单词后，点击开始练习</p>';
+            // 重置到卡片展示阶段
+            currentPhase = StudyPhase.SHOW_CARD;
             renderStudyCard();
         }, 2000);
         
@@ -297,6 +365,11 @@ function handleOptionClick(btn) {
     correctCount++;
     currentStreak++;
     todayCount++;
+    
+    // 移动到下一个阶段
+    currentPhaseIndex = (currentPhaseIndex + 1) % CONFIG.PHASES_PER_CYCLE;
+    currentPhase = PHASE_SEQUENCE[currentPhaseIndex];
+    
     saveProgress();
     updateProgress();
     updateTodayCount();
@@ -316,7 +389,8 @@ function handleOptionClick(btn) {
         isWaiting = false;
         elements.studyHint.classList.remove('correct');
         elements.studyHint.innerHTML = '<p>🎯 选择正确释义，继续加油！</p>';
-        startStudy();
+        generateOptions();
+        renderStudyCard();
     }, 1000);
 }
 
@@ -324,7 +398,10 @@ function handleOptionClick(btn) {
  * 保存进度
  */
 function saveProgress() {
-    localStorage.setItem(`${CONFIG.STORAGE_KEYS.PROGRESS}_${currentWord.id}`, JSON.stringify({ count: correctCount }));
+    localStorage.setItem(`${CONFIG.STORAGE_KEYS.PROGRESS}_${currentWord.id}`, JSON.stringify({ 
+        count: correctCount,
+        phaseIndex: currentPhaseIndex
+    }));
     localStorage.setItem(CONFIG.STORAGE_KEYS.TODAY_COUNT, todayCount.toString());
     localStorage.setItem(CONFIG.STORAGE_KEYS.TODAY_DATE, new Date().toDateString());
 }
@@ -340,6 +417,9 @@ function masterWord() {
     
     masteredWords.push(masteredWord);
     localStorage.setItem(CONFIG.STORAGE_KEYS.MASTERED, JSON.stringify(masteredWords));
+    
+    // 清除该单词的进度
+    localStorage.removeItem(`${CONFIG.STORAGE_KEYS.PROGRESS}_${currentWord.id}`);
     
     elements.studyHint.innerHTML = `<p>🎉 太棒了！${currentWord.word} 已移入掌握区！</p>`;
     
