@@ -1,8 +1,9 @@
-const CACHE_NAME = 'academic-site-v8';
+const CACHE_NAME = 'academic-site-v9';
 const urlsToCache = [
   '/',
   '/index.html',
   '/weekly.html',
+  '/library.html',
   '/papers.html',
   '/vocabulary.html',
   '/settings.html',
@@ -10,6 +11,7 @@ const urlsToCache = [
   '/css/style.css',
   '/js/main.js',
   '/js/weekly.js',
+  '/js/library.js',
   '/js/papers.js',
   '/js/vocabulary.js',
   '/js/ai-parser.js',
@@ -19,6 +21,7 @@ const urlsToCache = [
   '/data/vocabulary.json',
   '/data/weekly.json',
   '/data/journals.json',
+  '/data/checked_dois.json',
   '/manifest.json'
 ];
 
