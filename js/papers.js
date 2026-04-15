@@ -548,11 +548,8 @@ function openCardDetail(cardId) {
     // 设置开关状态
     document.getElementById('cardLangSwitch').checked = cardLangCN;
     
-    // 根据语言选择内容
-    const lang = cardLangCN ? 'cn' : 'en';
-    
-    // 标题
-    const title = cardLangCN ? (card.title_cn || card.title) : card.title;
+    // 标题（驼峰命名字段）
+    const title = cardLangCN ? (card.titleCn || card.title) : card.title;
     document.getElementById('cardDetailTitle').textContent = title || '文献卡片';
     
     // 构建内容
@@ -562,7 +559,7 @@ function openCardDetail(cardId) {
     html += `
         <div class="card-meta">
             ${card.journal ? `<span>📖 ${escapeHtml(card.journal)}</span>` : ''}
-            ${card.publish_date ? `<span>📅 ${escapeHtml(card.publish_date)}</span>` : ''}
+            ${card.publishDate ? `<span>📅 ${escapeHtml(card.publishDate)}</span>` : ''}
             ${card.doi ? `<span>🔗 <a href="https://doi.org/${escapeHtml(card.doi)}" target="_blank" style="color:var(--primary);">${escapeHtml(card.doi)}</a></span>` : ''}
             ${card.category ? `<span>🏷️ ${escapeHtml(card.category)}</span>` : ''}
         </div>
@@ -579,7 +576,7 @@ function openCardDetail(cardId) {
     }
     
     // 摘要
-    const abstract = cardLangCN ? (card.abstract_cn || card.abstract) : card.abstract;
+    const abstract = cardLangCN ? (card.abstractCn || card.abstract) : card.abstract;
     if (abstract) {
         html += `
             <div class="card-section">
@@ -602,7 +599,7 @@ function openCardDetail(cardId) {
     }
     
     // 工作总结
-    const summary = cardLangCN ? (card.summary_cn || card.summary) : card.summary;
+    const summary = cardLangCN ? (card.summaryCn || card.summary) : card.summary;
     if (summary) {
         html += `
             <div class="card-section">
@@ -613,7 +610,7 @@ function openCardDetail(cardId) {
     }
     
     // 创新点
-    const innovations = cardLangCN ? (card.innovation_cn || card.innovation) : card.innovation;
+    const innovations = cardLangCN ? (card.innovationCn || card.innovation) : card.innovation;
     if (innovations) {
         const items = Array.isArray(innovations) ? innovations : [innovations];
         if (items.length && items[0]) {
@@ -629,7 +626,7 @@ function openCardDetail(cardId) {
     }
     
     // 应用领域
-    const application = cardLangCN ? (card.application_cn || card.application) : card.application;
+    const application = cardLangCN ? (card.applicationCn || card.application) : card.application;
     if (application) {
         html += `
             <div class="card-section">
@@ -640,7 +637,7 @@ function openCardDetail(cardId) {
     }
     
     // 论证思路
-    const structure = cardLangCN ? (card.structure_cn || card.structure) : card.structure;
+    const structure = cardLangCN ? (card.structureCn || card.structure) : card.structure;
     if (structure) {
         html += `
             <div class="card-section">
@@ -651,7 +648,7 @@ function openCardDetail(cardId) {
     }
     
     // 表征技术
-    const methods = cardLangCN ? (card.methods_cn || card.methods) : card.methods;
+    const methods = cardLangCN ? (card.methodsCn || card.methods) : card.methods;
     if (methods) {
         const methodItems = Array.isArray(methods) ? methods : methods.split(',').map(m => m.trim());
         if (methodItems.length && methodItems[0]) {
@@ -696,7 +693,7 @@ function openCardDetail(cardId) {
                                         <span class="word">${escapeHtml(wordEn)}</span>
                                         <span class="cn">${escapeHtml(wordCn)}</span>
                                     </div>
-                                    <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy('${wordEn.replace(/'/g, "\\'")}')">📚 加入学习</button>
+                                    <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy('${wordEn.replace(/'/g, "\\'")}')">📚 ${cardLangCN ? '加入学习' : 'Study'}</button>
                                 </div>
                                 ${def ? `<div class="def">${escapeHtml(def)}</div>` : ''}
                                 ${ex ? `<div class="ex">${exFormatted}</div>` : ''}
