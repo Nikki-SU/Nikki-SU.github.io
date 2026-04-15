@@ -555,7 +555,10 @@ async function translatePaper(paper) {
             })
         });
 
-        if (!response.ok) return null;
+        if (!response.ok) {
+            console.error('API请求失败:', response.status);
+            return null;
+        }
 
         const data = await response.json();
         const content = data.choices?.[0]?.message?.content || '';
@@ -563,7 +566,12 @@ async function translatePaper(paper) {
         // 解析JSON
         const jsonMatch = content.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
+            try {
+                return JSON.parse(jsonMatch[0]);
+            } catch (parseErr) {
+                console.error('JSON解析失败:', parseErr, '内容:', jsonMatch[0]);
+                return null;
+            }
         }
     } catch (error) {
         console.error('翻译失败:', error);
@@ -839,7 +847,14 @@ function saveLibrary() {
  * 保存文献卡片
  */
 function saveCards() {
-    localStorage.setItem('papersData', JSON.stringify(paperCards));
+    try {
+        const jsonStr = JSON.stringify(paperCards);
+        localStorage.setItem('papersData', jsonStr);
+        console.log('保存文献卡片:', paperCards.length, '张');
+    } catch (e) {
+        console.error('保存文献卡片失败:', e);
+        alert('保存失败，数据可能有问题: ' + e.message);
+    }
 }
 
 /**
