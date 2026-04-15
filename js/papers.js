@@ -49,6 +49,9 @@ function initEventListeners() {
     });
     document.getElementById('cardFileInput')?.addEventListener('change', handleCardFileImport);
     
+    // 粘贴JSON数据导入
+    document.getElementById('importJsonBtn')?.addEventListener('click', handleJsonDataImport);
+    
     // 卡片详情
     document.getElementById('closeCardDetailModal')?.addEventListener('click', closeCardDetailModal);
     document.getElementById('closeCardDetailBtn')?.addEventListener('click', closeCardDetailModal);
@@ -580,6 +583,26 @@ function deleteCurrentCard() {
     loadCards();
 }
 
+// 处理粘贴的JSON数据导入
+function handleJsonDataImport() {
+    const textarea = document.getElementById('importJsonData');
+    const jsonText = textarea.value.trim();
+    
+    if (!jsonText) {
+        showToast('请先粘贴JSON数据', 'error');
+        return;
+    }
+    
+    try {
+        const cardData = JSON.parse(jsonText);
+        processAndSaveCard(cardData);
+        textarea.value = ''; // 清空输入
+    } catch (error) {
+        console.error('JSON解析失败:', error);
+        showToast('JSON格式错误：' + error.message, 'error');
+    }
+}
+
 // 处理JSON卡片文件导入
 async function handleCardFileImport(event) {
     const file = event.target.files[0];
@@ -588,85 +611,86 @@ async function handleCardFileImport(event) {
     try {
         const text = await file.text();
         const cardData = JSON.parse(text);
-        
-        // 验证基本字段
-        if (!cardData.title) {
-            showToast('JSON格式错误：缺少title字段', 'error');
-            return;
-        }
-        
-        // 转换词汇格式以适配新的词汇本格式
-        // 新格式: en, cn, defCn, defEn, ex (词汇在例句中标粗)
-        const vocabulary = (cardData.vocabulary || []).map(v => {
-            // 兼容多种可能的字段名
-            const en = v.en || v.word || v.english || '';
-            const cn = v.cn || v.word_cn || v.chinese || '';
-            const defCn = v.defCn || v.definition_cn || v.definitionCn || v.cnDef || '';
-            const defEn = v.defEn || v.definition_en || v.definitionEn || v.enDef || '';
-            const ex = v.ex || v.example || v.exampleSentence || '';
-            
-            return {
-                en: en,
-                cn: cn,
-                defCn: defCn,
-                defEn: defEn,
-                ex: ex,
-                status: 'new',
-                correct_count: 0,
-                error_count: 0,
-                correct_streak: 0
-            };
-        });
-        
-        // 构建卡片数据
-        const card = {
-            title: cardData.title,
-            titleCn: cardData.title_cn || cardData.titleCn || '',
-            authors: cardData.authors || '',
-            journal: cardData.journal || '',
-            publishDate: cardData.publish_date || cardData.publishDate || '',
-            doi: cardData.doi || '',
-            abstract: cardData.abstract || '',
-            abstractCn: cardData.abstract_cn || cardData.abstractCn || '',
-            keywords: cardData.keywords || [],
-            summary: cardData.summary || '',
-            summaryCn: cardData.summary_cn || cardData.summaryCn || '',
-            innovation: cardData.innovation || [],
-            innovationCn: cardData.innovation_cn || cardData.innovationCn || [],
-            application: cardData.application || '',
-            applicationCn: cardData.application_cn || cardData.applicationCn || '',
-            structure: cardData.structure || '',
-            structureCn: cardData.structure_cn || cardData.structureCn || '',
-            methods: cardData.methods || [],
-            methodsCn: cardData.methods_cn || cardData.methodsCn || [],
-            category: cardData.category || '',
-            vocabulary: vocabulary,
-            sourcePaperId: null,
-            sourceAbstract: cardData.abstract || ''
-        };
-        
-        // 保存卡片
-        PapersStore.add(card);
-        
-        // 同时添加词汇到词汇本
-        if (vocabulary.length > 0) {
-            vocabulary.forEach(v => {
-                VocabularyStore.add(v);
-            });
-            showToast(`卡片导入成功！已将 ${vocabulary.length} 个词汇添加到词汇本`, 'success');
-        } else {
-            showToast('卡片导入成功！', 'success');
-        }
-        
-        // 重新加载卡片列表
-        loadCards();
-        
-        // 清空文件输入
+        processAndSaveCard(cardData);
         event.target.value = '';
-        
     } catch (error) {
         console.error('导入失败:', error);
         showToast('导入失败：' + error.message, 'error');
         event.target.value = '';
     }
+}
+
+// 处理并保存卡片数据（被粘贴导入和文件导入共用）
+function processAndSaveCard(cardData) {
+    // 验证基本字段
+    if (!cardData.title) {
+        showToast('JSON格式错误：缺少title字段', 'error');
+        return;
+    }
+    
+    // 转换词汇格式以适配新的词汇本格式
+    // 新格式: en, cn, defCn, defEn, ex (词汇在例句中标粗)
+    const vocabulary = (cardData.vocabulary || []).map(v => {
+        // 兼容多种可能的字段名
+        const en = v.en || v.word || v.english || '';
+        const cn = v.cn || v.word_cn || v.chinese || '';
+        const defCn = v.defCn || v.definition_cn || v.definitionCn || v.cnDef || '';
+        const defEn = v.defEn || v.definition_en || v.definitionEn || v.enDef || '';
+        const ex = v.ex || v.example || v.exampleSentence || '';
+        
+        return {
+            en: en,
+            cn: cn,
+            defCn: defCn,
+            defEn: defEn,
+            ex: ex,
+            status: 'new',
+            correct_count: 0,
+            error_count: 0,
+            correct_streak: 0
+        };
+    });
+    
+    // 构建卡片数据
+    const card = {
+        title: cardData.title,
+        titleCn: cardData.title_cn || cardData.titleCn || '',
+        authors: cardData.authors || '',
+        journal: cardData.journal || '',
+        publishDate: cardData.publish_date || cardData.publishDate || '',
+        doi: cardData.doi || '',
+        abstract: cardData.abstract || '',
+        abstractCn: cardData.abstract_cn || cardData.abstractCn || '',
+        keywords: cardData.keywords || [],
+        summary: cardData.summary || '',
+        summaryCn: cardData.summary_cn || cardData.summaryCn || '',
+        innovation: cardData.innovation || [],
+        innovationCn: cardData.innovation_cn || cardData.innovationCn || '',
+        application: cardData.application || '',
+        applicationCn: cardData.application_cn || cardData.applicationCn || '',
+        structure: cardData.structure || '',
+        structureCn: cardData.structure_cn || cardData.structureCn || '',
+        methods: cardData.methods || [],
+        methodsCn: cardData.methods_cn || cardData.methodsCn || [],
+        category: cardData.category || '',
+        vocabulary: vocabulary,
+        sourcePaperId: null,
+        sourceAbstract: cardData.abstract || ''
+    };
+    
+    // 保存卡片
+    PapersStore.add(card);
+    
+    // 同时添加词汇到词汇本
+    if (vocabulary.length > 0) {
+        vocabulary.forEach(v => {
+            VocabularyStore.add(v);
+        });
+        showToast(`卡片导入成功！已将 ${vocabulary.length} 个词汇添加到词汇本`, 'success');
+    } else {
+        showToast('卡片导入成功！', 'success');
+    }
+    
+    // 重新加载卡片列表
+    loadCards();
 }
