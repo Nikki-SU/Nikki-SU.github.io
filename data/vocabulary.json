@@ -1,0 +1,122 @@
+[
+  {
+    "id": "vocab-1",
+    "word": "perovskite",
+    "word_cn": "钙钛矿",
+    "definition": "一种具有ABX₃晶体结构的半导体材料，在太阳能电池中用作光吸收层",
+    "example": "The perovskite layer absorbs sunlight and generates electron-hole pairs.",
+    "example_cn": "钙钛矿层吸收阳光并产生电子-空穴对。",
+    "category": "synthesis",
+    "correct_count": 0
+  },
+  {
+    "id": "vocab-2",
+    "word": "crystallinity",
+    "word_cn": "结晶度/结晶性",
+    "definition": "材料中原子或分子有序排列的程度，影响材料的光电性质",
+    "example": "High crystallinity reduces grain boundaries and improves charge transport.",
+    "example_cn": "高结晶度减少晶界并改善电荷传输。",
+    "category": "synthesis",
+    "correct_count": 0
+  },
+  {
+    "id": "vocab-3",
+    "word": "passivation",
+    "word_cn": "钝化",
+    "definition": "通过表面处理减少材料表面缺陷态的过程，可降低载流子复合",
+    "example": "Surface passivation significantly reduces non-radiative recombination.",
+    "example_cn": "表面钝化显著降低非辐射复合。",
+    "category": "mechanism",
+    "correct_count": 0
+  },
+  {
+    "id": "vocab-4",
+    "word": "grain boundary",
+    "word_cn": "晶界",
+    "definition": "多晶材料中不同取向晶粒之间的界面区域",
+    "example": "Grain boundaries often act as recombination centers for charge carriers.",
+    "example_cn": "晶界通常作为载流子的复合中心。",
+    "category": "mechanism",
+    "correct_count": 0
+  },
+  {
+    "id": "vocab-5",
+    "word": "recombination",
+    "word_cn": "复合",
+    "definition": "电子和空穴相遇并湮灭释放能量的过程，是太阳能电池中的主要能量损失机制",
+    "example": "Minimizing recombination is crucial for achieving high efficiency.",
+    "example_cn": "最小化复合对于实现高效率至关重要。",
+    "category": "mechanism",
+    "correct_count": 0
+  },
+  {
+    "id": "vocab-6",
+    "word": "XRD",
+    "word_cn": "X射线衍射",
+    "definition": "X-ray Diffraction，用于分析材料晶体结构的技术",
+    "example": "XRD patterns reveal the crystallographic information of perovskite films.",
+    "example_cn": "XRD图谱揭示了钙钛矿薄膜的晶体学信息。",
+    "category": "characterization",
+    "correct_count": 0
+  },
+  {
+    "id": "vocab-7",
+    "word": "SEM",
+    "word_cn": "扫描电子显微镜",
+    "definition": "Scanning Electron Microscopy，用于观察材料表面形貌的高分辨率成像技术",
+    "example": "SEM images show the surface morphology and grain size distribution.",
+    "example_cn": "SEM图像显示了表面形貌和晶粒尺寸分布。",
+    "category": "characterization",
+    "correct_count": 0
+  },
+  {
+    "id": "vocab-8",
+    "word": "PL",
+    "word_cn": "光致发光",
+    "definition": "Photoluminescence，材料在光照下发射光的现象，用于研究载流子行为",
+    "example": "PL mapping can reveal spatial variations in film quality.",
+    "example_cn": "PL mapping可以揭示薄膜质量的空间变化。",
+    "category": "characterization",
+    "correct_count": 0
+  },
+  {
+    "id": "vocab-9",
+    "word": "defect",
+    "word_cn": "缺陷",
+    "definition": "晶体结构中的不完整性，如空位、间隙原子或位错",
+    "example": "Defects can act as traps for charge carriers.",
+    "example_cn": "缺陷可以作为载流子的陷阱。",
+    "category": "mechanism",
+    "correct_count": 0
+  },
+  {
+    "id": "vocab-10",
+    "word": "efficiency",
+    "word_cn": "效率",
+    "definition": "太阳能电池将入射光能转化为电能的百分比",
+    "example": "The certified efficiency reached 26.2% under standard illumination.",
+    "example_cn": "在标准光照下认证效率达到26.2%。",
+    "category": "application",
+    "correct_count": 0
+  },
+  {
+    "id": "vocab-11",
+    "word": "spin-coating",
+    "word_cn": "旋涂",
+    "definition": "通过高速旋转基底使液体均匀铺展成薄膜的制备方法",
+    "example": "The perovskite layer was prepared by spin-coating at 4000 rpm.",
+    "example_cn": "钙钛矿层以4000转/分的速度旋涂制备。",
+    "category": "synthesis",
+    "correct_count": 0
+  },
+  {
+    "id": "vocab-12",
+    "word": "annealing",
+    "word_cn": "退火",
+    "definition": "对材料进行热处理以改善晶体结构或完成相变的过程",
+    "example": "Thermal annealing at 100°C for 30 minutes promotes crystallization.",
+    "example_cn": "在100°C下热退火30分钟促进结晶。",
+    "category": "synthesis",
+    "correct_count": 0
+  }
+]
