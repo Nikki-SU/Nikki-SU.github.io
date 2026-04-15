@@ -548,10 +548,10 @@ function openCardDetail(cardId) {
                     ${card.vocabulary.map(v => `
                         <div class="list-item">
                             <div class="list-item-main">
-                                <div class="list-item-title">${escapeHtml(v.word)} <span class="text-muted">- ${escapeHtml(v.word_cn)}</span></div>
-                                <div class="list-item-sub">${escapeHtml(v.definition_cn || '')}</div>
+                                <div class="list-item-title">${escapeHtml(v.en || v.word || '')} <span class="text-muted">- ${escapeHtml(v.cn || v.word_cn || '')}</span></div>
+                                <div class="list-item-sub">${escapeHtml(v.defCn || v.definition_cn || '')}</div>
                             </div>
-                            <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy('${v.word}')">📚 加入学习</button>
+                            <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy('${v.en || v.word || '')')">📚 加入学习</button>
                         </div>
                     `).join('')}
                 </div>
