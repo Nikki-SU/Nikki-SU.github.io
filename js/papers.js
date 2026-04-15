@@ -5,6 +5,7 @@
 // 状态
 let currentTab = 'library';
 let currentCardId = null;
+let libraryLangCN = true; // 文献库语言，true=中文，false=英文
 
 // DOM加载完成后执行
 document.addEventListener('DOMContentLoaded', () => {
@@ -35,6 +36,9 @@ function initEventListeners() {
     
     // 刷新
     document.getElementById('refreshLibraryBtn')?.addEventListener('click', loadLibrary);
+    
+    // 语言切换
+    document.getElementById('libraryLangBtn')?.addEventListener('click', toggleLibraryLang);
     
     // 筛选
     document.getElementById('libraryFilter')?.addEventListener('change', loadLibrary);
@@ -81,10 +85,28 @@ function switchTab(tab) {
     if (tab === 'cards') loadCards();
 }
 
+// 切换文献库语言
+function toggleLibraryLang() {
+    libraryLangCN = !libraryLangCN;
+    const btn = document.getElementById('libraryLangBtn');
+    btn.textContent = libraryLangCN ? '中' : 'EN';
+    btn.classList.toggle('btn-primary', !libraryLangCN);
+    btn.classList.toggle('btn-outline', libraryLangCN);
+    loadLibrary();
+}
+
 // 加载文献库
 function loadLibrary() {
     const container = document.getElementById('libraryList');
     let papers = LibraryStore.getAll();
+    
+    // 更新语言按钮状态
+    const langBtn = document.getElementById('libraryLangBtn');
+    if (langBtn) {
+        langBtn.textContent = libraryLangCN ? '中' : 'EN';
+        langBtn.classList.toggle('btn-primary', !libraryLangCN);
+        langBtn.classList.toggle('btn-outline', libraryLangCN);
+    }
     
     // 筛选
     const filter = document.getElementById('libraryFilter')?.value;
@@ -120,23 +142,33 @@ function loadLibrary() {
         return;
     }
     
-    container.innerHTML = papers.map(paper => `
-        <div class="paper-card" data-id="${paper.id}">
-            <div class="paper-card-title">${escapeHtml(paper.title || paper.titleCn || '无标题')}</div>
-            ${paper.titleEn ? `<div class="text-muted" style="font-size: 0.9rem; margin-bottom: 8px;">${escapeHtml(paper.titleEn)}</div>` : ''}
-            <div class="paper-card-meta">
-                ${paper.authors ? `<span>${escapeHtml(paper.authors.join(', '))}</span>` : ''}
-                ${paper.year ? `<span> · ${paper.year}</span>` : ''}
-                ${paper.doi ? `<span> · DOI: ${escapeHtml(paper.doi)}</span>` : ''}
-                <span class="badge badge-secondary" style="margin-left: 8px;">${formatDate(paper.addedAt)}</span>
+    container.innerHTML = papers.map(paper => {
+        // 根据语言选择标题
+        const mainTitle = libraryLangCN 
+            ? (paper.titleCn || paper.title || '无标题') 
+            : (paper.titleEn || paper.title || 'No Title');
+        const subTitle = libraryLangCN 
+            ? (paper.titleEn ? paper.titleEn : '') 
+            : (paper.titleCn ? paper.titleCn : '');
+        
+        return `
+            <div class="paper-card" data-id="${paper.id}">
+                <div class="paper-card-title">${escapeHtml(mainTitle)}</div>
+                ${subTitle ? `<div class="text-muted" style="font-size: 0.9rem; margin-bottom: 8px;">${escapeHtml(subTitle)}</div>` : ''}
+                <div class="paper-card-meta">
+                    ${paper.authors ? `<span>${escapeHtml(paper.authors.join(', '))}</span>` : ''}
+                    ${paper.year ? `<span> · ${paper.year}</span>` : ''}
+                    ${paper.doi ? `<span> · DOI: ${escapeHtml(paper.doi)}</span>` : ''}
+                    <span class="badge badge-secondary" style="margin-left: 8px;">${formatDate(paper.addedAt)}</span>
+                </div>
+                <div class="paper-card-actions">
+                    ${paper.doi ? `<a href="https://doi.org/${paper.doi}" target="_blank" class="btn btn-sm btn-outline">🔗 原文</a>` : ''}
+                    <button class="btn btn-sm btn-primary" onclick="createCardFromPaper('${paper.id}')">🃏 生成卡片</button>
+                    <button class="btn btn-sm btn-danger" onclick="deletePaper('${paper.id}')">🗑️ 删除</button>
+                </div>
             </div>
-            <div class="paper-card-actions">
-                ${paper.doi ? `<a href="https://doi.org/${paper.doi}" target="_blank" class="btn btn-sm btn-outline">🔗 原文</a>` : ''}
-                <button class="btn btn-sm btn-primary" onclick="createCardFromPaper('${paper.id}')">🃏 生成卡片</button>
-                <button class="btn btn-sm btn-danger" onclick="deletePaper('${paper.id}')">🗑️ 删除</button>
-            </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // 加载卡片列表
