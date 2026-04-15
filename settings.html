@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API设置 - 小N学术站</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .settings-container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        
+        .settings-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 32px;
+        }
+        
+        .settings-header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .settings-header h1 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .settings-header p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .settings-section {
+            margin-bottom: 28px;
+        }
+        
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .settings-section h2 {
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .form-group .hint {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        .input-wrapper input {
+            width: 100%;
+            padding: 12px 16px;
+            padding-right: 50px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        .input-wrapper input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .toggle-visibility {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        
+        .toggle-visibility:hover {
+            opacity: 1;
+        }
+        
+        .model-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .model-option {
+            position: relative;
+        }
+        
+        .model-option input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .model-option label {
+            display: block;
+            padding: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .model-option input:checked + label {
+            border-color: var(--primary-color);
+            background: rgba(79, 70, 229, 0.05);
+        }
+        
+        .model-option .model-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .model-option .model-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        
+        .btn-test {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-test.primary {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-test.primary:hover {
+            background: var(--primary-hover);
+        }
+        
+        .btn-test.secondary {
+            background: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-test.secondary:hover {
+            background: #475569;
+        }
+        
+        .test-result {
+            margin-top: 16px;
+            padding: 16px;
+            border-radius: var(--radius);
+            text-align: center;
+            font-weight: 500;
+            display: none;
+        }
+        
+        .test-result.success {
+            display: block;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+        
+        .test-result.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+            border: 1px solid var(--error-color);
+        }
+        
+        .test-result.loading {
+            display: block;
+            background: rgba(79, 70, 229, 0.1);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-top: 16px;
+        }
+        
+        .status-indicator.configured {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+        
+        .status-indicator.not-configured {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+        }
+        
+        .info-box {
+            background: rgba(79, 70, 229, 0.05);
+            border: 1px solid rgba(79, 70, 229, 0.2);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .info-box h3 {
+            font-size: 0.95rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .info-box p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .info-box a {
+            color: var(--primary-color);
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .back-link:hover {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        @media (max-width: 600px) {
+            .settings-card {
+                padding: 20px;
+            }
+            
+            .model-selector {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">
+                <span class="logo-icon">🧪</span>
+                小N学术站
+            </h1>
+            <nav class="nav" id="navMenu">
+                <a href="index.html" class="nav-link">
+                    <span class="icon">🏠</span> 首页
+                </a>
+                <a href="weekly.html" class="nav-link">
+                    <span class="icon">📅</span> 周报
+                </a>
+                <a href="papers.html" class="nav-link">
+                    <span class="icon">📚</span> 文献卡片
+                </a>
+                <a href="vocabulary.html" class="nav-link">
+                    <span class="icon">📝</span> 词汇本
+                </a>
+                <a href="settings.html" class="nav-link active">
+                    <span class="icon">⚙️</span> 设置
+                </a>
+            </nav>
+            <button class="menu-toggle" id="menuToggle">☰</button>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="settings-container">
+            <a href="papers.html" class="back-link">
+                <span>←</span> 返回文献卡片
+            </a>
+            
+            <div class="settings-card">
+                <div class="settings-header">
+                    <h1>🔑 API设置</h1>
+                    <p>配置硅基流动API以启用AI文献解析功能</p>
+                    <div id="statusIndicator" class="status-indicator"></div>
+                </div>
+                
+                <div class="info-box">
+                    <h3>💡 如何获取API Key</h3>
+                    <p>
+                        1. 访问 <a href="https://cloud.siliconflow.cn" target="_blank">硅基流动官网</a> 注册账号<br>
+                        2. 进入控制台 → API密钥 → 创建新密钥<br>
+                        3. 复制密钥并粘贴到下方输入框<br>
+                        4. 新用户有免费额度可用
+                    </p>
+                </div>
+                
+                <div class="settings-section">
+                    <h2>📌 API密钥</h2>
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <input type="password" id="apiKeyInput" placeholder="请输入您的API Key (sk-...)">
+                            <button type="button" class="toggle-visibility" id="toggleKeyVisibility" title="显示/隐藏密钥">👁️</button>
+                        </div>
+                        <p class="hint">API Key仅保存在本地浏览器中，不会上传到服务器</p>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h2>🤖 选择模型</h2>
+                    <div class="model-selector">
+                        <div class="model-option">
+                            <input type="radio" name="model" id="modelDeepseek" value="deepseek">
+                            <label for="modelDeepseek">
+                                <div class="model-name">DeepSeek-V3</div>
+                                <div class="model-desc">性能强劲，性价比高</div>
+                            </label>
+                        </div>
+                        <div class="model-option">
+                            <input type="radio" name="model" id="modelQwen" value="qwen">
+                            <label for="modelQwen">
+                                <div class="model-name">Qwen2.5-72B</div>
+                                <div class="model-desc">阿里通义千问大模型</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button type="button" class="btn-test secondary" id="clearBtn">
+                        🗑️ 清除设置
+                    </button>
+                    <button type="button" class="btn-test primary" id="testBtn">
+                        🔗 测试连接
+                    </button>
+                </div>
+                
+                <div id="testResult" class="test-result"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© 2024 小N学术学习站 | 钙钛矿太阳能电池研究方向</p>
+            <p class="footer-link">托管于 GitHub Pages</p>
+        </div>
+    </footer>
+
+    <script src="js/ai-parser.js"></script>
+    <script src="js/settings.js"></script>
+</body>
+</html>
