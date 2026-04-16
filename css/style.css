@@ -362,6 +362,7 @@ body {
     }
     .options-container {
         gap: 10px;
+        grid-template-columns: 1fr;
     }
     .option-btn {
         padding: 14px 12px;
@@ -370,17 +371,19 @@ body {
     }
 }
 
-/* 横屏响应式：选项排成一行或两行 */
-@media (orientation: landscape) and (min-width: 900px) {
+/* 横屏响应式：选项横着排 */
+@media (orientation: landscape) {
     .options-container {
-        grid-template-columns: repeat(4, 1fr);
-        max-width: 1000px;
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 700px;
     }
 }
 
-@media (orientation: landscape) and (min-width: 600px) and (max-width: 899px) {
+/* 横屏大屏：一行4个选项 */
+@media (orientation: landscape) and (min-width: 1024px) {
     .options-container {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
+        max-width: 1200px;
     }
 }
 
