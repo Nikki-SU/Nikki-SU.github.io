@@ -263,3 +263,109 @@ body {
 .btn-retry:hover {
     background: #C43C2B;
 }
+
+/* 词汇本 - 单词卡片居中 */
+.word-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    border-top: 4px solid var(--primary);
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.word-card .question-content {
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text-main);
+    line-height: 1.6;
+}
+
+.word-card .question-word {
+    color: var(--primary);
+    font-size: 2rem;
+}
+
+.word-card .question-text {
+    color: var(--text-main);
+    font-size: 1.5rem;
+}
+
+/* 词汇本 - 选项容器居中 */
+.options-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.option-btn {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    text-align: center;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Microsoft YaHei', sans-serif;
+    touch-action: manipulation;
+    word-break: break-word;
+}
+
+.option-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: rgba(77, 187, 213, 0.08);
+}
+
+.option-btn:disabled {
+    cursor: default;
+}
+
+.option-btn.correct {
+    border-color: var(--secondary) !important;
+    background: rgba(0, 160, 135, 0.2) !important;
+    color: var(--secondary) !important;
+    font-weight: 600;
+}
+
+.option-btn.wrong {
+    border-color: var(--danger) !important;
+    background: rgba(230, 75, 53, 0.2) !important;
+    color: var(--danger) !important;
+    font-weight: 600;
+}
+
+/* 响应式 - 手机 */
+@media (max-width: 600px) {
+    .word-card {
+        padding: 24px 16px;
+        border-radius: 12px;
+    }
+    .word-card .question-content {
+        font-size: 1.5rem;
+    }
+    .word-card .question-word {
+        font-size: 1.6rem;
+    }
+    .word-card .question-text {
+        font-size: 1.3rem;
+    }
+    .options-container {
+        gap: 10px;
+    }
+    .option-btn {
+        padding: 14px 12px;
+        font-size: 0.95rem;
+        min-height: 56px;
+    }
+}
