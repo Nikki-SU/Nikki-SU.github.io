@@ -3,304 +3,728 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>词汇本 - 小N学术站</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>小科学术站 - 词汇本</title>
+    <style>
+        :root {
+            --primary: #4a90d9;
+            --primary-dark: #3a7bc8;
+            --success: #52c41a;
+            --error: #ff4d4f;
+            --warning: #faad14;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --border-color: #e8e8e8;
+            --shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        header nav a {
+            margin-left: 20px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        header nav a:hover {
+            color: var(--primary);
+        }
+
+        /* Stats Area */
+        .stats-area {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-number {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-card.new .stat-number { color: #1890ff; }
+        .stat-card.learning .stat-number { color: #fa8c16; }
+        .stat-card.learned .stat-number { color: #52c41a; }
+        .stat-card.mastered .stat-number { color: #722ed1; }
+        .stat-card.wrong .stat-number { color: #ff4d4f; }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Study Panel */
+        .study-panel {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .study-panel h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .study-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 16px 24px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(74, 144, 217, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #52c41a, #389e0d);
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(82, 196, 26, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #1890ff, #096dd9);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            background: var(--card-bg);
+            padding: 8px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: var(--bg-color);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Content Area */
+        .vocab-content {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            min-height: 300px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Study Area */
+        #studyArea {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 500px;
+        }
+
+        /* Progress Info */
+        .progress-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .mode-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .mode-badge.learning {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .mode-badge.review {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+
+        .phase-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: #f0f0f0;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .word-count {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .wrong-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: #fff2e8;
+            color: #fa8c16;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Quiz Container */
+        .quiz-container {
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .word-display {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 32px;
+            padding: 24px;
+            background: linear-gradient(135deg, #f0f5ff, #e6f4ff);
+            border-radius: var(--radius);
+            color: var(--primary);
+        }
+
+        .word-display.cn {
+            font-size: 28px;
+            background: linear-gradient(135deg, #f6ffed, #e6fffb);
+            color: #52c41a;
+        }
+
+        .word-display.definition {
+            font-size: 20px;
+            background: linear-gradient(135deg, #fff7e6, #fff1db);
+            color: #fa8c16;
+        }
+
+        .example-display {
+            font-size: 18px;
+            line-height: 1.8;
+            padding: 24px;
+            background: #fafafa;
+            border-radius: var(--radius);
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .example-prompt, .definition-prompt {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        /* Options Grid */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .option-btn {
+            padding: 18px 24px;
+            border: 2px solid var(--border-color);
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: #f0f5ff;
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .option-btn.correct {
+            background: #f6ffed;
+            border-color: #52c41a;
+            color: #389e0d;
+        }
+
+        .option-btn.wrong {
+            background: #fff2f0;
+            border-color: #ff4d4f;
+            color: #cf1322;
+        }
+
+        /* Hint Area */
+        .hint-area {
+            margin-top: 24px;
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .hint-area.success {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+
+        .hint-area.error {
+            background: #fff2f0;
+            color: #ff4d4f;
+        }
+
+        .hint-area.info {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        /* Word Card */
+        .word-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+            margin: 0 auto;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .word-en {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .word-pronunciation {
+            font-size: 18px;
+            opacity: 0.8;
+        }
+
+        .card-body {
+            padding: 28px;
+        }
+
+        .card-section {
+            margin-bottom: 20px;
+        }
+
+        .card-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-label {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section-content {
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+
+        .section-content.example {
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .highlight {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .card-next-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .card-next-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Completion Container */
+        .completion-container {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .completion-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .completion-container h3 {
+            font-size: 24px;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .completion-stats {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .completion-breakdown {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+
+        .stat-item {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .stat-item.new { background: #e6f7ff; color: #1890ff; }
+        .stat-item.learning { background: #fff7e6; color: #fa8c16; }
+        .stat-item.learned { background: #f6ffed; color: #52c41a; }
+        .stat-item.mastered { background: #f9f0ff; color: #722ed1; }
+
+        /* Word List */
+        .word-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+        }
+
+        .word-item:hover {
+            background: #fafafa;
+        }
+
+        .word-item:last-child {
+            border-bottom: none;
+        }
+
+        .word-main {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .word-en {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .word-cn {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .word-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.new { background: #e6f7ff; color: #1890ff; }
+        .status-badge.learning { background: #fff7e6; color: #fa8c16; }
+        .status-badge.learned { background: #f6ffed; color: #52c41a; }
+        .status-badge.mastered { background: #f9f0ff; color: #722ed1; }
+        .status-badge.wrong { background: #fff2f0; color: #ff4d4f; }
+
+        .progress-text, .streak-text {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Empty State */
+        .empty-message {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: #52c41a;
+            color: white;
+        }
+
+        .toast.error {
+            background: #ff4d4f;
+            color: white;
+        }
+
+        .toast.info {
+            background: #1890ff;
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .stats-area {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .study-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                min-width: 100%;
+            }
+
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tab-nav {
+                flex-wrap: wrap;
+            }
+
+            .tab-btn {
+                flex: 1 1 45%;
+            }
+        }
+        
+        /* 竖屏响应式：选项改为单列 */
+        @media (orientation: portrait) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 横屏响应式：选项保持2列 */
+        @media (orientation: landscape) {
+            .options-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
 </head>
 <body>
-    <header class="header">
-        <div class="container">
-            <h1 class="logo">
-                <span class="logo-icon">🧪</span>
-                小N学术站
-            </h1>
-            <nav class="nav" id="navMenu">
-                <a href="index.html" class="nav-link">
-                    <span>🏠</span> 首页
-                </a>
-                <a href="papers.html" class="nav-link">
-                    <span>📚</span> 文献库
-                </a>
-                <a href="vocabulary.html" class="nav-link active">
-                    <span>📖</span> 词汇本
-                </a>
-                <a href="settings.html" class="nav-link">
-                    <span>⚙️</span> 设置
-                </a>
+    <div class="container">
+        <header>
+            <h1>📚 小科学术站</h1>
+            <nav>
+                <a href="index.html">周报</a>
+                <a href="papers.html">文献卡片</a>
+                <a href="vocabulary.html">词汇本</a>
             </nav>
-            <button class="menu-toggle" id="menuToggle">☰</button>
-        </div>
-    </header>
+        </header>
 
-    <main class="main">
-        <div class="container">
-            <!-- 页面标题 -->
-            <div class="section-header">
-                <h3 class="section-title">
-                    <span>📖</span>
-                    学术词汇本
-                </h3>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-secondary" id="settingsBtn">
-                        <span>⚙️</span> 学习设置
-                    </button>
-                </div>
+        <!-- 统计区域 -->
+        <div class="stats-area" id="statsArea">
+            <div class="stat-card new">
+                <div class="stat-number" id="newCount">0</div>
+                <div class="stat-label">新词</div>
             </div>
-
-            <!-- 统计卡片 -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon">🆕</div>
-                    <div class="stat-value" id="newCount">0</div>
-                    <div class="stat-label">新词</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">📖</div>
-                    <div class="stat-value" id="studyingCount">0</div>
-                    <div class="stat-label">正在学</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">✅</div>
-                    <div class="stat-value" id="learnedCount">0</div>
-                    <div class="stat-label">已学</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🏆</div>
-                    <div class="stat-value" id="masteredCount">0</div>
-                    <div class="stat-label">已掌握</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">❌</div>
-                    <div class="stat-value" id="wrongCount">0</div>
-                    <div class="stat-label">错词本</div>
-                </div>
+            <div class="stat-card learning">
+                <div class="stat-number" id="learningCount">0</div>
+                <div class="stat-label">学习中</div>
             </div>
-
-            <!-- Tabs -->
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="study">📖 学习</button>
-                <button class="tab-btn" data-tab="all">📚 全部</button>
-                <button class="tab-btn" data-tab="wrong">❌ 错词本</button>
+            <div class="stat-card learned">
+                <div class="stat-number" id="learnedCount">0</div>
+                <div class="stat-label">已学</div>
             </div>
-
-            <!-- 学习模式 -->
-            <div id="studyTab" class="tab-content active">
-                <!-- 学习控制 -->
-                <div class="card" id="studyControls">
-                    <div style="margin-bottom: 16px;">
-                        <div class="progress">
-                            <div class="progress-bar" id="progressFill" style="width: 0%"></div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin-top: 8px;" class="text-muted">
-                            <span id="progressText">准备开始</span>
-                            <span id="progressPercent">0%</span>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-                        <div class="form-group" style="margin: 0;">
-                            <label class="form-label" style="font-size: 0.85rem;">学习词数:</label>
-                            <select id="studyCountSelect" style="padding: 8px; width: 100px;">
-                                <option value="10">10个</option>
-                                <option value="20">20个</option>
-                                <option value="30">30个</option>
-                                <option value="50" selected>50个</option>
-                                <option value="80">80个</option>
-                            </select>
-                        </div>
-                        <button class="btn btn-primary" id="startStudyBtn">
-                            📖 开始学习
-                        </button>
-                        <button class="btn btn-secondary" id="startReviewBtn">
-                            🔄 开始复习
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 进度信息 -->
-                <div id="queueInfo" class="queue-info hidden">
-                    <span class="queue-badge" id="queueBadge">学习中</span>
-                    <span class="phase-badge" id="phaseBadge">英选中</span>
-                    <span class="word-progress" id="wordProgress">第 1 / 10 个词</span>
-                    <button class="btn btn-sm btn-danger" id="quitStudyBtn">退出</button>
-                </div>
-
-                <!-- 学习区域 -->
-                <div id="studyArea" class="card" style="margin-top: 24px; min-height: 300px;">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📖</div>
-                        <p>选择上方按钮开始学习！</p>
-                        <p class="text-muted">支持6种题型：英选中、中选英、英选义、义选英、句选中、句选义</p>
-                    </div>
-                </div>
+            <div class="stat-card mastered">
+                <div class="stat-number" id="masteredCount">0</div>
+                <div class="stat-label">已掌握</div>
             </div>
-
-            <!-- 全部词汇 -->
-            <div id="allTab" class="tab-content">
-                <div class="card">
-                    <div class="filter-bar">
-                        <select id="allCategoryFilter" class="form-select" style="min-width: 120px;">
-                            <option value="">全部分类</option>
-                            <option value="synthesis">合成</option>
-                            <option value="characterization">表征</option>
-                            <option value="mechanism">机理</option>
-                            <option value="application">应用</option>
-                            <option value="custom">自定义</option>
-                        </select>
-                        <select id="allStatusFilter" class="form-select" style="min-width: 120px;">
-                            <option value="">全部状态</option>
-                            <option value="new">新词</option>
-                            <option value="studying">正在学</option>
-                            <option value="learned">已学</option>
-                            <option value="mastered">已掌握</option>
-                        </select>
-                        <input type="text" id="allSearchInput" class="form-input" placeholder="搜索单词..." style="flex: 1;">
-                    </div>
-                    <button class="btn btn-primary mb-4" id="addWordBtn">
-                        <span>➕</span> 添加单词
-                    </button>
-                    <div id="allWordList" class="list">
-                        <div class="empty-state">
-                            <p>暂无词汇</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 错词本 -->
-            <div id="wrongTab" class="tab-content">
-                <div class="card">
-                    <div style="display: flex; gap: 12px; margin-bottom: 20px;">
-                        <button class="btn btn-secondary" id="reviewWrongBtn">
-                            🔄 复习错词
-                        </button>
-                        <button class="btn btn-outline" id="clearWrongBtn">
-                            🗑️ 清空错词本
-                        </button>
-                    </div>
-                    <div id="wrongWordList" class="list">
-                        <div class="empty-state">
-                            <p>暂无错词记录</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="stat-card wrong">
+                <div class="stat-number" id="wrongCount">0</div>
+                <div class="stat-label">错词</div>
             </div>
         </div>
-    </main>
 
-    <!-- 添加单词模态框 -->
-    <div id="addWordModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>➕ 添加单词</h3>
-                <button class="modal-close" id="closeAddWordModal">×</button>
+        <!-- 学习面板 -->
+        <div class="study-panel" id="studyPanel">
+            <h2>开始学习</h2>
+            <div class="study-buttons">
+                <button class="btn btn-primary" id="startLearningBtn">
+                    📚 开始学习 (0)
+                </button>
+                <button class="btn btn-secondary" id="startReviewBtn" disabled>
+                    🔄 复习已学 (0)
+                </button>
+                <button class="btn btn-success" id="syncBtn">
+                    📱 同步到背单词App
+                </button>
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label class="form-label">英文词汇 *</label>
-                    <input type="text" class="form-input" id="wordEn" placeholder="输入英文">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">中文翻译 *</label>
-                    <input type="text" class="form-input" id="wordCn" placeholder="输入中文翻译">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">中文释义</label>
-                    <textarea class="form-textarea" id="defCn" placeholder="详细的中文释义"></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">英文释义</label>
-                    <textarea class="form-textarea" id="defEn" placeholder="英文释义（可选）"></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">例句</label>
-                    <textarea class="form-textarea" id="wordExample" placeholder="例句，用**词汇**标记重点词"></textarea>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">分类</label>
-                    <select class="form-select" id="wordCategory">
-                        <option value="custom">自定义</option>
-                        <option value="synthesis">合成</option>
-                        <option value="characterization">表征</option>
-                        <option value="mechanism">机理</option>
-                        <option value="application">应用</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer" style="padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn btn-secondary" id="cancelAddWordBtn">取消</button>
-                <button class="btn btn-primary" id="confirmAddWordBtn">添加</button>
-            </div>
+        </div>
+
+        <!-- 学习区域 -->
+        <div class="vocab-content hidden" id="studyArea">
+            <div class="progress-info" id="progressInfo"></div>
+            <div class="hint-area" id="hintArea"></div>
+            <!-- 动态内容 -->
+        </div>
+
+        <!-- 标签页导航 -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="list">单词列表</button>
+        </div>
+
+        <!-- 单词列表 -->
+        <div class="vocab-content" id="listContent">
+            <div id="wordList"></div>
         </div>
     </div>
 
-    <!-- 学习设置模态框 -->
-    <div id="settingsModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>⚙️ 学习设置</h3>
-                <button class="modal-close" id="closeSettingsModal">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-row">
-                    <span class="settings-label">🔊 朗读发音</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="settingSpeak">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="settings-row">
-                    <span class="settings-label">🏆 掌握条件（连续正确）</span>
-                    <select id="settingMasterCount" style="padding: 8px;">
-                        <option value="8">8次</option>
-                        <option value="12" selected>12次</option>
-                    </select>
-                </div>
-                <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border);">
-                <h4 style="margin-bottom: 16px;">🎯 题型开关</h4>
-                <div class="settings-row">
-                    <span class="settings-label">🇬🇧 英选中</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="settingEnCn" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="settings-row">
-                    <span class="settings-label">🇨🇳 中选英</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="settingCnEn" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="settings-row">
-                    <span class="settings-label">📖 英选义</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="settingEnDef" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="settings-row">
-                    <span class="settings-label">📝 义选英</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="settingDefEn" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                
-                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
-                    <button class="btn btn-warning" id="btnTranslateAll" style="width: 100%;">
-                        🔄 补全缺失翻译
-                    </button>
-                    <p style="font-size: 12px; color: var(--text-light); margin-top: 8px; text-align: center;">
-                        为缺少中文/定义的词汇自动翻译补全
-                    </p>
-                </div>
-            </div>
-            <div class="modal-footer" style="padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end;">
-                <button class="btn btn-primary" id="saveSettingsBtn">保存</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="js/main.js"></script>
     <script src="js/vocabulary.js"></script>
 </body>
 </html>
