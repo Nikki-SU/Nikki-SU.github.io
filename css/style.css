@@ -300,7 +300,7 @@ body {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 14px;
-    max-width: 500px;
+    max-width: 600px;
     margin: 0 auto;
 }
 
@@ -308,9 +308,9 @@ body {
     background: var(--card-bg);
     border: 2px solid var(--border);
     border-radius: 12px;
-    padding: 18px 16px;
+    padding: 18px 20px;
     text-align: center;
-    font-size: 1.05rem;
+    font-size: 1.1rem;
     cursor: pointer;
     transition: all 0.2s;
     min-height: 64px;
@@ -367,5 +367,33 @@ body {
         padding: 14px 12px;
         font-size: 0.95rem;
         min-height: 56px;
+    }
+}
+
+/* 横屏响应式：选项排成一行或两行 */
+@media (orientation: landscape) and (min-width: 900px) {
+    .options-container {
+        grid-template-columns: repeat(4, 1fr);
+        max-width: 1000px;
+    }
+}
+
+@media (orientation: landscape) and (min-width: 600px) and (max-width: 899px) {
+    .options-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* 竖屏响应式：选项保持单列或两列 */
+@media (orientation: portrait) {
+    .options-container {
+        grid-template-columns: 1fr;
+        max-width: 500px;
+    }
+}
+
+@media (orientation: portrait) and (min-width: 500px) {
+    .options-container {
+        grid-template-columns: repeat(2, 1fr);
     }
 }

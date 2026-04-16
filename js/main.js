@@ -176,9 +176,43 @@ const PapersStore = {
 // 词汇本数据
 const VocabularyStore = {
     key: 'vocabularyData',
+    oldKey: 'vocabulary', // 旧版本key
     
     getAll() {
-        return Storage.get(this.key, []);
+        // 先检查新版本数据
+        let words = Storage.get(this.key, []);
+        
+        // 如果新版本没有数据，尝试迁移旧版本数据
+        if (words.length === 0) {
+            const oldWords = Storage.get(this.oldKey, []);
+            if (oldWords.length > 0) {
+                console.log('正在迁移旧版本词汇数据...');
+                words = this.migrateOldData(oldWords);
+                Storage.set(this.key, words);
+                // 迁移完成后不清除旧数据，以防万一
+                console.log(`成功迁移 ${words.length} 条词汇`);
+            }
+        }
+        
+        return words;
+    },
+    
+    // 迁移旧版本数据格式
+    migrateOldData(oldWords) {
+        return oldWords.map(w => ({
+            id: w.id || Date.now().toString() + Math.random(),
+            en: (w.en || w.english || w.word || '').toLowerCase(),
+            cn: w.cn || w.chinese || '',
+            defCn: w.defCn || w.definition_cn || w.definition || '',
+            defEn: w.defEn || w.definition_en || '',
+            ex: w.ex || w.example || w.exampleSentence || '',
+            status: w.status || w.state || 'new',
+            correct_count: w.correct_count || w.correctStreak || 0,
+            error_count: w.error_count || w.wrongCount || 0,
+            correct_streak: w.correct_streak || w.correctStreak || 0,
+            category: w.category || 'migrated',
+            addedAt: w.addedAt || new Date().toISOString()
+        }));
     },
     
     // 同步添加（不翻译）
