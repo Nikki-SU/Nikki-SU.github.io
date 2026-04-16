@@ -134,6 +134,10 @@ function initEventListeners() {
     
     // 补全翻译按钮
     document.getElementById('btnTranslateAll')?.addEventListener('click', translateAllMissing);
+    
+    // 导出词汇按钮
+    document.getElementById('exportVocabBtn')?.addEventListener('click', exportVocabularyToClipboard);
+    document.getElementById('downloadVocabBtn')?.addEventListener('click', downloadVocabularyFile);
 }
 
 // ===== 补全翻译 =====
@@ -852,4 +856,92 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
+}
+
+// ===== 导出词汇 =====
+
+function getExportJsonData() {
+    if (vocabulary.length === 0) {
+        return null;
+    }
+    
+    // 转换为小N单词格式
+    return vocabulary.map(w => ({
+        en: w.en || '',
+        cn: w.cn || '',
+        defCn: w.defCn || '',
+        defEn: w.defEn || '',
+        ex: w.ex || '',
+        category: 'academic'
+    }));
+}
+
+function exportVocabularyToClipboard() {
+    const exportData = getExportJsonData();
+    if (!exportData) {
+        showToast('词汇本为空，无法导出', 'error');
+        return;
+    }
+    
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    
+    navigator.clipboard.writeText(jsonStr).then(() => {
+        showToast(`已复制 ${exportData.length} 个词汇到剪贴板`, 'success');
+    }).catch(() => {
+        // 降级方案
+        const textarea = document.createElement('textarea');
+        textarea.value = jsonStr;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast(`已复制 ${exportData.length} 个词汇到剪贴板`, 'success');
+    });
+}
+
+function downloadVocabularyFile() {
+    const exportData = getExportJsonData();
+    if (!exportData) {
+        showToast('词汇本为空，无法导出', 'error');
+        return;
+    }
+    
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `学术站词汇_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast(`已下载 ${exportData.length} 个词汇`, 'success');
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 12px 24px;
+        border-radius: 8px;
+        z-index: 10000;
+        font-size: 14px;
+        background: ${type === 'success' ? '#00A087' : type === 'error' ? '#E64B35' : '#4DBBD5'};
+        color: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
 }
