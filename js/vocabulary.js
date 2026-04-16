@@ -335,7 +335,7 @@ function renderStudy() {
     if (pendingWrong) {
         const word = pendingWrong.word;
         html = renderCard(word);
-        html += `<div style="text-align:center;margin-top:20px;"><button class="btn btn-primary btn-lg" onclick="retryAfterCard()">重做</button></div>`;
+        html += `<div style="text-align:center;margin-top:20px;"><button class="btn btn-danger btn-lg" onclick="retryAfterCard()">🔄 重做</button></div>`;
         area.innerHTML = html;
         return;
     }
@@ -538,6 +538,9 @@ function speak(text) {
 
 window.checkAnswer = function(selected, correct, type, btn) {
     const btns = document.querySelectorAll('.option-btn');
+    
+    // 立即禁用所有按钮防止重复点击
+    btns.forEach(b => b.disabled = true);
     const isCorrect = selected === correct;
     
     btns.forEach(b => {
@@ -847,3 +850,4 @@ function debounce(func, wait) {
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
 }
+
