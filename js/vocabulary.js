@@ -124,7 +124,7 @@ function initEventListeners() {
     document.getElementById('quitStudyBtn')?.addEventListener('click', quitStudy);
     
     document.getElementById('settingsBtn')?.addEventListener('click', openSettings);
-    document.getElementById('closeSettings')?.addEventListener('click', closeSettings);
+    document.getElementById('closeSettingsModal')?.addEventListener('click', closeSettings);
     document.getElementById('saveSettingsBtn')?.addEventListener('click', saveSettingsAndClose);
     
     document.getElementById('reviewWrongBtn')?.addEventListener('click', () => startStudy('review', true));
@@ -134,14 +134,6 @@ function initEventListeners() {
     
     // 补全翻译按钮
     document.getElementById('btnTranslateAll')?.addEventListener('click', translateAllMissing);
-    
-    // 导出词汇按钮
-    document.getElementById('exportVocabBtn')?.addEventListener('click', exportVocabulary);
-    document.getElementById('closeExportModal')?.addEventListener('click', () => {
-        document.getElementById('exportModal')?.classList.add('hidden');
-    });
-    document.getElementById('copyExportBtn')?.addEventListener('click', copyExportToClipboard);
-    document.getElementById('downloadExportBtn')?.addEventListener('click', downloadExportFile);
 }
 
 // ===== 补全翻译 =====
@@ -343,7 +335,7 @@ function renderStudy() {
     if (pendingWrong) {
         const word = pendingWrong.word;
         html = renderCard(word);
-        html += `<div style="text-align:center;margin-top:20px;"><button class="btn btn-danger btn-lg" onclick="retryAfterCard()">🔄 重做</button></div>`;
+        html += `<div style="text-align:center;margin-top:20px;"><button class="btn btn-primary btn-lg" onclick="retryAfterCard()">重做</button></div>`;
         area.innerHTML = html;
         return;
     }
@@ -546,9 +538,6 @@ function speak(text) {
 
 window.checkAnswer = function(selected, correct, type, btn) {
     const btns = document.querySelectorAll('.option-btn');
-    
-    // 立即禁用所有按钮防止重复点击
-    btns.forEach(b => b.disabled = true);
     const isCorrect = selected === correct;
     
     btns.forEach(b => {
@@ -768,7 +757,7 @@ function renderWrongWords() {
 }
 
 function renderMasteredWords() {
-    const container = document.getElementById('masteredWordsList');
+    const container = document.getElementById('masteredWordList');
     if (!container) return;
     
     const words = vocabulary.filter(w => classify(w) === 'mastered');
@@ -808,28 +797,11 @@ window.removeFromMastered = function(en) {
 function openSettings() {
     document.getElementById('settingsModal')?.classList.remove('hidden');
     document.getElementById('settingSpeak').checked = settings.speak;
-    document.getElementById('settingCut').checked = settings.allowZhan;
+    document.getElementById('settingAllowZhan').checked = settings.allowZhan;
     document.getElementById('settingMasterCount').value = settings.masterCount;
     
-    // 6种题型开关
-    const typeMap = {
-        1: 'settingEnCn',  // 英选中
-        2: 'settingCnEn',  // 中选英
-        3: 'settingEnDef', // 英选义
-        4: 'settingDefEn', // 义选英
-        5: 'settingSentEn', // 句选中
-        6: 'settingSentCn'  // 句选义
-    };
-    
-    // 先全部设为false
-    Object.values(typeMap).forEach(id => {
-        const cb = document.getElementById(id);
-        if (cb) cb.checked = false;
-    });
-    
-    // 再根据settings.types设置选中的
     settings.types.forEach(t => {
-        const cb = document.getElementById(typeMap[t]);
+        const cb = document.getElementById(`type${t}`);
         if (cb) cb.checked = true;
     });
 }
@@ -840,23 +812,13 @@ function closeSettings() {
 
 function saveSettingsAndClose() {
     settings.speak = document.getElementById('settingSpeak')?.checked ?? true;
-    settings.allowZhan = document.getElementById('settingCut')?.checked ?? false;
+    settings.allowZhan = document.getElementById('settingAllowZhan')?.checked ?? false;
     settings.masterCount = parseInt(document.getElementById('settingMasterCount')?.value) || 12;
     
-    const typeMap = {
-        'settingEnCn': 1,  // 英选中
-        'settingCnEn': 2,  // 中选英
-        'settingEnDef': 3, // 英选义
-        'settingDefEn': 4, // 义选英
-        'settingSentEn': 5, // 句选中
-        'settingSentCn': 6  // 句选义
-    };
-    
     const types = [];
-    Object.entries(typeMap).forEach(([id, type]) => {
-        if (document.getElementById(id)?.checked) types.push(type);
-    });
-    
+    for (let i = 1; i <= 6; i++) {
+        if (document.getElementById(`type${i}`)?.checked) types.push(i);
+    }
     if (types.length > 0) settings.types = types;
     
     saveSettings();
@@ -884,91 +846,4 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
-}
-
-
-// ===== 导出词汇 =====
-let exportJsonStr = '';
-
-function exportVocabulary() {
-    if (vocabulary.length === 0) {
-        showToast('词汇本为空，无法导出', 'error');
-        return;
-    }
-    
-    // 转换为小N单词格式
-    const exportData = vocabulary.map(w => ({
-        en: w.en || '',
-        cn: w.cn || '',
-        defCn: w.defCn || '',
-        defEn: w.defEn || '',
-        ex: w.ex || '',
-        category: 'academic'
-    }));
-    
-    exportJsonStr = JSON.stringify(exportData, null, 2);
-    
-    // 显示弹窗
-    const textarea = document.getElementById('exportTextarea');
-    if (textarea) {
-        textarea.value = exportJsonStr;
-    }
-    document.getElementById('exportModal')?.classList.remove('hidden');
-    
-    showToast(`已导出 ${exportData.length} 个词汇`, 'success');
-}
-
-function copyExportToClipboard() {
-    const textarea = document.getElementById('exportTextarea');
-    if (textarea && textarea.value) {
-        navigator.clipboard.writeText(textarea.value).then(() => {
-            showToast('已复制到剪贴板', 'success');
-        }).catch(() => {
-            // 降级方案
-            textarea.select();
-            document.execCommand('copy');
-            showToast('已复制到剪贴板', 'success');
-        });
-    }
-}
-
-function downloadExportFile() {
-    if (!exportJsonStr) return;
-    
-    const blob = new Blob([exportJsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `学术站词汇_${new Date().toISOString().slice(0, 10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    showToast('文件已下载', 'success');
-}
-
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 12px 24px;
-        border-radius: 8px;
-        z-index: 10000;
-        font-size: 14px;
-        background: ${type === 'success' ? '#00A087' : type === 'error' ? '#E64B35' : '#4DBBD5'};
-        color: white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
-    }, 2000);
 }
