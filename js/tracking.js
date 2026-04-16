@@ -287,10 +287,16 @@ async function startTracking() {
     resultsList.innerHTML = '';
     
     const journals = config.selectedJournals;
-    const keywords = (config.keywords || []).join(' ');
+    const keywords = config.keywords || [];
     let currentIndex = 0;
     
-    // 模拟追踪过程（实际应用中需要调用真实的API）
+    // 计算日期范围（最近7天）
+    const today = new Date();
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const fromDate = weekAgo.toISOString().split('T')[0];
+    const toDate = today.toISOString().split('T')[0];
+    
+    // 遍历每个刊物，调用CrossRef API
     for (const journal of journals) {
         currentIndex++;
         const percent = Math.round((currentIndex / journals.length) * 100);
@@ -304,24 +310,35 @@ async function startTracking() {
             <span class="text-muted">第 ${currentIndex} / ${journals.length} 个</span>
         `;
         
-        // 模拟API调用延迟
-        await new Promise(resolve => setTimeout(resolve, 800));
+        try {
+            // 调用CrossRef API
+            const results = await fetchFromCrossRef(journal, keywords, fromDate, toDate);
+            currentResults.push({
+                journal,
+                results: results,
+                count: results.length
+            });
+        } catch (error) {
+            console.error(`追踪 ${journal} 失败:`, error);
+            currentResults.push({
+                journal,
+                results: [],
+                count: 0,
+                error: error.message
+            });
+        }
         
-        // 模拟获取结果（实际应用中需要调用真实的学术API）
-        const mockResults = generateMockResults(journal, keywords);
-        currentResults.push({
-            journal,
-            results: mockResults,
-            count: mockResults.length
-        });
+        // 避免请求过快
+        await new Promise(resolve => setTimeout(resolve, 500));
     }
     
     // 完成追踪
     isTracking = false;
     document.getElementById('trackingStatus').textContent = '追踪完成！';
+    const totalCount = currentResults.reduce((sum, r) => sum + r.count, 0);
     document.getElementById('currentJournal').innerHTML = `
         <strong style="color: var(--success);">✅ 追踪完成！</strong><br>
-        共找到 ${currentResults.reduce((sum, r) => sum + r.count, 0)} 篇文献
+        共找到 ${totalCount} 篇文献
     `;
     
     // 显示结果
@@ -338,40 +355,57 @@ async function startTracking() {
     showToast('追踪完成！', 'success');
 }
 
-// 生成模拟结果（用于演示）
-function generateMockResults(journal, keywords) {
-    const count = Math.floor(Math.random() * 8) + 1;
-    const results = [];
+// 调用CrossRef API获取文献
+async function fetchFromCrossRef(journal, keywords, fromDate, toDate) {
+    // 构建查询URL
+    let url = 'https://api.crossref.org/works?';
+    const params = new URLSearchParams();
     
-    for (let i = 0; i < count; i++) {
-        results.push({
-            title: keywords ? `${keywords.split(' ')[0] || '研究'}在${journal}中的最新进展 (${2024 - Math.floor(Math.random() * 3)})` 
-                : `${journal}最新研究进展 (${2024 - Math.floor(Math.random() * 3)})`,
-            titleEn: keywords ? `Recent advances in ${keywords.split(' ')[0] || 'research'} published in ${journal}`
-                : `Latest research progress in ${journal}`,
-            doi: `10.${Math.floor(Math.random() * 90000) + 10000}/${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 1000)}`,
-            authors: generateMockAuthors(),
-            year: 2024 - Math.floor(Math.random() * 2),
-            abstract: keywords ? `This study investigates ${keywords} with promising results...`
-                : `This paper presents significant findings...`
-        });
+    // 添加期刊过滤
+    params.append('filter', `container-title:"${journal}",from-pub-date:${fromDate},until-pub-date:${toDate}`);
+    
+    // 添加关键词查询
+    if (keywords && keywords.length > 0) {
+        const keywordQuery = keywords.map(k => k.replace(/^(AND|OR|NOT)\s*/i, '')).join(' ');
+        params.append('query', keywordQuery);
+    }
+    
+    params.append('rows', '20');  // 每个刊物最多20篇
+    params.append('select', 'DOI,title,author,published-print,published-online,abstract,container-title');
+    
+    url += params.toString();
+    
+    const response = await fetch(url, {
+        headers: {
+            'User-Agent': 'XiaoNAcademicSite/1.0 (mailto:contact@example.com)'
+        }
+    });
+    
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // 解析结果
+    const results = [];
+    if (data.message && data.message.items) {
+        for (const item of data.message.items) {
+            if (!item.DOI || !item.title) continue;
+            
+            results.push({
+                title: Array.isArray(item.title) ? item.title[0] : item.title,
+                titleEn: Array.isArray(item.title) ? item.title[0] : item.title,
+                doi: item.DOI,
+                authors: item.author ? item.author.slice(0, 5).map(a => `${a.given || ''} ${a.family || ''}`).join(', ') : '未知作者',
+                year: item['published-print']?.['date-parts']?.[0]?.[0] || item['published-online']?.['date-parts']?.[0]?.[0] || new Date().getFullYear(),
+                abstract: item.abstract || '',
+                journal: item['container-title']?.[0] || journal
+            });
+        }
     }
     
     return results;
-}
-
-// 生成模拟作者
-function generateMockAuthors() {
-    const names = ['Zhang Wei', 'Li Ming', 'Wang Fang', 'Liu Yang', 'Chen Hui', 'Yang Xia', 'Zhou Lin', 'Wu Qiang'];
-    const count = Math.floor(Math.random() * 3) + 2;
-    const selected = [];
-    
-    for (let i = 0; i < count; i++) {
-        const name = names[Math.floor(Math.random() * names.length)];
-        if (!selected.includes(name)) selected.push(name);
-    }
-    
-    return selected;
 }
 
 // 渲染追踪结果
