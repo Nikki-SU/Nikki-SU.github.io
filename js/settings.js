@@ -89,6 +89,11 @@ function initEventListeners() {
     document.getElementById('clearVocabBtn')?.addEventListener('click', () => clearData('vocab', '词汇本'));
     document.getElementById('clearHistoryBtn')?.addEventListener('click', () => clearData('history', '追踪历史'));
     document.getElementById('clearAllBtn')?.addEventListener('click', clearAllData);
+    
+    // 导出数据
+    document.getElementById('exportLibraryBtn')?.addEventListener('click', () => exportData('library', '文献库'));
+    document.getElementById('exportCardsBtn')?.addEventListener('click', () => exportData('cards', '文献卡片'));
+    document.getElementById('exportVocabBtn')?.addEventListener('click', () => exportData('vocab', '词汇本'));
 }
 
 // 选择提供商
@@ -333,4 +338,52 @@ function clearAllData() {
     updateStatus();
     
     showToast('所有数据已清空', 'success');
+}
+
+// 导出数据
+function exportData(type, name) {
+    let data, filename;
+    const date = new Date().toISOString().slice(0, 10);
+    
+    switch (type) {
+        case 'library':
+            data = LibraryStore.getAll();
+            filename = `library_${date}.json`;
+            break;
+        case 'cards':
+            data = PapersStore.getAll();
+            filename = `papers_${date}.json`;
+            break;
+        case 'vocab':
+            data = VocabularyStore.getAll();
+            // 导出简洁格式的词汇（兼容chem-words）
+            data = data.map(w => ({
+                en: w.en,
+                cn: w.cn,
+                defCn: w.defCn,
+                defEn: w.defEn,
+                ex: w.ex
+            }));
+            filename = `vocabulary_${date}.json`;
+            break;
+    }
+    
+    if (!data || data.length === 0) {
+        showToast(`${name}为空，无法导出`, 'error');
+        return;
+    }
+    
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast(`${name}已导出: ${filename}`, 'success');
 }
