@@ -2,30 +2,30 @@
 /* Nature Classic 配色 + Times New Roman/宋体 字体 */
 
 :root {
-    /* Nature Classic 配色 */
-    --primary: #E64B35;
-    --primary-light: #E86A5A;
-    --secondary: #4DBBD5;
-    --accent-1: #00A087;
-    --accent-2: #3C5488;
-    --accent-3: #F39B7F;
-    --accent-4: #8491B4;
+    /* 小N学术站配色 - 蓝绿主调 */
+    --primary: #4DBBD5;        /* 主基调 - 蓝色（按钮、标题、强调） */
+    --primary-light: #6DCCE8;
+    --secondary: #00A087;       /* 主基调 - 绿色（成功状态、卡片边框） */
+    --secondary-light: #00C49A;
+    
+    /* 文字颜色 */
+    --text: #3C5488;           /* 主要文字（正文） */
+    --text-secondary: #8491B4;  /* 次要信息（作者、出版日期等） */
+    --text-muted: #AAAAAA;
     
     /* 语义化颜色 */
-    --success: #00A087;
-    --warning: #F39B7F;
-    --danger: #E64B35;
+    --success: #00A087;        /* 成功状态 */
+    --warning: #F39B7F;        /* 强调/警告色 */
+    --danger: #E64B35;         /* 错误提示 - 仅用于错误 */
     --info: #4DBBD5;
     
-    /* 背景与文字 */
+    /* 背景与边框 */
     --bg: #FAFAFA;
     --bg-secondary: #F5F5F5;
     --card-bg: #FFFFFF;
     --card-bg-hover: #F8F8F8;
-    --text: #3C5488;
-    --text-secondary: #8491B4;
-    --text-muted: #AAAAAA;
     --border: #E0E0E0;
+    --border-accent: #00A087;   /* 卡片边框强调 */
     
     /* 其他 */
     --radius: 8px;
@@ -83,7 +83,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--accent-2);
+    color: var(--text);
 }
 
 .logo-icon {
@@ -147,7 +147,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--accent-2);
+    color: var(--text);
 }
 
 /* Cards */
@@ -166,7 +166,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: var(--accent-2);
+    color: var(--text);
 }
 
 /* Stats Grid */
@@ -444,7 +444,7 @@ body {
 .paper-card-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--accent-2);
+    color: var(--text);
     margin-bottom: 8px;
     line-height: 1.5;
 }
@@ -535,7 +535,7 @@ body {
 
 .modal-header h3 {
     font-size: 1.2rem;
-    color: var(--accent-2);
+    color: var(--text);
 }
 
 .modal-close {
@@ -795,12 +795,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--accent-4);
+    background: var(--text-secondary);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-2);
+    background: var(--text);
 }
 
 /* Selection */
@@ -895,7 +895,7 @@ th, td {
 
 th {
     font-weight: 600;
-    color: var(--accent-2);
+    color: var(--text);
     background: var(--bg-secondary);
 }
 
