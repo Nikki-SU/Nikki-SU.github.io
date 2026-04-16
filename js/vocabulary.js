@@ -800,11 +800,28 @@ window.removeFromMastered = function(en) {
 function openSettings() {
     document.getElementById('settingsModal')?.classList.remove('hidden');
     document.getElementById('settingSpeak').checked = settings.speak;
-    document.getElementById('settingAllowZhan').checked = settings.allowZhan;
+    document.getElementById('settingCut').checked = settings.allowZhan;
     document.getElementById('settingMasterCount').value = settings.masterCount;
     
+    // 6种题型开关
+    const typeMap = {
+        1: 'settingEnCn',  // 英选中
+        2: 'settingCnEn',  // 中选英
+        3: 'settingEnDef', // 英选义
+        4: 'settingDefEn', // 义选英
+        5: 'settingSentEn', // 句选中
+        6: 'settingSentCn'  // 句选义
+    };
+    
+    // 先全部设为false
+    Object.values(typeMap).forEach(id => {
+        const cb = document.getElementById(id);
+        if (cb) cb.checked = false;
+    });
+    
+    // 再根据settings.types设置选中的
     settings.types.forEach(t => {
-        const cb = document.getElementById(`type${t}`);
+        const cb = document.getElementById(typeMap[t]);
         if (cb) cb.checked = true;
     });
 }
@@ -815,13 +832,23 @@ function closeSettings() {
 
 function saveSettingsAndClose() {
     settings.speak = document.getElementById('settingSpeak')?.checked ?? true;
-    settings.allowZhan = document.getElementById('settingAllowZhan')?.checked ?? false;
+    settings.allowZhan = document.getElementById('settingCut')?.checked ?? false;
     settings.masterCount = parseInt(document.getElementById('settingMasterCount')?.value) || 12;
     
+    const typeMap = {
+        'settingEnCn': 1,  // 英选中
+        'settingCnEn': 2,  // 中选英
+        'settingEnDef': 3, // 英选义
+        'settingDefEn': 4, // 义选英
+        'settingSentEn': 5, // 句选中
+        'settingSentCn': 6  // 句选义
+    };
+    
     const types = [];
-    for (let i = 1; i <= 6; i++) {
-        if (document.getElementById(`type${i}`)?.checked) types.push(i);
-    }
+    Object.entries(typeMap).forEach(([id, type]) => {
+        if (document.getElementById(id)?.checked) types.push(type);
+    });
+    
     if (types.length > 0) settings.types = types;
     
     saveSettings();
