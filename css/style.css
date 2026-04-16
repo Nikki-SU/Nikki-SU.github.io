@@ -300,7 +300,7 @@ body {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 14px;
-    max-width: 600px;
+    max-width: 500px;
     margin: 0 auto;
 }
 
@@ -308,9 +308,9 @@ body {
     background: var(--card-bg);
     border: 2px solid var(--border);
     border-radius: 12px;
-    padding: 18px 20px;
+    padding: 18px 16px;
     text-align: center;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     cursor: pointer;
     transition: all 0.2s;
     min-height: 64px;
@@ -332,15 +332,15 @@ body {
 }
 
 .option-btn.correct {
-    border-color: var(--primary) !important;
-    background: var(--card-bg) !important;
-    color: var(--primary) !important;
+    border-color: var(--secondary) !important;
+    background: rgba(0, 160, 135, 0.2) !important;
+    color: var(--secondary) !important;
     font-weight: 600;
 }
 
 .option-btn.wrong {
     border-color: var(--danger) !important;
-    background: var(--card-bg) !important;
+    background: rgba(230, 75, 53, 0.2) !important;
     color: var(--danger) !important;
     font-weight: 600;
 }
@@ -362,41 +362,10 @@ body {
     }
     .options-container {
         gap: 10px;
-        grid-template-columns: 1fr;
     }
     .option-btn {
         padding: 14px 12px;
         font-size: 0.95rem;
         min-height: 56px;
-    }
-}
-
-/* 横屏响应式：选项横着排 */
-@media (orientation: landscape) {
-    .options-container {
-        grid-template-columns: repeat(2, 1fr);
-        max-width: 700px;
-    }
-}
-
-/* 横屏大屏：一行4个选项 */
-@media (orientation: landscape) and (min-width: 1024px) {
-    .options-container {
-        grid-template-columns: repeat(4, 1fr);
-        max-width: 1200px;
-    }
-}
-
-/* 竖屏响应式：选项保持单列或两列 */
-@media (orientation: portrait) {
-    .options-container {
-        grid-template-columns: 1fr;
-        max-width: 500px;
-    }
-}
-
-@media (orientation: portrait) and (min-width: 500px) {
-    .options-container {
-        grid-template-columns: repeat(2, 1fr);
     }
 }
