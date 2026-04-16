@@ -114,8 +114,8 @@ function toggleJournal(name) {
     const index = selected.indexOf(name);
     
     if (index === -1) {
-        if (selected.length >= 10) {
-            showToast('最多选择10个刊物', 'error');
+        if (selected.length >= 50) {
+            showToast('最多选择50个刊物', 'error');
             return;
         }
         selected.push(name);
@@ -261,6 +261,19 @@ function saveConfig() {
     updateStats();
 }
 
+// 获取最近7天的日期范围
+function getLast7DaysRange() {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    
+    return {
+        start: sevenDaysAgo.toISOString().split('T')[0],
+        end: now.toISOString().split('T')[0],
+        startISO: sevenDaysAgo.toISOString(),
+        endISO: now.toISOString()
+    };
+}
+
 // 开始追踪
 async function startTracking() {
     const config = TrackingConfig.get();
@@ -278,6 +291,9 @@ async function startTracking() {
     isTracking = true;
     currentResults = [];
     
+    // 获取最近7天的时间范围
+    const dateRange = getLast7DaysRange();
+    
     const progressDiv = document.getElementById('trackingProgress');
     const resultsDiv = document.getElementById('trackingResults');
     const resultsList = document.getElementById('resultsList');
@@ -290,6 +306,13 @@ async function startTracking() {
     const keywords = (config.keywords || []).join(' ');
     let currentIndex = 0;
     
+    // 更新状态显示
+    document.getElementById('trackingStatus').textContent = `正在追踪最近7天文献...`;
+    document.getElementById('currentJournal').innerHTML = `
+        <strong>时间范围:</strong> ${dateRange.start} 至 ${dateRange.end}<br>
+        <span class="text-muted">追踪最近7天发表的文献</span>
+    `;
+    
     // 模拟追踪过程（实际应用中需要调用真实的API）
     for (const journal of journals) {
         currentIndex++;
@@ -298,17 +321,17 @@ async function startTracking() {
         // 更新进度
         document.getElementById('trackingBar').style.width = `${percent}%`;
         document.getElementById('trackingPercent').textContent = `${percent}%`;
-        document.getElementById('trackingStatus').textContent = `正在追踪...`;
+        document.getElementById('trackingStatus').textContent = `正在追踪最近7天文献...`;
         document.getElementById('currentJournal').innerHTML = `
             <strong>当前刊物:</strong> ${escapeHtml(journal)}<br>
-            <span class="text-muted">第 ${currentIndex} / ${journals.length} 个</span>
+            <span class="text-muted">第 ${currentIndex} / ${journals.length} 个 | 时间范围: ${dateRange.start} 至 ${dateRange.end}</span>
         `;
         
         // 模拟API调用延迟
         await new Promise(resolve => setTimeout(resolve, 800));
         
-        // 模拟获取结果（实际应用中需要调用真实的学术API）
-        const mockResults = generateMockResults(journal, keywords);
+        // 模拟获取结果（实际应用中需要调用真实的学术API，并传入dateRange）
+        const mockResults = generateMockResults(journal, keywords, dateRange);
         currentResults.push({
             journal,
             results: mockResults,
@@ -321,6 +344,7 @@ async function startTracking() {
     document.getElementById('trackingStatus').textContent = '追踪完成！';
     document.getElementById('currentJournal').innerHTML = `
         <strong style="color: var(--success);">✅ 追踪完成！</strong><br>
+        时间范围: ${dateRange.start} 至 ${dateRange.end}<br>
         共找到 ${currentResults.reduce((sum, r) => sum + r.count, 0)} 篇文献
     `;
     
@@ -339,19 +363,29 @@ async function startTracking() {
 }
 
 // 生成模拟结果（用于演示）
-function generateMockResults(journal, keywords) {
+function generateMockResults(journal, keywords, dateRange) {
     const count = Math.floor(Math.random() * 8) + 1;
     const results = [];
     
+    // 在时间范围内生成随机日期
+    const startDate = new Date(dateRange.startISO);
+    const endDate = new Date(dateRange.endISO);
+    const timeDiff = endDate.getTime() - startDate.getTime();
+    
     for (let i = 0; i < count; i++) {
+        // 生成时间范围内的随机日期
+        const randomTime = startDate.getTime() + Math.random() * timeDiff;
+        const randomDate = new Date(randomTime);
+        
         results.push({
-            title: keywords ? `${keywords.split(' ')[0] || '研究'}在${journal}中的最新进展 (${2024 - Math.floor(Math.random() * 3)})` 
-                : `${journal}最新研究进展 (${2024 - Math.floor(Math.random() * 3)})`,
+            title: keywords ? `${keywords.split(' ')[0] || '研究'}在${journal}中的最新进展` 
+                : `${journal}最新研究进展`,
             titleEn: keywords ? `Recent advances in ${keywords.split(' ')[0] || 'research'} published in ${journal}`
                 : `Latest research progress in ${journal}`,
             doi: `10.${Math.floor(Math.random() * 90000) + 10000}/${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 1000)}`,
             authors: generateMockAuthors(),
-            year: 2024 - Math.floor(Math.random() * 2),
+            year: randomDate.getFullYear(),
+            publishDate: randomDate.toISOString().split('T')[0],
             abstract: keywords ? `This study investigates ${keywords} with promising results...`
                 : `This paper presents significant findings...`
         });
@@ -402,7 +436,7 @@ function renderResults() {
                 ${r.results.slice(0, 3).map(paper => `
                     <div style="padding: 8px; background: var(--card-bg); border-radius: 6px; margin-bottom: 6px;">
                         <div style="font-size: 0.9rem; margin-bottom: 4px;">${escapeHtml(paper.title)}</div>
-                        <div class="text-muted" style="font-size: 0.8rem;">${escapeHtml(paper.authors.join(', '))}</div>
+                        <div class="text-muted" style="font-size: 0.8rem;">${escapeHtml(paper.authors.join(', '))} · ${paper.publishDate || paper.year}</div>
                     </div>
                 `).join('')}
                 ${r.count > 3 ? `<div class="text-muted" style="font-size: 0.85rem;">...还有 ${r.count - 3} 篇</div>` : ''}
@@ -485,10 +519,12 @@ function confirmImport() {
 // 保存历史记录项
 function saveHistoryItem() {
     const history = Storage.get('trackingHistory', []);
+    const dateRange = getLast7DaysRange();
     
     history.unshift({
         id: Date.now().toString(),
         date: new Date().toLocaleString('zh-CN'),
+        dateRange: `${dateRange.start} 至 ${dateRange.end}`,
         journals: currentResults.map(r => r.journal),
         totalResults: currentResults.reduce((sum, r) => sum + r.count, 0),
         results: currentResults
