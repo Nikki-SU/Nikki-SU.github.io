@@ -79,21 +79,14 @@
             <div class="sync-section" style="margin: 16px 0; padding: 16px; background: var(--card-bg); border-radius: var(--radius);">
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                     <div>
-                        <h4 style="margin: 0 0 4px 0;">🔄 同步到小N单词</h4>
+                        <h4 style="margin: 0 0 4px 0;">📤 导出词汇数据</h4>
                         <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">
-                            将词汇同步到背单词App的学术站词书
+                            导出JSON文件，在小N单词App中导入
                         </p>
                     </div>
-                    <button class="btn btn-primary" id="syncToAppBtn">
-                        🔄 同步到小N单词
+                    <button class="btn btn-primary" id="exportVocabBtn">
+                        📥 导出词汇JSON
                     </button>
-                </div>
-                <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
-                    <label style="display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer;">
-                        <input type="checkbox" id="autoSyncToggle">
-                        每日自动同步
-                    </label>
-                    <span id="lastSyncInfo" style="font-size: 0.8rem; color: var(--text-secondary);"></span>
                 </div>
             </div>
 
