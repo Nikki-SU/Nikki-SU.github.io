@@ -124,7 +124,7 @@ function initEventListeners() {
     document.getElementById('quitStudyBtn')?.addEventListener('click', quitStudy);
     
     document.getElementById('settingsBtn')?.addEventListener('click', openSettings);
-    document.getElementById('closeSettingsModal')?.addEventListener('click', closeSettings);
+    document.getElementById('closeSettings')?.addEventListener('click', closeSettings);
     document.getElementById('saveSettingsBtn')?.addEventListener('click', saveSettingsAndClose);
     
     document.getElementById('reviewWrongBtn')?.addEventListener('click', () => startStudy('review', true));
