@@ -81,12 +81,30 @@
                     <div>
                         <h4 style="margin: 0 0 4px 0;">📤 导出词汇数据</h4>
                         <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary);">
-                            导出JSON文件，在小N单词App中导入
+                            复制JSON数据，粘贴到小N单词App导入
                         </p>
                     </div>
                     <button class="btn btn-primary" id="exportVocabBtn">
-                        📥 导出词汇JSON
+                        📋 导出词汇JSON
                     </button>
+                </div>
+            </div>
+            
+            <!-- 导出弹窗 -->
+            <div id="exportModal" class="modal hidden">
+                <div class="modal-content modal-lg">
+                    <div class="modal-header">
+                        <h3>📋 导出词汇数据</h3>
+                        <button class="modal-close" id="closeExportModal">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <p style="margin-bottom: 12px; color: var(--text-secondary);">复制以下JSON数据，在小N单词App中粘贴导入：</p>
+                        <textarea id="exportTextarea" style="width: 100%; height: 300px; font-family: monospace; font-size: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; resize: vertical;" readonly></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" id="copyExportBtn">📋 复制到剪贴板</button>
+                        <button class="btn btn-secondary" id="downloadExportBtn">📥 下载JSON文件</button>
+                    </div>
                 </div>
             </div>
 

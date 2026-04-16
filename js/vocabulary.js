@@ -137,6 +137,11 @@ function initEventListeners() {
     
     // 导出词汇按钮
     document.getElementById('exportVocabBtn')?.addEventListener('click', exportVocabulary);
+    document.getElementById('closeExportModal')?.addEventListener('click', () => {
+        document.getElementById('exportModal')?.classList.add('hidden');
+    });
+    document.getElementById('copyExportBtn')?.addEventListener('click', copyExportToClipboard);
+    document.getElementById('downloadExportBtn')?.addEventListener('click', downloadExportFile);
 }
 
 // ===== 补全翻译 =====
@@ -883,6 +888,8 @@ function debounce(func, wait) {
 
 
 // ===== 导出词汇 =====
+let exportJsonStr = '';
+
 function exportVocabulary() {
     if (vocabulary.length === 0) {
         showToast('词汇本为空，无法导出', 'error');
@@ -899,8 +906,36 @@ function exportVocabulary() {
         category: 'academic'
     }));
     
-    const jsonStr = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
+    exportJsonStr = JSON.stringify(exportData, null, 2);
+    
+    // 显示弹窗
+    const textarea = document.getElementById('exportTextarea');
+    if (textarea) {
+        textarea.value = exportJsonStr;
+    }
+    document.getElementById('exportModal')?.classList.remove('hidden');
+    
+    showToast(`已导出 ${exportData.length} 个词汇`, 'success');
+}
+
+function copyExportToClipboard() {
+    const textarea = document.getElementById('exportTextarea');
+    if (textarea && textarea.value) {
+        navigator.clipboard.writeText(textarea.value).then(() => {
+            showToast('已复制到剪贴板', 'success');
+        }).catch(() => {
+            // 降级方案
+            textarea.select();
+            document.execCommand('copy');
+            showToast('已复制到剪贴板', 'success');
+        });
+    }
+}
+
+function downloadExportFile() {
+    if (!exportJsonStr) return;
+    
+    const blob = new Blob([exportJsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     
     const a = document.createElement('a');
@@ -911,7 +946,7 @@ function exportVocabulary() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    showToast(`成功导出 ${exportData.length} 个词汇`, 'success');
+    showToast('文件已下载', 'success');
 }
 
 function showToast(message, type = 'info') {
