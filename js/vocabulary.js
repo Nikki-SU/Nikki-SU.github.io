@@ -800,9 +800,11 @@ function openSettings() {
     document.getElementById('settingAllowZhan').checked = settings.allowZhan;
     document.getElementById('settingMasterCount').value = settings.masterCount;
     
-    settings.types.forEach(t => {
-        const cb = document.getElementById(`type${t}`);
-        if (cb) cb.checked = true;
+    // 题型开关 - 对应HTML中的ID
+    const typeIds = { 1: 'settingEnCn', 2: 'settingCnEn', 3: 'settingEnDef', 4: 'settingDefEn', 5: 'settingSenCn', 6: 'settingSenDef' };
+    Object.entries(typeIds).forEach(([type, id]) => {
+        const cb = document.getElementById(id);
+        if (cb) cb.checked = settings.types.includes(parseInt(type));
     });
 }
 
@@ -815,10 +817,14 @@ function saveSettingsAndClose() {
     settings.allowZhan = document.getElementById('settingAllowZhan')?.checked ?? false;
     settings.masterCount = parseInt(document.getElementById('settingMasterCount')?.value) || 12;
     
+    // 题型开关 - 对应HTML中的ID
     const types = [];
-    for (let i = 1; i <= 6; i++) {
-        if (document.getElementById(`type${i}`)?.checked) types.push(i);
-    }
+    if (document.getElementById('settingEnCn')?.checked) types.push(1);  // 英选中
+    if (document.getElementById('settingCnEn')?.checked) types.push(2);  // 中选英
+    if (document.getElementById('settingEnDef')?.checked) types.push(3); // 英选义
+    if (document.getElementById('settingDefEn')?.checked) types.push(4); // 义选英
+    if (document.getElementById('settingSenCn')?.checked) types.push(5); // 句选中
+    if (document.getElementById('settingSenDef')?.checked) types.push(6); // 句选义
     if (types.length > 0) settings.types = types;
     
     saveSettings();
