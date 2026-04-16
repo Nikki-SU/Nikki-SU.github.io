@@ -213,7 +213,7 @@ body {
     background: #C43C2B;
 }
 
-.btn-small {
+.btn-small, .btn-sm {
     padding: 6px 12px;
     font-size: 0.85rem;
 }
@@ -222,6 +222,15 @@ body {
     padding: 8px;
     min-width: 36px;
     justify-content: center;
+}
+
+.btn-success {
+    background: var(--secondary);
+    color: white;
+}
+
+.btn-success:hover {
+    background: var(--secondary-dark);
 }
 
 /* Cards */
@@ -249,6 +258,9 @@ body {
     font-weight: 600;
     color: var(--text-main);
     line-height: 1.4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .card-meta {
@@ -387,8 +399,55 @@ body {
     transform: translateX(22px);
 }
 
+/* Toggle Switch (alternative style) */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border);
+    transition: 0.3s;
+    border-radius: 26px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
+
 /* Modal */
-.modal-overlay {
+.modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -402,11 +461,11 @@ body {
     padding: 20px;
 }
 
-.modal-overlay.hidden {
+.modal.hidden {
     display: none;
 }
 
-.modal {
+.modal-content {
     background: var(--card-bg);
     border-radius: var(--radius);
     max-width: 600px;
@@ -416,12 +475,23 @@ body {
     box-shadow: 0 8px 32px rgba(60, 84, 136, 0.3);
 }
 
+.modal-lg .modal-content,
+.modal-content.modal-lg {
+    max-width: 800px;
+}
+
 .modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 20px;
     border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-main);
 }
 
 .modal-title {
@@ -455,6 +525,123 @@ body {
     gap: 12px;
 }
 
+/* Settings Section */
+.settings-section {
+    margin-bottom: 24px;
+}
+
+.settings-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+}
+
+.settings-label {
+    font-size: 0.95rem;
+    color: var(--text-main);
+}
+
+/* Journal Selection */
+.journal-category {
+    margin-bottom: 16px;
+}
+
+.journal-category-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    padding-left: 4px;
+}
+
+.journal-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--bg);
+    border-radius: var(--radius);
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.journal-item:hover {
+    background: var(--bg-secondary);
+}
+
+.journal-item.selected {
+    border-color: var(--primary);
+    background: rgba(77, 187, 213, 0.1);
+}
+
+.journal-item-name {
+    font-size: 0.9rem;
+    color: var(--text-main);
+}
+
+.journal-item-if {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Tracking */
+.tracking-progress {
+    margin: 16px 0;
+}
+
+.progress {
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+.tracking-item {
+    background: var(--bg);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.tracking-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.tracking-item-name {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.tracking-item-count {
+    background: var(--primary);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
 /* List */
 .list {
     display: flex;
@@ -465,6 +652,7 @@ body {
 .list-item {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 12px 16px;
     background: var(--card-bg);
     border-radius: var(--radius);
@@ -477,19 +665,24 @@ body {
     box-shadow: var(--shadow);
 }
 
-/* Progress */
-.progress-bar {
-    height: 8px;
-    background: var(--bg-secondary);
-    border-radius: 4px;
-    overflow: hidden;
+.list-item-main {
+    flex: 1;
 }
 
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--primary), var(--secondary));
-    border-radius: 4px;
-    transition: width 0.3s;
+.list-item-title {
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.list-item-sub {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.list-item-actions {
+    display: flex;
+    gap: 8px;
 }
 
 /* Badges */
@@ -593,18 +786,15 @@ body {
     pointer-events: none;
 }
 
-/* Grid Layout */
-.grid {
-    display: grid;
-    gap: 20px;
-}
-
-.grid-2 {
-    grid-template-columns: repeat(2, 1fr);
-}
-
-.grid-3 {
-    grid-template-columns: repeat(3, 1fr);
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 /* Stats */
@@ -640,12 +830,13 @@ body {
     margin-top: 4px;
 }
 
+.stat-icon {
+    font-size: 1.5rem;
+    margin-bottom: 8px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
-    .grid-2, .grid-3 {
-        grid-template-columns: 1fr;
-    }
-    
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -673,6 +864,11 @@ body {
     .section-header {
         flex-direction: column;
         align-items: flex-start;
+    }
+    
+    .modal-content {
+        margin: 10px;
+        max-height: 85vh;
     }
 }
 
