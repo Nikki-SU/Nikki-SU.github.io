@@ -333,14 +333,14 @@ body {
 
 .option-btn.correct {
     border-color: var(--primary) !important;
-    background: rgba(77, 187, 213, 0.25) !important;
-    color: var(--primary-dark) !important;
+    background: var(--card-bg) !important;
+    color: var(--primary) !important;
     font-weight: 600;
 }
 
 .option-btn.wrong {
     border-color: var(--danger) !important;
-    background: rgba(230, 75, 53, 0.25) !important;
+    background: var(--card-bg) !important;
     color: var(--danger) !important;
     font-weight: 600;
 }
