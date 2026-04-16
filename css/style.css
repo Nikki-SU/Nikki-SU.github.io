@@ -216,6 +216,66 @@ body {
 .grid-2 { grid-template-columns: repeat(2, 1fr); }
 .grid-3 { grid-template-columns: repeat(3, 1fr); }
 
+
+/* Tabs - 大彩色按钮，响应式 */
+.tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+.tab-btn {
+    width: 100%;
+    padding: 18px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Microsoft YaHei', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 68px;
+    touch-action: manipulation;
+}
+
+.tab-btn[data-tab="library"] {
+    background: rgba(77, 187, 213, 0.2);
+    color: #2D8BA0;
+}
+
+.tab-btn[data-tab="library"]:hover,
+.tab-btn[data-tab="library"]:active {
+    background: rgba(77, 187, 213, 0.35);
+}
+
+.tab-btn[data-tab="library"].active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 16px rgba(77, 187, 213, 0.5);
+}
+
+.tab-btn[data-tab="cards"] {
+    background: rgba(0, 160, 135, 0.2);
+    color: #006B59;
+}
+
+.tab-btn[data-tab="cards"]:hover,
+.tab-btn[data-tab="cards"]:active {
+    background: rgba(0, 160, 135, 0.35);
+}
+
+.tab-btn[data-tab="cards"].active {
+    background: var(--secondary);
+    color: white;
+    box-shadow: 0 4px 16px rgba(0, 160, 135, 0.5);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .stats-grid, .grid-2, .grid-3 { grid-template-columns: repeat(2, 1fr); }
