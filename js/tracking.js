@@ -462,21 +462,36 @@ function renderResults() {
 }
 
 // 导入单个刊物的结果
-function importJournal(journal) {
+// 导入单个刊物的结果（带翻译）
+async function importJournal(journal) {
     const journalData = currentResults.find(r => r.journal === journal);
     if (!journalData) return;
     
     let imported = 0;
     let skipped = 0;
     
-    journalData.results.forEach(paper => {
-        const result = LibraryStore.add(paper);
-        if (result.success) {
-            imported++;
-        } else {
-            skipped++;
+    showToast("正在导入并翻译...", "info");
+    
+    for (const paper of journalData.results) {
+        let titleCn = paper.titleCn || '';
+        let abstractCn = paper.abstractCn || '';
+        
+        if (!titleCn && paper.title && window.translateField) {
+            titleCn = await translateField(paper.title, 'cn');
         }
-    });
+        if (!abstractCn && paper.abstract && window.translateField) {
+            abstractCn = await translateField(paper.abstract, 'defCn');
+        }
+        
+        const result = LibraryStore.add({
+            ...paper,
+            titleCn: titleCn || '',
+            abstractCn: abstractCn || ''
+        });
+        
+        if (result.success) imported++;
+        else skipped++;
+    }
     
     showToast(`导入完成：${imported} 篇成功，${skipped} 篇已存在`, 'success');
 }
@@ -496,29 +511,45 @@ function closeImportModal() {
     document.getElementById('importModal').classList.add('hidden');
 }
 
-function confirmImport() {
+// 确认导入全部（带翻译）
+async function confirmImport() {
     const dedup = document.getElementById('dedupToggle').checked;
     let imported = 0;
     let skipped = 0;
     
-    currentResults.forEach(journalData => {
-        journalData.results.forEach(paper => {
+    showToast("正在导入并翻译...", "info");
+    
+    for (const journalData of currentResults) {
+        for (const paper of journalData.results) {
+            let titleCn = paper.titleCn || '';
+            let abstractCn = paper.abstractCn || '';
+            
+            if (!titleCn && paper.title && window.translateField) {
+                titleCn = await translateField(paper.title, 'cn');
+            }
+            if (!abstractCn && paper.abstract && window.translateField) {
+                abstractCn = await translateField(paper.abstract, 'defCn');
+            }
+            
             if (dedup) {
-                const result = LibraryStore.add(paper);
-                if (result.success) {
-                    imported++;
-                } else {
-                    skipped++;
-                }
+                const result = LibraryStore.add({
+                    ...paper,
+                    titleCn: titleCn || '',
+                    abstractCn: abstractCn || ''
+                });
+                if (result.success) imported++;
+                else skipped++;
             } else {
                 LibraryStore.add({
                     ...paper,
+                    titleCn: titleCn || '',
+                    abstractCn: abstractCn || '',
                     id: Date.now().toString() + Math.random().toString(36).substr(2)
                 });
                 imported++;
             }
-        });
-    });
+        }
+    }
     
     closeImportModal();
     showToast(`导入完成：${imported} 篇成功${dedup ? `，${skipped} 篇已跳过` : ''}`, 'success');
