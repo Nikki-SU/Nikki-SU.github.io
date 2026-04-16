@@ -1,5 +1,6 @@
 /**
  * tracking.js - 文献追踪逻辑
+ * 使用 CrossRef API 真实搜索文献
  */
 
 // 状态
@@ -32,13 +33,8 @@ async function loadJournalsData() {
 // 加载配置
 function loadConfig() {
     const config = TrackingConfig.get();
-    
-    // 更新UI
     document.getElementById('autoTrackToggle').checked = config.autoTracking;
-    
-    // 渲染关键词
     renderKeywords(config.keywords || []);
-    
     updateStats();
 }
 
@@ -126,7 +122,6 @@ function toggleJournal(name) {
     config.selectedJournals = selected;
     TrackingConfig.save(config);
     
-    // 更新UI
     document.querySelectorAll('.journal-item').forEach(el => {
         if (el.dataset.journal === name) {
             el.classList.toggle('selected', selected.includes(name));
@@ -167,7 +162,6 @@ function addKeyword() {
     const config = TrackingConfig.get();
     const keywords = config.keywords || [];
     
-    // 添加逻辑前缀
     if (keywords.length > 0 && logic !== 'AND') {
         keyword = `${logic} ${keyword}`;
     }
@@ -206,7 +200,6 @@ function updateStats() {
         document.getElementById('lastTrackingTime').textContent = formatDate(lastTracking);
     }
     
-    // 累计结果数
     const history = Storage.get('trackingHistory', []);
     const totalResults = history.reduce((sum, h) => sum + (h.totalResults || 0), 0);
     document.getElementById('totalResults').textContent = totalResults;
@@ -229,13 +222,11 @@ function initEventListeners() {
         TrackingConfig.save(config);
     });
     
-    // 导入相关
     document.getElementById('importAllBtn')?.addEventListener('click', openImportModal);
     document.getElementById('closeImportModal')?.addEventListener('click', closeImportModal);
     document.getElementById('cancelImportBtn')?.addEventListener('click', closeImportModal);
     document.getElementById('confirmImportBtn')?.addEventListener('click', confirmImport);
     
-    // 模态框点击关闭
     document.getElementById('configModal')?.addEventListener('click', (e) => {
         if (e.target.id === 'configModal') closeConfigModal();
     });
@@ -244,17 +235,14 @@ function initEventListeners() {
     });
 }
 
-// 打开配置模态框
 function openConfigModal() {
     document.getElementById('configModal').classList.remove('hidden');
 }
 
-// 关闭配置模态框
 function closeConfigModal() {
     document.getElementById('configModal').classList.add('hidden');
 }
 
-// 保存配置
 function saveConfig() {
     showToast('配置已保存', 'success');
     closeConfigModal();
@@ -268,10 +256,69 @@ function getLast7DaysRange() {
     
     return {
         start: sevenDaysAgo.toISOString().split('T')[0],
-        end: now.toISOString().split('T')[0],
-        startISO: sevenDaysAgo.toISOString(),
-        endISO: now.toISOString()
+        end: now.toISOString().split('T')[0]
     };
+}
+
+// 使用 CrossRef API 搜索文献
+async function searchPapersFromCrossRef(journalName, keywords, dateRange) {
+    const baseUrl = 'https://api.crossref.org/works';
+    
+    // 构建查询
+    const queryParts = [];
+    if (keywords && keywords.trim()) {
+        queryParts.push(keywords.trim());
+    }
+    
+    const params = new URLSearchParams();
+    params.set('rows', '20');
+    params.set('select', 'DOI,title,author,published-print,published-online,abstract,container-title');
+    
+    // 时间过滤
+    params.set('filter', `from-pub-date:${dateRange.start},until-pub-date:${dateRange.end}`);
+    
+    // 查询词：期刊名 + 关键词
+    const query = `${journalName} ${keywords}`.trim();
+    params.set('query', query);
+    
+    try {
+        const response = await fetch(`${baseUrl}?${params.toString()}`, {
+            headers: {
+                'User-Agent': 'AcademicSite/1.0 (mailto:contact@example.com)'
+            }
+        });
+        
+        if (!response.ok) {
+            console.warn(`CrossRef API 请求失败: ${response.status}`);
+            return [];
+        }
+        
+        const data = await response.json();
+        const items = data.message?.items || [];
+        
+        // 过滤匹配期刊名的结果
+        return items
+            .filter(item => {
+                const containerTitle = item['container-title']?.[0] || '';
+                return containerTitle.toLowerCase().includes(journalName.toLowerCase()) ||
+                       journalName.toLowerCase().includes(containerTitle.toLowerCase()) ||
+                       containerTitle.length > 0; // 保留有期刊名的结果
+            })
+            .map(item => ({
+                doi: item.DOI || '',
+                title: item.title?.[0] || '无标题',
+                titleEn: item.title?.[0] || '',
+                authors: (item.author || []).map(a => `${a.given || ''} ${a.family || ''}`).filter(n => n.trim()),
+                year: item['published-print']?.['date-parts']?.[0]?.[0] || 
+                      item['published-online']?.['date-parts']?.[0]?.[0] || new Date().getFullYear(),
+                publishDate: item['published-print']?.['date-parts']?.[0]?.join('-') ||
+                             item['published-online']?.['date-parts']?.[0]?.join('-') || '',
+                abstract: item.abstract || ''
+            }));
+    } catch (error) {
+        console.error('CrossRef API 错误:', error);
+        return [];
+    }
 }
 
 // 开始追踪
@@ -291,7 +338,6 @@ async function startTracking() {
     isTracking = true;
     currentResults = [];
     
-    // 获取最近7天的时间范围
     const dateRange = getLast7DaysRange();
     
     const progressDiv = document.getElementById('trackingProgress');
@@ -305,107 +351,63 @@ async function startTracking() {
     const journals = config.selectedJournals;
     const keywords = (config.keywords || []).join(' ');
     let currentIndex = 0;
+    let totalFound = 0;
     
-    // 更新状态显示
     document.getElementById('trackingStatus').textContent = `正在追踪最近7天文献...`;
     document.getElementById('currentJournal').innerHTML = `
         <strong>时间范围:</strong> ${dateRange.start} 至 ${dateRange.end}<br>
-        <span class="text-muted">追踪最近7天发表的文献</span>
+        <span class="text-muted">使用 CrossRef API 搜索</span>
     `;
     
-    // 模拟追踪过程（实际应用中需要调用真实的API）
     for (const journal of journals) {
         currentIndex++;
         const percent = Math.round((currentIndex / journals.length) * 100);
         
-        // 更新进度
         document.getElementById('trackingBar').style.width = `${percent}%`;
         document.getElementById('trackingPercent').textContent = `${percent}%`;
-        document.getElementById('trackingStatus').textContent = `正在追踪最近7天文献...`;
+        document.getElementById('trackingStatus').textContent = `正在搜索...`;
         document.getElementById('currentJournal').innerHTML = `
             <strong>当前刊物:</strong> ${escapeHtml(journal)}<br>
-            <span class="text-muted">第 ${currentIndex} / ${journals.length} 个 | 时间范围: ${dateRange.start} 至 ${dateRange.end}</span>
+            <span class="text-muted">第 ${currentIndex} / ${journals.length} 个 | 通过 CrossRef API</span>
         `;
         
-        // 模拟API调用延迟
-        await new Promise(resolve => setTimeout(resolve, 800));
+        try {
+            const papers = await searchPapersFromCrossRef(journal, keywords, dateRange);
+            
+            if (papers.length > 0) {
+                currentResults.push({
+                    journal,
+                    results: papers,
+                    count: papers.length
+                });
+                totalFound += papers.length;
+            }
+        } catch (error) {
+            console.error(`搜索 ${journal} 失败:`, error);
+        }
         
-        // 模拟获取结果（实际应用中需要调用真实的学术API，并传入dateRange）
-        const mockResults = generateMockResults(journal, keywords, dateRange);
-        currentResults.push({
-            journal,
-            results: mockResults,
-            count: mockResults.length
-        });
+        await new Promise(resolve => setTimeout(resolve, 500));
     }
     
-    // 完成追踪
     isTracking = false;
     document.getElementById('trackingStatus').textContent = '追踪完成！';
     document.getElementById('currentJournal').innerHTML = `
         <strong style="color: var(--success);">✅ 追踪完成！</strong><br>
         时间范围: ${dateRange.start} 至 ${dateRange.end}<br>
-        共找到 ${currentResults.reduce((sum, r) => sum + r.count, 0)} 篇文献
+        共找到 ${totalFound} 篇文献 ${totalFound === 0 ? '<br><span class="text-muted">（最近7天可能无匹配论文，或期刊名需精确匹配）</span>' : ''}
     `;
     
-    // 显示结果
     renderResults();
     
-    // 更新配置中的最后追踪时间
     config.lastTracking = new Date().toISOString();
     TrackingConfig.save(config);
     updateStats();
     
-    // 保存历史
-    saveHistoryItem();
-    
-    showToast('追踪完成！', 'success');
-}
-
-// 生成模拟结果（用于演示）
-function generateMockResults(journal, keywords, dateRange) {
-    const count = Math.floor(Math.random() * 8) + 1;
-    const results = [];
-    
-    // 在时间范围内生成随机日期
-    const startDate = new Date(dateRange.startISO);
-    const endDate = new Date(dateRange.endISO);
-    const timeDiff = endDate.getTime() - startDate.getTime();
-    
-    for (let i = 0; i < count; i++) {
-        // 生成时间范围内的随机日期
-        const randomTime = startDate.getTime() + Math.random() * timeDiff;
-        const randomDate = new Date(randomTime);
-        
-        results.push({
-            title: keywords ? `${keywords.split(' ')[0] || '研究'}在${journal}中的最新进展` 
-                : `${journal}最新研究进展`,
-            titleEn: keywords ? `Recent advances in ${keywords.split(' ')[0] || 'research'} published in ${journal}`
-                : `Latest research progress in ${journal}`,
-            doi: `10.${Math.floor(Math.random() * 90000) + 10000}/${String.fromCharCode(65 + Math.floor(Math.random() * 26))}${Math.floor(Math.random() * 1000)}`,
-            authors: generateMockAuthors(),
-            year: randomDate.getFullYear(),
-            publishDate: randomDate.toISOString().split('T')[0],
-            abstract: keywords ? `This study investigates ${keywords} with promising results...`
-                : `This paper presents significant findings...`
-        });
+    if (totalFound > 0) {
+        saveHistoryItem();
     }
     
-    return results;
-}
-
-// 生成模拟作者
-function generateMockAuthors() {
-    const names = ['Zhang Wei', 'Li Ming', 'Wang Fang', 'Liu Yang', 'Chen Hui', 'Yang Xia', 'Zhou Lin', 'Wu Qiang'];
-    const count = Math.floor(Math.random() * 3) + 2;
-    const selected = [];
-    
-    for (let i = 0; i < count; i++) {
-        const name = names[Math.floor(Math.random() * names.length)];
-        if (!selected.includes(name)) selected.push(name);
-    }
-    
-    return selected;
+    showToast(`追踪完成！找到 ${totalFound} 篇文献`, totalFound > 0 ? 'success' : 'info');
 }
 
 // 渲染追踪结果
@@ -420,7 +422,10 @@ function renderResults() {
     if (flatResults.length === 0) {
         resultsList.innerHTML = `
             <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
                 <p>未找到匹配的文献</p>
+                <p class="text-muted">可能的原因：最近7天该期刊无相关论文</p>
+                <p class="text-muted" style="font-size: 0.85rem; margin-top: 8px;">数据来源: CrossRef API</p>
             </div>
         `;
         return;
@@ -433,13 +438,19 @@ function renderResults() {
                 <span class="tracking-item-count">${r.count} 篇</span>
             </div>
             <div style="margin-bottom: 12px;">
-                ${r.results.slice(0, 3).map(paper => `
-                    <div style="padding: 8px; background: var(--card-bg); border-radius: 6px; margin-bottom: 6px;">
-                        <div style="font-size: 0.9rem; margin-bottom: 4px;">${escapeHtml(paper.title)}</div>
-                        <div class="text-muted" style="font-size: 0.8rem;">${escapeHtml(paper.authors.join(', '))} · ${paper.publishDate || paper.year}</div>
+                ${r.results.slice(0, 5).map(paper => `
+                    <div style="padding: 10px; background: var(--card-bg); border-radius: 6px; margin-bottom: 6px; border-left: 3px solid var(--primary);">
+                        <div style="font-size: 0.95rem; margin-bottom: 4px; color: var(--text-main);">${escapeHtml(paper.title)}</div>
+                        <div class="text-muted" style="font-size: 0.8rem;">
+                            ${escapeHtml(paper.authors.slice(0, 3).join(', '))}${paper.authors.length > 3 ? ' 等' : ''} 
+                            · ${paper.publishDate || paper.year}
+                        </div>
+                        <div style="font-size: 0.75rem; margin-top: 4px;">
+                            <a href="https://doi.org/${paper.doi}" target="_blank" style="color: var(--primary); text-decoration: none;">DOI: ${paper.doi}</a>
+                        </div>
                     </div>
                 `).join('')}
-                ${r.count > 3 ? `<div class="text-muted" style="font-size: 0.85rem;">...还有 ${r.count - 3} 篇</div>` : ''}
+                ${r.count > 5 ? `<div class="text-muted" style="font-size: 0.85rem;">...还有 ${r.count - 5} 篇</div>` : ''}
             </div>
             <div style="display: flex; gap: 8px;">
                 <button class="btn btn-sm btn-success" onclick="importJournal('${escapeAttr(r.journal)}')">
@@ -470,7 +481,6 @@ function importJournal(journal) {
     showToast(`导入完成：${imported} 篇成功，${skipped} 篇已存在`, 'success');
 }
 
-// 打开导入确认模态框
 function openImportModal() {
     if (currentResults.length === 0) {
         showToast('没有可导入的结果', 'error');
@@ -482,12 +492,10 @@ function openImportModal() {
     document.getElementById('importModal').classList.remove('hidden');
 }
 
-// 关闭导入模态框
 function closeImportModal() {
     document.getElementById('importModal').classList.add('hidden');
 }
 
-// 确认导入
 function confirmImport() {
     const dedup = document.getElementById('dedupToggle').checked;
     let imported = 0;
@@ -516,7 +524,6 @@ function confirmImport() {
     showToast(`导入完成：${imported} 篇成功${dedup ? `，${skipped} 篇已跳过` : ''}`, 'success');
 }
 
-// 保存历史记录项
 function saveHistoryItem() {
     const history = Storage.get('trackingHistory', []);
     const dateRange = getLast7DaysRange();
@@ -530,12 +537,10 @@ function saveHistoryItem() {
         results: currentResults
     });
     
-    // 只保留最近20条记录
     Storage.set('trackingHistory', history.slice(0, 20));
     loadHistory();
 }
 
-// 查看历史详情
 function viewHistoryDetail(id) {
     const history = Storage.get('trackingHistory', []);
     const item = history.find(h => h.id === id);
@@ -545,13 +550,11 @@ function viewHistoryDetail(id) {
         return;
     }
     
-    // 加载历史结果用于查看
     currentResults = item.results || [];
     renderResults();
     showToast(`正在查看 ${item.date} 的追踪结果`, 'info');
 }
 
-// 删除历史记录
 function deleteHistory(id) {
     if (!confirm('确定要删除这条追踪记录吗？')) return;
     
