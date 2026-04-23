@@ -774,6 +774,17 @@ function deleteCurrentCard() {
 }
 
 // 处理粘贴的JSON数据导入
+// 复制AI提示词
+function copyAiPrompt() {
+    const promptText = document.getElementById('aiPromptText').textContent;
+    navigator.clipboard.writeText(promptText).then(() => {
+        showToast('AI提示词已复制到剪贴板', 'success');
+    }).catch(err => {
+        console.error('复制失败:', err);
+        showToast('复制失败，请手动复制', 'error');
+    });
+}
+
 function handleJsonDataImport() {
     const textarea = document.getElementById('importJsonData');
     const jsonText = textarea.value.trim();
