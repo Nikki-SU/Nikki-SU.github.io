@@ -423,12 +423,11 @@ function renderCard(word) {
 
 // 词汇不足时跳过题目
 function renderSkipQuestion(word, type, typeName) {
-    const typeNames = { 1: '英选中', 2: '中选英', 3: '英选义', 4: '义选英', 5: '句选中', 6: '句选义' };
     return `
         <div class="question-area">
             <div class="alert alert-warning" style="margin-bottom:12px;">
-                ⚠️ 词汇库词汇不足，跳过此题型<br>
-                <small>建议添加更多词汇或使用"补全翻译"功能</small>
+                ⚠️ 词库中可用词汇不足，跳过此题型<br>
+                <small>请添加更多词汇或使用"补全翻译"功能</small>
             </div>
             <div style="text-align: center; padding: 20px;">
                 <button class="btn btn-primary" onclick="handleAnswer(true)">继续下一题</button>
@@ -449,12 +448,12 @@ function renderQuestion(word, type, typeName) {
     });
     
     others.sort(() => Math.random() - 0.5);
-    
-    // 如果可用干扰项不足3个，允许重复抽取填充
-    while (others.length < 3 && others.length > 0) {
-        others.push(others[Math.floor(Math.random() * others.length)]);
-    }
     others = others.slice(0, 3);
+    
+    // 如果干扰项太少（少于1个），跳过此题型
+    if (others.length < 1) {
+        return renderSkipQuestion(word, type, typeName);
+    }
     
     let question, options, correct;
     
@@ -510,15 +509,7 @@ function renderQuestion(word, type, typeName) {
             break;
     }
     
-    // 确保至少有2个选项（正确答案 + 至少1个干扰项）
-    if (options.length < 2) {
-        // 词汇库实在太小，跳过此题
-        return renderSkipQuestion(word, type, typeName);
-    }
-    // 如果选项不足4个，从已有选项中重复填充
-    while (options.length < 4) {
-        options.push(options[Math.floor(Math.random() * (options.length - 1)) + 1]);
-    }
+    // 选项不足4个时，有多少用多少（最少2个：正确答案+1个干扰项）
     
     let html = `
         <div class="question-area">
