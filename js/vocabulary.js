@@ -437,6 +437,24 @@ function renderSkipQuestion(word, type, typeName) {
 }
 
 function renderQuestion(word, type, typeName) {
+    // 检查当前单词是否有该题型需要的字段
+    const requiredFields = {
+        1: ['cn'],           // 英选中需要 cn
+        2: ['cn', 'en'],     // 中选英需要 cn（题目）和 en（答案）
+        3: ['en'],           // 英选义需要 en，定义有降级
+        4: ['en'],           // 义选英需要 en，定义有降级
+        5: ['cn'],           // 句选中需要 cn（例句可选）
+        6: []                // 句选义定义有降级
+    };
+    
+    const required = requiredFields[type] || [];
+    for (const field of required) {
+        if (!word[field] || !word[field].trim()) {
+            // 缺少必需字段，跳过此题型
+            return renderSkipQuestion(word, type, typeName);
+        }
+    }
+    
     // 获取其他词汇作为干扰项，过滤掉字段为空的词汇
     let others = vocabulary.filter(w => {
         if (w.en === word.en) return false;
