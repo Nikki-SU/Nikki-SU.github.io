@@ -382,8 +382,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // AI翻译函数（使用硅基流动API）
 async function translateField(text, fieldType = 'word') {
-    const settings = GlobalSettings.get();
-    if (!settings.apiKey) {
+    // 使用 ai-parser.js 中的函数获取配置
+    const apiKey = typeof getApiKey === 'function' ? getApiKey() : null;
+    const providerConfig = typeof getProviderConfig === 'function' ? getProviderConfig() : null;
+    const model = typeof getSelectedModel === 'function' ? getSelectedModel() : 'Qwen/Qwen2.5-7B-Instruct';
+    
+    if (!apiKey) {
         console.warn('未配置API Key，跳过翻译');
         return null;
     }
@@ -402,29 +406,70 @@ async function translateField(text, fieldType = 'word') {
     }
     
     try {
-        const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${settings.apiKey}`
-            },
-            body: JSON.stringify({
-                model: settings.model || 'Qwen/Qwen2.5-7B-Instruct',
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: text }
-                ],
-                temperature: 0.3,
-                max_tokens: 200
-            })
-        });
+        let response;
+        
+        if (providerConfig && providerConfig.isGemini) {
+            // Gemini API
+            const url = `${providerConfig.url}/${model}:generateContent?key=${apiKey}`;
+            response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `${systemPrompt}\n\n${text}` }] }],
+                    generationConfig: { temperature: 0.3, maxOutputTokens: 200 }
+                })
+            });
+        } else if (providerConfig) {
+            // OpenAI 兼容 API
+            response = await fetch(providerConfig.url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `${providerConfig.authPrefix} ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: text }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 200
+                })
+            });
+        } else {
+            // 降级：使用 GlobalSettings 中的旧配置（兼容旧版本）
+            const settings = GlobalSettings.get();
+            response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${settings.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: settings.model || 'Qwen/Qwen2.5-7B-Instruct',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: text }
+                    ],
+                    temperature: 0.3,
+                    max_tokens: 200
+                })
+            });
+        }
         
         if (!response.ok) {
             throw new Error(`API错误: ${response.status}`);
         }
         
         const data = await response.json();
-        return data.choices?.[0]?.message?.content?.trim() || null;
+        
+        // 根据不同 API 格式解析结果
+        if (providerConfig && providerConfig.isGemini) {
+            return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+        } else {
+            return data.choices?.[0]?.message?.content?.trim() || null;
+        }
     } catch (error) {
         console.error('翻译失败:', error);
         return null;

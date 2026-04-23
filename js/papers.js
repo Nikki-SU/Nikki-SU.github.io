@@ -725,7 +725,7 @@ function openCardDetail(cardId) {
                                         <span class="word">${escapeHtml(wordEn)}</span>
                                         <span class="cn">${escapeHtml(wordCn)}</span>
                                     </div>
-                                    <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy('${wordEn.replace(/'/g, "\\'")}')">📚 ${cardLangCN ? '加入学习' : 'Study'}</button>
+                                    <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy(JSON.stringify({en: wordEn, cn: wordCn, defCn: defCn, defEn: defEn, ex: ex}).replace(/"/g, '&quot;'))">📚 ${cardLangCN ? '加入学习' : 'Study'}</button>
                                 </div>
                                 ${def ? `<div class="def">${escapeHtml(def)}</div>` : ''}
                                 ${ex ? `<div class="ex">${exFormatted}</div>` : ''}
@@ -741,9 +741,20 @@ function openCardDetail(cardId) {
     document.getElementById('cardDetailModal').classList.remove('hidden');
 }
 
-// 添加词汇到学习
-function addVocabToStudy(word) {
-    showToast(`已将 "${word}" 添加到学习队列`, 'success');
+// 添加词汇到词汇本
+function addVocabToStudy(vocabJson) {
+    try {
+        const vocab = JSON.parse(vocabJson);
+        const result = VocabularyStore.add(vocab);
+        if (result.success) {
+            showToast(`已将 "${vocab.en}" 添加到词汇本`, 'success');
+        } else {
+            showToast(`"${vocab.en}" 已在词汇本中`, 'info');
+        }
+    } catch (e) {
+        console.error('添加词汇失败:', e);
+        showToast('添加词汇失败', 'error');
+    }
 }
 
 // 关闭卡片详情
