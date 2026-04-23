@@ -950,27 +950,4 @@ function downloadVocabularyFile() {
     showToast(`已下载 ${exportData.length} 个词汇`, 'success');
 }
 
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
-    toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 12px 24px;
-        border-radius: 8px;
-        z-index: 10000;
-        font-size: 14px;
-        background: ${type === 'success' ? '#00A087' : type === 'error' ? '#E64B35' : '#4DBBD5'};
-        color: white;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transition = 'opacity 0.3s';
-        setTimeout(() => toast.remove(), 300);
-    }, 2000);
-}
+

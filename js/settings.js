@@ -153,6 +153,12 @@ function saveSettings() {
     };
     
     GlobalSettings.save(settings);
+    
+    // 同步到 ai-parser 的存储键，确保 translateField 等函数能正确读取
+    if (typeof setApiConfig === 'function') {
+        setApiConfig(currentProvider, apiKey, model);
+    }
+    
     updateStatus();
     showResult('设置已保存！', 'success');
     showToast('API设置已保存', 'success');
