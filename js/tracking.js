@@ -292,7 +292,7 @@ async function startTracking() {
     
     // 计算日期范围（最近7天）
     const today = new Date();
-    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const weekAgo = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
     const fromDate = weekAgo.toISOString().split('T')[0];
     const toDate = today.toISOString().split('T')[0];
     
