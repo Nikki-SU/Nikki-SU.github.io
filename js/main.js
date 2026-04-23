@@ -209,9 +209,8 @@ const VocabularyStore = {
             defEn: defEn,
             ex: ex,
             status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            correct_streak: 0,
+            streak: 0,
+            wrongCount: 0,
             category: word.category || 'custom',
             addedAt: new Date().toISOString()
         });
@@ -272,9 +271,8 @@ const VocabularyStore = {
             defEn: defEn,
             ex: ex,
             status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            correct_streak: 0,
+            streak: 0,
+            wrongCount: 0,
             category: word.category || 'custom',
             addedAt: new Date().toISOString()
         });
