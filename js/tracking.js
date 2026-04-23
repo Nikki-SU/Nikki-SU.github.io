@@ -114,8 +114,8 @@ function toggleJournal(name) {
     const index = selected.indexOf(name);
     
     if (index === -1) {
-        if (selected.length >= 10) {
-            showToast('最多选择10个刊物', 'error');
+        if (selected.length >= 50) {
+            showToast('最多选择50个刊物', 'error');
             return;
         }
         selected.push(name);

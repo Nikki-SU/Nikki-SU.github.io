@@ -931,3 +931,57 @@ tr:hover {
     background: rgba(77, 187, 213, 0.1);
     color: var(--secondary);
 }
+
+/* 期刊选择样式 */
+.journal-category {
+    margin-bottom: 16px;
+}
+
+.journal-category-title {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+.journal-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    margin: 4px 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.journal-item:hover {
+    background: var(--bg-secondary);
+}
+
+.journal-item.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.journal-item.selected .journal-item-name {
+    color: white;
+}
+
+.journal-item.selected .journal-item-if {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.journal-item-name {
+    font-size: 0.95rem;
+    color: var(--text);
+}
+
+.journal-item-if {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
