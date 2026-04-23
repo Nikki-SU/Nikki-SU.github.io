@@ -357,20 +357,40 @@ async function startTracking() {
 
 // 调用CrossRef API获取文献
 async function fetchFromCrossRef(journal, keywords, fromDate, toDate) {
-    // 构建查询URL
+    // 解析关键词逻辑
+    const andKeywords = [];
+    const orKeywords = [];
+    const notKeywords = [];
+    
+    if (keywords && keywords.length > 0) {
+        keywords.forEach(k => {
+            const match = k.match(/^(AND|OR|NOT)\s+(.+)$/i);
+            if (match) {
+                const logic = match[1].toUpperCase();
+                const word = match[2].toLowerCase();
+                if (logic === 'AND') andKeywords.push(word);
+                else if (logic === 'OR') orKeywords.push(word);
+                else if (logic === 'NOT') notKeywords.push(word);
+            } else {
+                // 无前缀的默认为 AND
+                andKeywords.push(k.toLowerCase());
+            }
+        });
+    }
+    
+    // 构建查询URL - 使用所有关键词（不含NOT）进行搜索
     let url = 'https://api.crossref.org/works?';
     const params = new URLSearchParams();
     
-    // 添加期刊过滤
     params.append('filter', `container-title:"${journal}",from-pub-date:${fromDate},until-pub-date:${toDate}`);
     
-    // 添加关键词查询
-    if (keywords && keywords.length > 0) {
-        const keywordQuery = keywords.map(k => k.replace(/^(AND|OR|NOT)\s*/i, '')).join(' ');
-        params.append('query', keywordQuery);
+    // 用 AND 和 OR 关键词搜索
+    const searchKeywords = [...andKeywords, ...orKeywords].join(' ');
+    if (searchKeywords) {
+        params.append('query', searchKeywords);
     }
     
-    params.append('rows', '20');  // 每个刊物最多20篇
+    params.append('rows', '50');  // 获取更多结果用于筛选
     params.append('select', 'DOI,title,author,published-print,published-online,abstract,container-title');
     
     url += params.toString();
@@ -387,19 +407,35 @@ async function fetchFromCrossRef(journal, keywords, fromDate, toDate) {
     
     const data = await response.json();
     
-    // 解析结果
+    // 解析并筛选结果
     const results = [];
     if (data.message && data.message.items) {
         for (const item of data.message.items) {
             if (!item.DOI || !item.title) continue;
             
+            const title = Array.isArray(item.title) ? item.title[0] : item.title;
+            const abstract = item.abstract || '';
+            const searchText = (title + ' ' + abstract).toLowerCase();
+            
+            // 检查 AND 条件：必须包含所有 AND 关键词
+            const matchAnd = andKeywords.length === 0 || andKeywords.every(kw => searchText.includes(kw));
+            if (!matchAnd) continue;
+            
+            // 检查 NOT 条件：不能包含任何 NOT 关键词
+            const matchNot = notKeywords.length === 0 || !notKeywords.some(kw => searchText.includes(kw));
+            if (!matchNot) continue;
+            
+            // 检查 OR 条件：至少包含一个 OR 关键词（如果有 OR 关键词的话）
+            const matchOr = orKeywords.length === 0 || orKeywords.some(kw => searchText.includes(kw));
+            if (!matchOr) continue;
+            
             results.push({
-                title: Array.isArray(item.title) ? item.title[0] : item.title,
-                titleEn: Array.isArray(item.title) ? item.title[0] : item.title,
+                title: title,
+                titleEn: title,
                 doi: item.DOI,
                 authors: item.author ? item.author.slice(0, 5).map(a => `${a.given || ''} ${a.family || ''}`).join(', ') : '未知作者',
                 year: item['published-print']?.['date-parts']?.[0]?.[0] || item['published-online']?.['date-parts']?.[0]?.[0] || new Date().getFullYear(),
-                abstract: item.abstract || '',
+                abstract: abstract,
                 journal: item['container-title']?.[0] || journal
             });
         }
