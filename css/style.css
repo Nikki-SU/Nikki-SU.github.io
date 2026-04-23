@@ -985,3 +985,67 @@ tr:hover {
     font-size: 0.85rem;
     color: var(--text-secondary);
 }
+
+/* 词汇学习全屏模式 */
+.study-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    overflow-y: auto !important;
+    background: var(--bg) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.study-fullscreen-header {
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding: 12px 0;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.study-fullscreen .question-area {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.study-fullscreen .options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+}
+
+@media (max-width: 600px) {
+    .study-fullscreen .options-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 全屏模式下的进度信息 */
+.fullscreen-queue-info {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    padding: 12px 20px;
+    z-index: 10000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}

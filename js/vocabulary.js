@@ -279,6 +279,9 @@ function startStudy(mode, wrongOnly = false) {
     document.getElementById('queueInfo')?.classList.remove('hidden');
     document.getElementById('studyArea')?.classList.remove('hidden');
     
+    // 进入全屏模式
+    enterFullscreenStudy();
+    
     renderStudy();
 }
 
@@ -724,14 +727,7 @@ function finishStudy() {
     setTimeout(() => quitStudy(), 500);
 }
 
-function quitStudy() {
-    study = null;
-    pendingWrong = null;
-    document.getElementById('studyControls')?.classList.remove('hidden');
-    document.getElementById('queueInfo')?.classList.add('hidden');
-    document.getElementById('studyArea')?.classList.add('hidden');
-    updateStats();
-}
+
 
 // ===== 列表渲染 =====
 
@@ -950,4 +946,72 @@ function downloadVocabularyFile() {
     showToast(`已下载 ${exportData.length} 个词汇`, 'success');
 }
 
+// ===== 全屏学习模式 =====
 
+function enterFullscreenStudy() {
+    const studyArea = document.getElementById('studyArea');
+    const queueInfo = document.getElementById('queueInfo');
+    
+    if (studyArea) {
+        studyArea.classList.add('study-fullscreen');
+    }
+    
+    // 修改退出按钮样式，移到右上角
+    if (queueInfo) {
+        queueInfo.classList.add('fullscreen-queue-info');
+    }
+    
+    // 尝试进入浏览器全屏
+    try {
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen) {
+            document.documentElement.webkitRequestFullscreen();
+        }
+    } catch (e) {
+        console.log('浏览器不支持全屏API');
+    }
+}
+
+function exitFullscreenStudy() {
+    const studyArea = document.getElementById('studyArea');
+    const queueInfo = document.getElementById('queueInfo');
+    
+    if (studyArea) {
+        studyArea.classList.remove('study-fullscreen');
+    }
+    
+    if (queueInfo) {
+        queueInfo.classList.remove('fullscreen-queue-info');
+    }
+    
+    // 退出浏览器全屏
+    try {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    } catch (e) {
+        console.log('退出全屏失败');
+    }
+}
+
+// 修改退出函数
+function quitStudy() {
+    // 保存进度
+    saveProgress();
+    showToast('进度已保存', 'success');
+    
+    // 退出全屏模式
+    exitFullscreenStudy();
+    
+    study = null;
+    pendingWrong = null;
+    
+    document.getElementById('studyControls')?.classList.remove('hidden');
+    document.getElementById('queueInfo')?.classList.add('hidden');
+    document.getElementById('studyArea')?.classList.add('hidden');
+    
+    updateStats();
+}
