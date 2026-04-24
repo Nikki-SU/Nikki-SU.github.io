@@ -351,19 +351,18 @@ const AbstractTranslationStore = {
     
     add(card) {
         const cards = this.getAll();
-        // 检查是否已存在
-        const exists = cards.find(c => c.paperId === card.paperId && c.titleEn === card.titleEn);
+        // 检查是否已存在（使用paperId作为唯一标识）
+        const exists = cards.find(c => c.paperId === card.paperId);
         if (exists) {
             return { success: false, message: '摘要已存在' };
         }
         cards.unshift({
-            id: Date.now().toString(),
             ...card,
-            translated: false,
-            userTranslation: '',
-            aiComment: null,
-            addedAt: new Date().toISOString(),
-            translatedAt: null
+            translated: card.translated || false,
+            userTranslation: card.userTranslation || null,
+            aiComment: card.aiComment || null,
+            addedAt: card.addedAt || Date.now(),
+            translatedAt: card.translatedAt || null
         });
         Storage.set(this.key, cards);
         return { success: true };
@@ -371,49 +370,52 @@ const AbstractTranslationStore = {
     
     addMany(cards) {
         const existing = this.getAll();
-        const existingKeys = new Set(existing.map(c => `${c.paperId}-${c.titleEn}`));
-        const newCards = cards.filter(c => !existingKeys.has(`${c.paperId}-${c.titleEn}`));
+        const existingIds = new Set(existing.map(c => c.paperId));
+        const newCards = cards.filter(c => !existingIds.has(c.paperId));
         
         for (const card of newCards) {
             existing.unshift({
-                id: Date.now().toString(),
                 ...card,
-                translated: false,
-                userTranslation: '',
-                aiComment: null,
-                addedAt: new Date().toISOString(),
-                translatedAt: null
+                translated: card.translated || false,
+                userTranslation: card.userTranslation || null,
+                aiComment: card.aiComment || null,
+                addedAt: card.addedAt || Date.now(),
+                translatedAt: card.translatedAt || null
             });
         }
         Storage.set(this.key, existing);
         return { success: true, count: newCards.length };
     },
     
-    update(id, data) {
+    update(paperId, data) {
         const cards = this.getAll();
-        const index = cards.findIndex(c => c.id === id);
+        const index = cards.findIndex(c => c.paperId === paperId);
         if (index !== -1) {
-            cards[index] = { ...cards[index], ...data, translatedAt: data.translated ? new Date().toISOString() : cards[index].translatedAt };
+            cards[index] = { 
+                ...cards[index], 
+                ...data, 
+                translatedAt: data.translated ? Date.now() : cards[index].translatedAt 
+            };
             Storage.set(this.key, cards);
             return true;
         }
         return false;
     },
     
-    remove(id) {
+    remove(paperId) {
         const cards = this.getAll();
-        const filtered = cards.filter(c => c.id !== id);
+        const filtered = cards.filter(c => c.paperId !== paperId);
         Storage.set(this.key, filtered);
     },
     
-    reset(id) {
+    reset(paperId) {
         const cards = this.getAll();
-        const index = cards.findIndex(c => c.id === id);
+        const index = cards.findIndex(c => c.paperId === paperId);
         if (index !== -1) {
             cards[index] = { 
                 ...cards[index], 
                 translated: false, 
-                userTranslation: '', 
+                userTranslation: null, 
                 aiComment: null, 
                 translatedAt: null 
             };

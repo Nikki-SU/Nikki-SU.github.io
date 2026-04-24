@@ -678,15 +678,17 @@ function processAndSaveCard(cardData) {
     if (cardData.abstract || cardData.abstractEn) {
         const transCard = {
             paperId: card.id,
-            title: cardData.title || '',
             titleEn: cardData.titleEn || cardData.title || '',
-            titleCn: cardData.titleCn || cardData.title_cn || '',
-            abstract: cardData.abstract || '',
+            titleCn: cardData.titleCn || cardData.title_cn || cardData.title_cn || '',
             abstractEn: cardData.abstractEn || cardData.abstract || '',
-            abstractCn: cardData.abstractCn || cardData.abstract_cn || '',
+            abstractCn: cardData.abstractCn || cardData.abstract_cn || cardData.abstractCn || '',
             keywords: cardData.keywords || [],
-            keywordsEn: cardData.keywordsEn || cardData.keywords || [],
-            keywordsCn: cardData.keywordsCn || cardData.keywords_cn || []
+            keywordsCn: cardData.keywordsCn || cardData.keywords_cn || cardData.keywordsCn || [],
+            translated: false,
+            userTranslation: null,
+            aiComment: null,
+            addedAt: Date.now(),
+            translatedAt: null
         };
         AbstractTranslationStore.add(transCard);
     }

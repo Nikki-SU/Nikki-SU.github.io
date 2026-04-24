@@ -234,8 +234,8 @@
 
                 <!-- 练习模式 -->
                 <div id="transPracticeTab" class="tab-content active">
-                    <!-- 练习区域 -->
-                    <div id="transPracticeArea" class="card" style="min-height: 300px;">
+                    <!-- 开始练习区域 -->
+                    <div id="transStartArea" class="card" style="min-height: 300px;">
                         <div class="empty-state">
                             <div class="empty-state-icon">📝</div>
                             <p>准备开始摘要翻译练习</p>
@@ -243,6 +243,58 @@
                             <button class="btn btn-primary" id="startTransBtn" style="margin-top: 16px;">
                                 🎯 开始练习
                             </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 练习进行中区域 -->
+                    <div id="transPracticeArea" class="card hidden" style="min-height: 400px;">
+                        <!-- 英文原文 -->
+                        <div class="trans-section">
+                            <h4 style="color: var(--primary); margin-bottom: 12px;">📄 英文原文</h4>
+                            <div style="background: var(--bg-secondary); padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="font-weight: 600; margin-bottom: 8px;" id="transTitleEn">标题</p>
+                                <p style="font-size: 14px; line-height: 1.6; color: var(--text-secondary);" id="transAbstractEn">摘要内容</p>
+                                <p style="font-size: 13px; color: var(--text-muted); margin-top: 12px;">
+                                    <strong>关键词:</strong> <span id="transKeywordsEn">keywords</span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- 用户翻译 -->
+                        <div class="trans-section">
+                            <h4 style="color: var(--primary); margin-bottom: 12px;">✏️ 您的翻译</h4>
+                            <div class="form-group">
+                                <label class="form-label">中文标题</label>
+                                <input type="text" class="form-input" id="transTitleInput" placeholder="请翻译标题">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">中文摘要</label>
+                                <textarea class="form-textarea" id="transAbstractInput" rows="6" placeholder="请翻译摘要"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- 操作按钮 -->
+                        <div style="display: flex; gap: 12px; margin-top: 16px;">
+                            <button class="btn btn-primary" id="transSubmitBtn">✅ 提交翻译</button>
+                            <button class="btn btn-secondary hidden" id="transShowRefBtn">📖 查看参考译文</button>
+                            <button class="btn btn-secondary" onclick="skipTransPractice()">⏭️ 跳过</button>
+                        </div>
+                        
+                        <!-- 参考译文区域 -->
+                        <div id="transReferenceArea" class="trans-section hidden" style="margin-top: 24px; padding-top: 24px; border-top: 1px dashed var(--border);">
+                            <h4 style="color: var(--success); margin-bottom: 12px;">📖 参考译文</h4>
+                            <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid var(--success);">
+                                <p style="font-weight: 600; margin-bottom: 8px;" id="transTitleCn">中文标题</p>
+                                <p style="font-size: 14px; line-height: 1.6; color: var(--text-secondary);" id="transAbstractCn">中文摘要</p>
+                                <p style="font-size: 13px; color: var(--text-muted); margin-top: 12px;">
+                                    <strong>关键词:</strong> <span id="transKeywordsCn">中文关键词</span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- 结果操作区域 -->
+                        <div id="transResultArea" class="hidden" style="margin-top: 20px; display: flex; gap: 12px;">
+                            <button class="btn btn-success" onclick="finishTransPractice()">✅ 标记完成</button>
                         </div>
                     </div>
                 </div>
