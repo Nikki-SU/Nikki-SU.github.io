@@ -605,8 +605,8 @@ async function handleCardFileImport(event) {
 // 处理并保存卡片数据（被粘贴导入和文件导入共用）
 function processAndSaveCard(cardData) {
     // 验证基本字段
-    if (!cardData.title) {
-        showToast('JSON格式错误：缺少title字段', 'error');
+    if (!cardData.title_cn && !cardData.title_en && !cardData.titleCn && !cardData.titleEn && !cardData.title) {
+        showToast('JSON格式错误：缺少标题字段', 'error');
         return;
     }
     
@@ -675,13 +675,13 @@ function processAndSaveCard(cardData) {
     }
     
     // 自动创建摘要翻译练习卡片（如果有英文摘要）
-    if (cardData.abstract || cardData.abstractEn || cardData.abstract_en) {
+    if (cardData.abstract_cn || cardData.abstract_en || cardData.abstractCn || cardData.abstractEn) {
         const transCard = {
             paperId: card.id,
-            titleEn: cardData.titleEn || cardData.title_en || cardData.title || '',
-            titleCn: cardData.titleCn || cardData.title_cn || cardData.title_cn || '',
-            abstractEn: cardData.abstractEn || cardData.abstract_en || cardData.abstract || '',
-            abstractCn: cardData.abstractCn || cardData.abstract_cn || cardData.abstractCn || '',
+            titleEn: cardData.title_en || cardData.titleEn || '',
+            titleCn: cardData.title_cn || cardData.titleCn || '',
+            abstractEn: cardData.abstract_en || cardData.abstractEn || '',
+            abstractCn: cardData.abstract_cn || cardData.abstractCn || '',
             keywords: cardData.keywords || [],
             keywordsCn: cardData.keywordsCn || cardData.keywords_cn || cardData.keywordsCn || [],
             translated: false,
