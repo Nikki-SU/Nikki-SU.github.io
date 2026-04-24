@@ -141,6 +141,8 @@ function initEventListeners() {
 
     // 摘要翻译练习事件
     document.getElementById('startTransBtn')?.addEventListener('click', startTransPractice);
+    document.getElementById('transSubmitBtn')?.addEventListener('click', submitTranslation);
+    document.getElementById('transShowRefBtn')?.addEventListener('click', showReference);
     document.querySelectorAll('#transTabs .tab-btn').forEach(btn => {
         btn.addEventListener('click', () => switchTransTab(btn.dataset.tab));
     });
