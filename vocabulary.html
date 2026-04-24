@@ -21,7 +21,7 @@
                     <span>📚</span> 文献库
                 </a>
                 <a href="vocabulary.html" class="nav-link active">
-                    <span>📖</span> 词汇本
+                    <span>📖</span> 学习区
                 </a>
                 <a href="settings.html" class="nav-link">
                     <span>⚙️</span> 设置
@@ -33,11 +33,16 @@
 
     <main class="main">
         <div class="container">
-            <!-- 页面标题 -->
+            <!-- 页面标签切换 -->
             <div class="section-header">
                 <h3 class="section-title">
-                    <span>📖</span>
-                    学术词汇本
+                    <span class="main-tab-btn active" id="vocabTabBtn" onclick="switchMainTab('vocab')">
+                        <span>📖</span> 学术词汇本
+                    </span>
+                    <span style="color: var(--border); margin: 0 8px;">|</span>
+                    <span class="main-tab-btn" id="transTabBtn" onclick="switchMainTab('trans')">
+                        <span>📝</span> 摘要翻译练习
+                    </span>
                 </h3>
                 <div style="display: flex; gap: 8px;">
                     <button class="btn btn-secondary" id="settingsBtn">
@@ -46,6 +51,8 @@
                 </div>
             </div>
 
+            <!-- 词汇本内容区域 -->
+            <div id="vocabContent">
             <!-- 统计卡片 -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -201,6 +208,55 @@
                     </div>
                 </div>
             </div>
+            </div><!-- 结束vocabContent -->
+
+            <!-- 摘要翻译练习内容区域 -->
+            <div id="transContent" style="display: none;">
+                <!-- 统计卡片 -->
+                <div class="stats-grid" style="margin-bottom: 24px;">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-value" id="transPendingCount">0</div>
+                        <div class="stat-label">待练习</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📚</div>
+                        <div class="stat-value" id="transDoneCount">0</div>
+                        <div class="stat-label">已翻译</div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="tabs" id="transTabs">
+                    <button class="tab-btn active" data-tab="transPractice" id="transPracticeTabBtn">🎯 练习</button>
+                    <button class="tab-btn" data-tab="transDone" id="transDoneTabBtn">📚 已翻译</button>
+                </div>
+
+                <!-- 练习模式 -->
+                <div id="transPracticeTab" class="tab-content active">
+                    <!-- 练习区域 -->
+                    <div id="transPracticeArea" class="card" style="min-height: 300px;">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📝</div>
+                            <p>准备开始摘要翻译练习</p>
+                            <p class="text-muted">从英文摘要翻译练习，提升学术翻译能力</p>
+                            <button class="btn btn-primary" id="startTransBtn" style="margin-top: 16px;">
+                                🎯 开始练习
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 已翻译列表 -->
+                <div id="transDoneTab" class="tab-content">
+                    <div id="transDoneList" class="card">
+                        <div class="empty-state">
+                            <p>暂无已翻译的摘要</p>
+                            <p class="text-muted">完成练习后会显示在这里</p>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- 结束transContent -->
         </div>
     </main>
 

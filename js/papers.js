@@ -674,6 +674,23 @@ function processAndSaveCard(cardData) {
         showToast('卡片导入成功！', 'success');
     }
     
+    // 自动创建摘要翻译练习卡片（如果有英文摘要）
+    if (cardData.abstract || cardData.abstractEn) {
+        const transCard = {
+            paperId: card.id,
+            title: cardData.title || '',
+            titleEn: cardData.titleEn || cardData.title || '',
+            titleCn: cardData.titleCn || cardData.title_cn || '',
+            abstract: cardData.abstract || '',
+            abstractEn: cardData.abstractEn || cardData.abstract || '',
+            abstractCn: cardData.abstractCn || cardData.abstract_cn || '',
+            keywords: cardData.keywords || [],
+            keywordsEn: cardData.keywordsEn || cardData.keywords || [],
+            keywordsCn: cardData.keywordsCn || cardData.keywords_cn || []
+        };
+        AbstractTranslationStore.add(transCard);
+    }
+    
     // 重新加载卡片列表
     loadCards();
 }

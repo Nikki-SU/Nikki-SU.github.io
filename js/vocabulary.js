@@ -138,6 +138,12 @@ function initEventListeners() {
     // 导出词汇按钮
     document.getElementById('exportVocabBtn')?.addEventListener('click', exportVocabularyToClipboard);
     document.getElementById('downloadVocabBtn')?.addEventListener('click', downloadVocabularyFile);
+
+    // 摘要翻译练习事件
+    document.getElementById('startTransBtn')?.addEventListener('click', startTransPractice);
+    document.querySelectorAll('#transTabs .tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTransTab(btn.dataset.tab));
+    });
 }
 
 // ===== 补全翻译 =====
@@ -997,21 +1003,801 @@ function exitFullscreenStudy() {
     }
 }
 
-// 修改退出函数
-function quitStudy() {
-    // 保存进度
-    saveProgress();
-    showToast('进度已保存', 'success');
+// ============================================
+// 摘要翻译练习功能
+// ============================================
+
+// 摘要翻译练习状态
+let transState = {
+    mode: 'practice', // 'practice' | 'done'
+    currentIndex: 0,
+    items: [],
+    showingReference: false,
+    currentReviewId: null,
+    showingChinese: false
+};
+
+// 切换主标签
+function switchMainTab(tab) {
+    const vocabTabBtn = document.getElementById('vocabTabBtn');
+    const transTabBtn = document.getElementById('transTabBtn');
+    const vocabContent = document.getElementById('vocabContent');
+    const transContent = document.getElementById('transContent');
+
+    if (tab === 'vocab') {
+        vocabTabBtn?.classList.add('active');
+        transTabBtn?.classList.remove('active');
+        vocabContent.style.display = 'block';
+        transContent.style.display = 'none';
+        updateStats();
+    } else {
+        vocabTabBtn?.classList.remove('active');
+        transTabBtn?.classList.add('active');
+        vocabContent.style.display = 'none';
+        transContent.style.display = 'block';
+        updateTransStats();
+        loadTransDoneList();
+    }
+}
+
+// 更新摘要翻译练习统计
+function updateTransStats() {
+    const pending = AbstractTranslationStore.getPending();
+    const done = AbstractTranslationStore.getDone();
     
-    // 退出全屏模式
-    exitFullscreenStudy();
+    document.getElementById('transPendingCount').textContent = pending.length;
+    document.getElementById('transDoneCount').textContent = done.length;
+}
+
+// 切换翻译练习内部标签
+function switchTransTab(tab) {
+    document.querySelectorAll('#transTabs .tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
     
-    study = null;
-    pendingWrong = null;
+    const practiceTab = document.getElementById('transPracticeTab');
+    const doneTab = document.getElementById('transDoneTab');
     
-    document.getElementById('studyControls')?.classList.remove('hidden');
-    document.getElementById('queueInfo')?.classList.add('hidden');
-    document.getElementById('studyArea')?.classList.add('hidden');
+    if (tab === 'transPractice') {
+        practiceTab?.classList.add('active');
+        doneTab?.classList.remove('active');
+    } else {
+        practiceTab?.classList.remove('active');
+        doneTab?.classList.add('active');
+        loadTransDoneList();
+    }
+}
+
+// 开始翻译练习
+function startTransPractice() {
+    const pending = AbstractTranslationStore.getPending();
     
-    updateStats();
+    if (pending.length === 0) {
+        showToast('暂无待练习的摘要', 'info');
+        return;
+    }
+    
+    transState.mode = 'practice';
+    transState.items = [...pending];
+    transState.currentIndex = 0;
+    transState.showingReference = false;
+    transState.currentReviewId = null;
+    transState.showingChinese = false;
+    
+    showCurrentTransItem();
+}
+
+// 显示当前翻译练习项
+function showCurrentTransItem() {
+    const area = document.getElementById('transPracticeArea');
+    
+    if (transState.currentIndex >= transState.items.length) {
+        // 练习完成
+        area.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🎉</div>
+                <p>本轮练习完成！</p>
+                <p class="text-muted">已完成 ${transState.items.length} 篇摘要翻译</p>
+                <button class="btn btn-primary" onclick="startTransPractice()" style="margin-top: 16px;">
+                    🔄 再练一轮
+                </button>
+            </div>
+        `;
+        updateTransStats();
+        return;
+    }
+    
+    const item = transState.items[transState.currentIndex];
+    transState.showingReference = false;
+    
+    area.innerHTML = `
+        <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                    ${transState.currentIndex + 1} / ${transState.items.length}
+                </span>
+                <button class="btn btn-sm btn-secondary" onclick="skipTransItem()">
+                    跳过
+                </button>
+            </div>
+            <div class="card-title" style="margin-bottom: 12px;">
+                <span>📄</span> 英文标题
+            </div>
+            <p style="font-size: 1rem; line-height: 1.6; color: var(--text);">${escapeHtml(item.titleEn || item.title || '无标题')}</p>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <div class="card-title" style="margin-bottom: 12px;">
+                <span>📝</span> 英文摘要
+            </div>
+            <p style="font-size: 0.95rem; line-height: 1.8; color: var(--text);">${escapeHtml(item.abstractEn || item.abstract || '')}</p>
+        </div>
+        
+        ${(item.keywordsEn || item.keywords || []).length > 0 ? `
+        <div style="margin-bottom: 20px;">
+            <div class="card-title" style="margin-bottom: 12px;">
+                <span>🔑</span> 英文关键词
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                ${(item.keywordsEn || item.keywords || []).map(kw => 
+                    `<span class="tag">${escapeHtml(kw)}</span>`
+                ).join('')}
+            </div>
+        </div>
+        ` : ''}
+        
+        <div style="margin-bottom: 20px;">
+            <div class="card-title" style="margin-bottom: 12px;">
+                <span>✍️</span> 你的翻译
+            </div>
+            <textarea id="transInput" class="form-textarea" rows="8" placeholder="请在此输入你的中文翻译...">${item.userTranslation || ''}</textarea>
+        </div>
+        
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="submitTrans()" id="submitTransBtn">
+                ✅ 提交翻译
+            </button>
+            <button class="btn btn-secondary" onclick="showTransReference()" id="showRefBtn" ${item.translated ? '' : 'disabled'}>
+                📖 查看参考译文
+            </button>
+        </div>
+        
+        <div id="transResult" style="margin-top: 20px; display: none;"></div>
+    `;
+}
+
+// 提交翻译
+async function submitTrans() {
+    const input = document.getElementById('transInput');
+    const userTranslation = input.value.trim();
+    
+    if (!userTranslation) {
+        showToast('请先输入翻译', 'warning');
+        return;
+    }
+    
+    const item = transState.items[transState.currentIndex];
+    
+    // 保存用户翻译
+    AbstractTranslationStore.update(item.id, { userTranslation });
+    
+    // 检查是否有API
+    const settings = typeof GlobalSettings !== 'undefined' ? GlobalSettings.get() : null;
+    const hasApi = settings && settings.apiKey;
+    
+    const resultDiv = document.getElementById('transResult');
+    const submitBtn = document.getElementById('submitTransBtn');
+    const showRefBtn = document.getElementById('showRefBtn');
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ 正在评阅...';
+    
+    if (hasApi) {
+        // 调用AI评阅
+        try {
+            const feedback = await evaluateTranslation(
+                item.abstractEn || item.abstract || '',
+                userTranslation,
+                item.abstractCn || ''
+            );
+            
+            if (feedback) {
+                // 显示评语
+                resultDiv.innerHTML = `
+                    <div class="card" style="background: var(--hover-bg);">
+                        <div style="margin-bottom: 12px;">
+                            <span style="font-weight: 600;">评分: ${feedback.score || 'N/A'}/100</span>
+                        </div>
+                        <p style="margin-bottom: 12px; line-height: 1.6;">${escapeHtml(feedback.comment || '')}</p>
+                        ${feedback.wrongWords && feedback.wrongWords.length > 0 ? `
+                        <div>
+                            <p style="font-weight: 600; margin-bottom: 8px;">📚 错误单词已加入词汇本:</p>
+                            ${feedback.wrongWords.map(w => `
+                                <div style="margin-bottom: 8px; padding: 8px; background: var(--card-bg); border-radius: 6px;">
+                                    <div><strong>${escapeHtml(w.en)}</strong> → ${escapeHtml(w.cn)}</div>
+                                    <div style="font-size: 0.85rem; color: var(--text-secondary);">${escapeHtml(w.defCn || w.defEn || '')}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+                resultDiv.style.display = 'block';
+                
+                // 保存AI评语
+                AbstractTranslationStore.update(item.id, { 
+                    aiComment: feedback,
+                    translated: true
+                });
+            } else {
+                // 降级显示参考译文
+                showTransReferenceOnly();
+            }
+        } catch (error) {
+            console.error('评阅失败:', error);
+            showToast('评阅失败，将显示参考译文', 'error');
+            showTransReferenceOnly();
+        }
+    } else {
+        // 无API，直接显示参考译文
+        showTransReferenceOnly();
+    }
+    
+    submitBtn.textContent = '✅ 已提交';
+    submitBtn.disabled = false;
+    showRefBtn.disabled = false;
+}
+
+// 显示参考译文
+function showTransReferenceOnly() {
+    const item = transState.items[transState.currentIndex];
+    const resultDiv = document.getElementById('transResult');
+    
+    resultDiv.innerHTML = `
+        <div class="card" style="background: var(--hover-bg);">
+            <div class="card-title" style="margin-bottom: 12px;">
+                <span>📖</span> 参考译文
+            </div>
+            <div style="margin-bottom: 16px;">
+                <div style="font-weight: 600; margin-bottom: 4px;">中文标题:</div>
+                <p>${escapeHtml(item.titleCn || '暂无')}</p>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <div style="font-weight: 600; margin-bottom: 4px;">中文摘要:</div>
+                <p style="line-height: 1.8;">${escapeHtml(item.abstractCn || '暂无')}</p>
+            </div>
+            ${(item.keywordsCn || []).length > 0 ? `
+            <div>
+                <div style="font-weight: 600; margin-bottom: 4px;">中文关键词:</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${(item.keywordsCn || []).map(kw => `<span class="tag">${escapeHtml(kw)}</span>`).join('')}
+                </div>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    resultDiv.style.display = 'block';
+}
+
+// 跳过当前项
+function skipTransItem() {
+    transState.currentIndex++;
+    showCurrentTransItem();
+}
+
+// 查看参考译文（按钮触发）
+function showTransReference() {
+    const item = transState.items[transState.currentIndex];
+    transState.showingReference = true;
+    
+    const resultDiv = document.getElementById('transResult');
+    resultDiv.innerHTML = `
+        <div class="card" style="background: var(--hover-bg);">
+            <div class="card-title" style="margin-bottom: 12px;">
+                <span>📖</span> 参考译文
+            </div>
+            <div style="margin-bottom: 16px;">
+                <div style="font-weight: 600; margin-bottom: 4px;">中文标题:</div>
+                <p>${escapeHtml(item.titleCn || '暂无')}</p>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <div style="font-weight: 600; margin-bottom: 4px;">中文摘要:</div>
+                <p style="line-height: 1.8;">${escapeHtml(item.abstractCn || '暂无')}</p>
+            </div>
+            ${(item.keywordsCn || []).length > 0 ? `
+            <div>
+                <div style="font-weight: 600; margin-bottom: 4px;">中文关键词:</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${(item.keywordsCn || []).map(kw => `<span class="tag">${escapeHtml(kw)}</span>`).join('')}
+                </div>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    resultDiv.style.display = 'block';
+    
+    // 标记为已翻译
+    AbstractTranslationStore.update(item.id, { translated: true });
+    
+    // 继续下一题
+    setTimeout(() => {
+        transState.currentIndex++;
+        showCurrentTransItem();
+    }, 2000);
+}
+
+// AI评阅翻译
+async function evaluateTranslation(englishAbstract, userTranslation, referenceTranslation) {
+    const settings = GlobalSettings.get();
+    const apiKey = settings.apiKey;
+    
+    if (!apiKey) return null;
+    
+    const prompt = `你是一位学术英语翻译教师。请对照以下内容：
+- 英文原文摘要
+- 用户翻译
+- 参考中文翻译
+
+请评价用户的翻译质量，指出：
+1. 翻译是否准确
+2. 是否有遗漏或错误
+3. 错误的单词或短语
+
+请以JSON格式返回：
+{
+  "score": 85,
+  "comment": "整体翻译较为准确，但有几处小问题...",
+  "wrongWords": [
+    {"en": "passivation", "cn": "钝化", "defCn": "表面处理技术", "defEn": "Surface treatment technique", "ex": "The **passivation** layer improved stability."}
+  ]
+}`;
+
+    try {
+        // 使用硅基流动API
+        const response = await fetch('https://api.siliconflow.cn/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: settings.model || 'Qwen/Qwen2.5-7B-Instruct',
+                messages: [
+                    { role: 'system', content: prompt },
+                    { role: 'user', content: `英文原文：\n${englishAbstract}\n\n用户翻译：\n${userTranslation}\n\n参考译文：\n${referenceTranslation}` }
+                ],
+                temperature: 0.3,
+                max_tokens: 1000
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API错误: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content;
+        
+        if (!content) return null;
+        
+        // 解析JSON
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            const result = JSON.parse(jsonMatch[0]);
+            
+            // 将错误单词添加到词汇本
+            if (result.wrongWords && Array.isArray(result.wrongWords)) {
+                for (const word of result.wrongWords) {
+                    VocabularyStore.add({
+                        en: word.en,
+                        cn: word.cn,
+                        defCn: word.defCn || '',
+                        defEn: word.defEn || '',
+                        ex: word.ex || '',
+                        category: 'custom'
+                    });
+                }
+            }
+            
+            return result;
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('评阅失败:', error);
+        return null;
+    }
+}
+
+// 加载已翻译列表
+function loadTransDoneList() {
+    const list = document.getElementById('transDoneList');
+    const done = AbstractTranslationStore.getDone();
+    
+    if (done.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <p>暂无已翻译的摘要</p>
+                <p class="text-muted">完成练习后会显示在这里</p>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = done.map(item => `
+        <div class="list-item" style="padding: 16px; border-bottom: 1px solid var(--border);">
+            <div style="margin-bottom: 8px;">
+                <span style="font-weight: 600;">${escapeHtml(item.titleEn || item.title || '无标题')}</span>
+            </div>
+            ${item.aiComment ? `
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">
+                评分: ${item.aiComment.score || 'N/A'}/100 | ${formatDate(item.translatedAt)}
+            </div>
+            ` : `
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 8px;">
+                ${formatDate(item.translatedAt)}
+            </div>
+            `}
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn btn-sm btn-secondary" onclick="reviewTransItem('${item.id}')">
+                    🔄 复习
+                </button>
+                <button class="btn btn-sm btn-outline" onclick="resetTransItem('${item.id}')">
+                    🔁 重新练习
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deleteTransItem('${item.id}')">
+                    🗑️ 删除
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 复习翻译项
+function reviewTransItem(id) {
+    const item = AbstractTranslationStore.getDone().find(i => i.id === id);
+    if (!item) return;
+    
+    transState.mode = 'review';
+    transState.currentReviewId = id;
+    transState.showingChinese = false;
+    
+    const area = document.getElementById('transPracticeArea');
+    
+    // 切换到练习标签
+    document.querySelectorAll('#transTabs .tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === 'transPractice');
+    });
+    document.getElementById('transPracticeTab')?.classList.add('active');
+    document.getElementById('transDoneTab')?.classList.remove('active');
+    
+    area.innerHTML = `
+        <div style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <span style="color: var(--text-secondary); font-size: 0.9rem;">复习模式</span>
+                <button class="btn btn-sm btn-secondary" onclick="exitTransReview()">
+                    退出复习
+                </button>
+            </div>
+            <div class="card-title" style="margin-bottom: 12px;">
+                <span>📄</span> 英文标题
+            </div>
+            <p style="font-size: 1rem; line-height: 1.6; color: var(--text);">${escapeHtml(item.titleEn || item.title || '无标题')}</p>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <div class="card-title" style="margin-bottom: 12px;">
+                <span>📝</span> 英文摘要
+            </div>
+            <p style="font-size: 0.95rem; line-height: 1.8; color: var(--text);">${escapeHtml(item.abstractEn || item.abstract || '')}</p>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <div class="card-title" style="margin-bottom: 12px;">
+                <span>✍️</span> 用户翻译
+            </div>
+            <p style="font-size: 0.95rem; line-height: 1.8; color: var(--text); background: var(--hover-bg); padding: 12px; border-radius: 6px;">${escapeHtml(item.userTranslation || '无')}</p>
+        </div>
+        
+        <button class="btn btn-primary" onclick="toggleTransReviewChinese('${id}')" id="toggleCnBtn">
+            ${transState.showingChinese ? '🙈 隐藏中文' : '👀 显示中文'}
+        </button>
+        
+        <div id="transReviewCn" style="margin-top: 20px; display: ${transState.showingChinese ? 'block' : 'none'};">
+            <div class="card" style="background: var(--hover-bg);">
+                <div class="card-title" style="margin-bottom: 12px;">
+                    <span>📖</span> 中文标题
+                </div>
+                <p style="margin-bottom: 16px;">${escapeHtml(item.titleCn || '暂无')}</p>
+                
+                <div class="card-title" style="margin-bottom: 12px;">
+                    <span>📖</span> 中文摘要
+                </div>
+                <p style="line-height: 1.8;">${escapeHtml(item.abstractCn || '暂无')}</p>
+                
+                ${item.aiComment ? `
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+                    <div style="font-weight: 600; margin-bottom: 8px;">📝 AI评语 (${item.aiComment.score}/100)</div>
+                    <p style="line-height: 1.6;">${escapeHtml(item.aiComment.comment || '')}</p>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+// 切换复习中文显示
+function toggleTransReviewChinese(id) {
+    transState.showingChinese = !transState.showingChinese;
+    
+    const cnDiv = document.getElementById('transReviewCn');
+    const toggleBtn = document.getElementById('toggleCnBtn');
+    
+    if (cnDiv) {
+        cnDiv.style.display = transState.showingChinese ? 'block' : 'none';
+    }
+    if (toggleBtn) {
+        toggleBtn.textContent = transState.showingChinese ? '🙈 隐藏中文' : '👀 显示中文';
+    }
+}
+
+// 退出复习
+function exitTransReview() {
+    transState.mode = 'practice';
+    transState.currentReviewId = null;
+    showCurrentTransItem();
+}
+
+// 重置翻译项
+function resetTransItem(id) {
+    AbstractTranslationStore.reset(id);
+    updateTransStats();
+    loadTransDoneList();
+    showToast('已重置，可重新练习', 'success');
+}
+
+// 删除翻译项
+function deleteTransItem(id) {
+    if (!confirm('确定要删除吗？')) return;
+    AbstractTranslationStore.remove(id);
+    updateTransStats();
+    loadTransDoneList();
+    showToast('已删除', 'success');
+}
+
+// 导出主标签切换函数
+window.switchMainTab = switchMainTab;
+
+
+// ===== 摘要翻译练习 =====
+
+// 主标签切换
+function switchMainTab(tab) {
+    const vocabBtn = document.getElementById('vocabTabBtn');
+    const transBtn = document.getElementById('transTabBtn');
+    const vocabContent = document.getElementById('vocabContent');
+    const transContent = document.getElementById('transContent');
+    
+    if (tab === 'vocab') {
+        vocabBtn?.classList.add('active');
+        transBtn?.classList.remove('active');
+        vocabContent?.classList.remove('hidden');
+        transContent?.classList.add('hidden');
+    } else {
+        vocabBtn?.classList.remove('active');
+        transBtn?.classList.add('active');
+        vocabContent?.classList.add('hidden');
+        transContent?.classList.remove('hidden');
+        updateTransStats();
+        renderTransDoneList();
+    }
+}
+
+// 翻译练习子标签切换
+function switchTransTab(tab) {
+    document.querySelectorAll('#transTabs .tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.getElementById('transPracticeTab')?.classList.toggle('hidden', tab !== 'practice');
+    document.getElementById('transDoneTab')?.classList.toggle('hidden', tab !== 'done');
+    
+    if (tab === 'done') {
+        renderTransDoneList();
+    }
+}
+
+// 更新翻译练习统计
+function updateTransStats() {
+    const pending = AbstractTranslationStore.getPending();
+    const done = AbstractTranslationStore.getDone();
+    
+    document.getElementById('transPendingCount').textContent = pending.length;
+    document.getElementById('transDoneCount').textContent = done.length;
+}
+
+// 当前翻译练习状态
+let transPractice = null;
+
+// 开始翻译练习
+function startTransPractice() {
+    const pending = AbstractTranslationStore.getPending();
+    
+    if (pending.length === 0) {
+        showToast('暂无可练习的摘要卡片，请先在文献卡片页面导入', 'warning');
+        return;
+    }
+    
+    // 随机选择一张
+    const randomIndex = Math.floor(Math.random() * pending.length);
+    const card = pending[randomIndex];
+    
+    transPractice = {
+        card: card,
+        startedAt: Date.now()
+    };
+    
+    // 显示练习界面
+    document.getElementById('transStartArea')?.classList.add('hidden');
+    document.getElementById('transPracticeArea')?.classList.remove('hidden');
+    
+    // 填充英文内容
+    document.getElementById('transTitleEn').textContent = card.titleEn || '无标题';
+    document.getElementById('transAbstractEn').textContent = card.abstractEn || '无摘要';
+    document.getElementById('transKeywordsEn').textContent = (card.keywords || []).join(', ') || '无关键词';
+    
+    // 清空用户输入
+    document.getElementById('transTitleInput').value = '';
+    document.getElementById('transAbstractInput').value = '';
+    
+    // 隐藏参考译文和结果区域
+    document.getElementById('transReferenceArea')?.classList.add('hidden');
+    document.getElementById('transResultArea')?.classList.add('hidden');
+    document.getElementById('transSubmitBtn')?.classList.remove('hidden');
+    document.getElementById('transShowRefBtn')?.classList.remove('hidden');
+}
+
+// 提交翻译
+function submitTranslation() {
+    if (!transPractice) return;
+    
+    const titleCn = document.getElementById('transTitleInput').value.trim();
+    const abstractCn = document.getElementById('transAbstractInput').value.trim();
+    
+    if (!titleCn || !abstractCn) {
+        showToast('请完成标题和摘要的翻译', 'warning');
+        return;
+    }
+    
+    // 保存用户翻译
+    transPractice.userTitle = titleCn;
+    transPractice.userAbstract = abstractCn;
+    
+    // 显示参考译文按钮
+    document.getElementById('transShowRefBtn')?.classList.remove('hidden');
+    
+    showToast('已记录您的翻译，请查看参考译文', 'success');
+}
+
+// 显示参考译文
+function showReference() {
+    if (!transPractice) return;
+    
+    const card = transPractice.card;
+    
+    // 显示参考译文区域
+    document.getElementById('transReferenceArea')?.classList.remove('hidden');
+    
+    // 填充参考译文
+    document.getElementById('transTitleCn').textContent = card.titleCn || '无中文标题';
+    document.getElementById('transAbstractCn').textContent = card.abstractCn || '无中文摘要';
+    document.getElementById('transKeywordsCn').textContent = (card.keywordsCn || []).join(', ') || '无中文关键词';
+    
+    // 显示结果区域
+    document.getElementById('transResultArea')?.classList.remove('hidden');
+    
+    // 隐藏提交和显示参考按钮
+    document.getElementById('transSubmitBtn')?.classList.add('hidden');
+    document.getElementById('transShowRefBtn')?.classList.add('hidden');
+}
+
+// 标记翻译完成
+function finishTransPractice() {
+    if (!transPractice) return;
+    
+    // 标记为已完成
+    AbstractTranslationStore.update(transPractice.card.paperId, {
+        translated: true,
+        userTranslation: {
+            title: transPractice.userTitle,
+            abstract: transPractice.userAbstract
+        },
+        translatedAt: Date.now()
+    });
+    
+    showToast('翻译已完成！', 'success');
+    
+    // 重置状态
+    transPractice = null;
+    
+    // 返回开始界面
+    document.getElementById('transStartArea')?.classList.remove('hidden');
+    document.getElementById('transPracticeArea')?.classList.add('hidden');
+    
+    updateTransStats();
+    renderTransDoneList();
+}
+
+// 跳过当前卡片
+function skipTransPractice() {
+    if (!transPractice) return;
+    
+    transPractice = null;
+    document.getElementById('transStartArea')?.classList.remove('hidden');
+    document.getElementById('transPracticeArea')?.classList.add('hidden');
+}
+
+// 渲染已翻译列表
+function renderTransDoneList() {
+    const list = document.getElementById('transDoneList');
+    if (!list) return;
+    
+    const done = AbstractTranslationStore.getDone();
+    
+    if (done.length === 0) {
+        list.innerHTML = '<div class="empty-state">暂无已翻译的卡片</div>';
+        return;
+    }
+    
+    list.innerHTML = done.map(item => `
+        <div class="trans-done-item" data-id="${item.paperId}">
+            <div class="trans-done-header">
+                <span class="trans-done-title">${item.titleEn || '无标题'}</span>
+                <span class="trans-done-date">${formatDate(item.translatedAt)}</span>
+            </div>
+            <div class="trans-done-actions">
+                <button class="btn-small" onclick="viewTransDetail('${item.paperId}')">查看详情</button>
+                <button class="btn-small" onclick="retryTrans('${item.paperId}')">重新练习</button>
+                <button class="btn-small btn-danger" onclick="deleteTransCard('${item.paperId}')">删除</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 格式化日期
+function formatDate(timestamp) {
+    if (!timestamp) return '-';
+    const date = new Date(timestamp);
+    return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+// 查看翻译详情
+function viewTransDetail(paperId) {
+    const item = AbstractTranslationStore.getAll().find(i => i.paperId === paperId);
+    if (!item) return;
+    
+    alert(`【原文标题】\n${item.titleEn}\n\n【参考译文】\n${item.titleCn}\n\n【您的翻译】\n${item.userTranslation?.title || '未记录'}\n\n---\n\n【原文摘要】\n${item.abstractEn?.substring(0, 200)}...\n\n【参考译文】\n${item.abstractCn?.substring(0, 200)}...\n\n【您的翻译】\n${item.userTranslation?.abstract?.substring(0, 200) || '未记录'}...`);
+}
+
+// 重新练习
+function retryTrans(paperId) {
+    // 重置状态
+    AbstractTranslationStore.reset(paperId);
+    
+    // 刷新统计和列表
+    updateTransStats();
+    renderTransDoneList();
+    
+    showToast('已重置，可以重新练习', 'success');
+}
+
+// 删除翻译卡片
+function deleteTransCard(paperId) {
+    if (!confirm('确定要删除这张翻译卡片吗？')) return;
+    
+    AbstractTranslationStore.remove(paperId);
+    
+    updateTransStats();
+    renderTransDoneList();
+    
+    showToast('已删除', 'success');
 }

@@ -150,6 +150,24 @@ body {
     color: var(--text);
 }
 
+.main-tab-btn {
+    cursor: pointer;
+    padding: 4px 12px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    color: var(--text-secondary);
+}
+
+.main-tab-btn:hover {
+    color: var(--text);
+    background: var(--hover-bg);
+}
+
+.main-tab-btn.active {
+    color: var(--primary);
+    font-weight: 600;
+}
+
 /* Cards */
 .card {
     background: var(--card-bg);

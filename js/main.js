@@ -333,6 +333,97 @@ const VocabularyStore = {
     }
 };
 
+// 摘要翻译练习数据
+const AbstractTranslationStore = {
+    key: 'abstractTranslationData',
+    
+    getAll() {
+        return Storage.get(this.key, []);
+    },
+    
+    getPending() {
+        return this.getAll().filter(item => !item.translated);
+    },
+    
+    getDone() {
+        return this.getAll().filter(item => item.translated);
+    },
+    
+    add(card) {
+        const cards = this.getAll();
+        // 检查是否已存在
+        const exists = cards.find(c => c.paperId === card.paperId && c.titleEn === card.titleEn);
+        if (exists) {
+            return { success: false, message: '摘要已存在' };
+        }
+        cards.unshift({
+            id: Date.now().toString(),
+            ...card,
+            translated: false,
+            userTranslation: '',
+            aiComment: null,
+            addedAt: new Date().toISOString(),
+            translatedAt: null
+        });
+        Storage.set(this.key, cards);
+        return { success: true };
+    },
+    
+    addMany(cards) {
+        const existing = this.getAll();
+        const existingKeys = new Set(existing.map(c => `${c.paperId}-${c.titleEn}`));
+        const newCards = cards.filter(c => !existingKeys.has(`${c.paperId}-${c.titleEn}`));
+        
+        for (const card of newCards) {
+            existing.unshift({
+                id: Date.now().toString(),
+                ...card,
+                translated: false,
+                userTranslation: '',
+                aiComment: null,
+                addedAt: new Date().toISOString(),
+                translatedAt: null
+            });
+        }
+        Storage.set(this.key, existing);
+        return { success: true, count: newCards.length };
+    },
+    
+    update(id, data) {
+        const cards = this.getAll();
+        const index = cards.findIndex(c => c.id === id);
+        if (index !== -1) {
+            cards[index] = { ...cards[index], ...data, translatedAt: data.translated ? new Date().toISOString() : cards[index].translatedAt };
+            Storage.set(this.key, cards);
+            return true;
+        }
+        return false;
+    },
+    
+    remove(id) {
+        const cards = this.getAll();
+        const filtered = cards.filter(c => c.id !== id);
+        Storage.set(this.key, filtered);
+    },
+    
+    reset(id) {
+        const cards = this.getAll();
+        const index = cards.findIndex(c => c.id === id);
+        if (index !== -1) {
+            cards[index] = { 
+                ...cards[index], 
+                translated: false, 
+                userTranslation: '', 
+                aiComment: null, 
+                translatedAt: null 
+            };
+            Storage.set(this.key, cards);
+            return true;
+        }
+        return false;
+    }
+};
+
 // 追踪配置
 const TrackingConfig = {
     key: 'trackingConfig',
@@ -480,6 +571,7 @@ window.Storage = Storage;
 window.LibraryStore = LibraryStore;
 window.PapersStore = PapersStore;
 window.VocabularyStore = VocabularyStore;
+window.AbstractTranslationStore = AbstractTranslationStore;
 window.TrackingConfig = TrackingConfig;
 window.GlobalSettings = GlobalSettings;
 window.escapeHtml = escapeHtml;
