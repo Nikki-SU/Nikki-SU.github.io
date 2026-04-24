@@ -735,6 +735,20 @@ function finishStudy() {
     setTimeout(() => quitStudy(), 500);
 }
 
+// 退出学习模式
+function quitStudy() {
+    exitFullscreenStudy();
+    
+    document.getElementById('studyControls')?.classList.remove('hidden');
+    document.getElementById('queueInfo')?.classList.add('hidden');
+    document.getElementById('studyArea')?.classList.add('hidden');
+    
+    study = null;
+    pendingWrong = null;
+    
+    updateStats();
+}
+
 
 
 // ===== 列表渲染 =====
