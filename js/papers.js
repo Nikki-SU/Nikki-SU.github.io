@@ -635,13 +635,13 @@ function processAndSaveCard(cardData) {
     
     // 构建卡片数据
     const card = {
-        title: cardData.title,
+        title: cardData.title_cn || cardData.titleCn || cardData.title || '',
         titleCn: cardData.title_cn || cardData.titleCn || '',
         authors: cardData.authors || '',
         journal: cardData.journal || '',
         publishDate: cardData.publish_date || cardData.publishDate || '',
         doi: cardData.doi || '',
-        abstract: cardData.abstract || '',
+        abstract: cardData.abstract_cn || cardData.abstractCn || cardData.abstract || '',
         abstractCn: cardData.abstract_cn || cardData.abstractCn || '',
         keywords: cardData.keywords || [],
         keywordsCn: cardData.keywords_cn || cardData.keywordsCn || [],
