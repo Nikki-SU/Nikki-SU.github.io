@@ -675,12 +675,12 @@ function processAndSaveCard(cardData) {
     }
     
     // 自动创建摘要翻译练习卡片（如果有英文摘要）
-    if (cardData.abstract || cardData.abstractEn) {
+    if (cardData.abstract || cardData.abstractEn || cardData.abstract_en) {
         const transCard = {
             paperId: card.id,
-            titleEn: cardData.titleEn || cardData.title || '',
+            titleEn: cardData.titleEn || cardData.title_en || cardData.title || '',
             titleCn: cardData.titleCn || cardData.title_cn || cardData.title_cn || '',
-            abstractEn: cardData.abstractEn || cardData.abstract || '',
+            abstractEn: cardData.abstractEn || cardData.abstract_en || cardData.abstract || '',
             abstractCn: cardData.abstractCn || cardData.abstract_cn || cardData.abstractCn || '',
             keywords: cardData.keywords || [],
             keywordsCn: cardData.keywordsCn || cardData.keywords_cn || cardData.keywordsCn || [],
