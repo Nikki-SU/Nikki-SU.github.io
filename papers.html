@@ -239,36 +239,81 @@
                     <div style="background: var(--bg); border-radius: 8px; padding: 16px; margin-bottom: 12px;">
                         <pre id="aiPromptText" style="white-space: pre-wrap; word-wrap: break-word; font-size: 0.85rem; line-height: 1.6; margin: 0;">请阅读以下论文PDF，提取关键信息并生成文献卡片JSON。
 
-要求：
-1. 提取一作和通讯作者（通讯作者用*标注）
-2. 生成中英文标题、摘要、关键词
-3. 提取5-10个学术词汇，每个词汇包含：英文、中文翻译、中文释义、英文释义、例句
-4. 例句中使用 **词汇** 标记重点词
+## 提取要求
 
-JSON格式如下：
+### 作者 (authors)
+- 只提取第一作者和通讯作者
+- 格式："第一作者姓名, 通讯作者姓名*"
+- 通讯作者用 * 标注，如果没有明确标注通讯作者则只写第一作者
+
+### 标题和摘要
+- title: 中文翻译标题
+- title_en: 英文原标题
+- abstract: 中文翻译摘要（200-300字，保留关键信息）
+- abstract_en: 英文原摘要（200-300字）
+
+### 关键词 (keywords / keywords_cn)
+- 提取5-8个核心关键词
+- keywords: 英文关键词数组
+- keywords_cn: 中文翻译关键词数组
+
+### 工作总结 (summary)
+- 用100-150字概括论文的核心工作和主要发现
+- 不要简单重复摘要，要提炼出研究目标和结果
+
+### 创新点 (innovation)
+- 列出2-4个具体的技术创新或方法创新
+- 每个创新点用一句话描述，要具体而非笼统
+
+### 应用领域 (application)
+- 说明该研究的潜在应用场景或适用范围
+- 50字以内
+
+### 文章脉络 (structure)
+- 这是论证思路，不是目录和小标题！
+- 用200字以内描述作者的论证逻辑：提出什么问题 → 用什么方法 → 得出什么结论
+- 要体现研究的思路链条
+
+### 表征技术 (methods)
+- 列出论文中使用的主要表征手段或实验方法
+- 如：XRD, SEM, TEM, J-V测试 等
+- 只写技术名称，不要展开描述
+
+### 学术词汇 (vocabulary)
+- 提取10-30个学术词汇
+- 选择标准：专业术语、关键概念、重要方法名称
+- 每个词汇包含：
+  - en: 英文词汇
+  - cn: 中文翻译
+  - defCn: 中文释义（简明扼要，30字以内）
+  - defEn: 英文释义（brief definition, under 30 words）
+  - ex: 例句（从论文中摘取或根据论文内容编写，用 **词汇** 标记该词）
+
+## JSON格式示例
+
 {
-  "title": "中文标题",
-  "title_en": "English Title",
-  "authors": "一作姓名, 通讯作者姓名*",
-  "journal": "期刊名",
-  "publish_date": "2024-01-01",
-  "doi": "10.xxxx/xxx",
-  "abstract": "中文摘要",
-  "abstract_en": "English Abstract",
-  "keywords": ["keyword1", "keyword2"],
-  "keywords_cn": ["关键词1", "关键词2"],
-  "summary": "工作总结（100字以内）",
-  "innovation": ["创新点1", "创新点2"],
-  "application": "应用领域",
-  "structure": "文章脉络",
-  "methods": ["表征技术1", "表征技术2"],
+  "title": "钙钛矿太阳能电池界面钝化研究",
+  "title_en": "Interface Passivation for Perovskite Solar Cells",
+  "authors": "Zhang San, Li Si*",
+  "journal": "Advanced Materials",
+  "publish_date": "2024-03-15",
+  "doi": "10.1002/adma.202400123",
+  "abstract": "本研究针对钙钛矿太阳能电池界面缺陷问题...",
+  "abstract_en": "This study addresses interface defects in perovskite solar cells...",
+  "keywords": ["perovskite", "interface passivation", "solar cell"],
+  "keywords_cn": ["钙钛矿", "界面钝化", "太阳能电池"],
+  "summary": "本研究通过引入新型界面钝化材料，有效降低了钙钛矿/传输层界面的缺陷密度，实现了效率提升...",
+  "innovation": ["开发了一种新型有机胺盐钝化剂", "揭示了界面钝化机理", "实现了超过24%的光电转换效率"],
+  "application": "高效稳定钙钛矿太阳能电池的制备",
+  "structure": "首先分析界面缺陷对器件性能的影响机制，然后设计并合成新型钝化材料，通过多种表征手段验证钝化效果，最后评估器件效率和稳定性",
+  "methods": ["XRD", "SEM", "TEM", "J-V测试", "PL光谱", "UPS"],
   "vocabulary": [
     {
-      "en": "perovskite",
-      "cn": "钙钛矿",
-      "defCn": "一种具有ABX3晶体结构的材料",
-      "defEn": "A material with ABX3 crystal structure",
-      "ex": "**Perovskite** solar cells have achieved high efficiency."
+      "en": "passivation",
+      "cn": "钝化",
+      "defCn": "通过化学处理消除材料表面缺陷的过程",
+      "defEn": "The process of eliminating surface defects through chemical treatment",
+      "ex": "Interface **passivation** significantly improved device performance."
     }
   ]
 }
