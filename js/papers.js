@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     loadLibrary();
     loadCards();
-    loadPaperSelect();
 });
 
 // 初始化事件监听
@@ -44,9 +43,6 @@ function initEventListeners() {
     document.getElementById('libraryFilter')?.addEventListener('change', loadLibrary);
     document.getElementById('librarySearch')?.addEventListener('input', debounce(loadLibrary, 300));
     
-    // 生成卡片
-    document.getElementById('generateCardBtn')?.addEventListener('click', generateCard);
-    
     // 导入JSON卡片
     document.getElementById('importCardBtn')?.addEventListener('click', () => {
         document.getElementById('cardFileInput')?.click();
@@ -55,6 +51,9 @@ function initEventListeners() {
     
     // 粘贴JSON数据导入
     document.getElementById('importJsonBtn')?.addEventListener('click', handleJsonDataImport);
+    
+    // 复制AI提示词
+    document.getElementById('copyAiPromptBtn')?.addEventListener('click', copyAiPrompt);
     
     // 卡片详情
     document.getElementById('closeCardDetailModal')?.addEventListener('click', closeCardDetailModal);
@@ -163,7 +162,6 @@ function loadLibrary() {
                 </div>
                 <div class="paper-card-actions">
                     ${paper.doi ? `<a href="https://doi.org/${paper.doi}" target="_blank" class="btn btn-sm btn-outline">🔗 原文</a>` : ''}
-                    <button class="btn btn-sm btn-primary" onclick="createCardFromPaper('${paper.id}')">🃏 生成卡片</button>
                     <button class="btn btn-sm btn-danger" onclick="deletePaper('${paper.id}')">🗑️ 删除</button>
                 </div>
             </div>
@@ -201,17 +199,6 @@ function loadCards() {
             </div>
         </div>
     `).join('');
-}
-
-// 加载论文选择器
-function loadPaperSelect() {
-    const select = document.getElementById('paperSelect');
-    const papers = LibraryStore.getAll();
-    
-    select.innerHTML = '<option value="">-- 选择文献 --</option>' +
-        papers.map(p => `
-            <option value="${p.id}">${escapeHtml(p.title || p.titleCn || '无标题')}</option>
-        `).join('');
 }
 
 // 通过DOI添加文献
@@ -276,7 +263,6 @@ async function addByDoi() {
             showToast('文献添加成功！', 'success');
             doiInput.value = '';
             loadLibrary();
-            loadPaperSelect();
         } else {
             showToast(result.message, 'warning');
         }
@@ -339,223 +325,17 @@ function deletePaper(id) {
     LibraryStore.remove(id);
     showToast('文献已删除', 'success');
     loadLibrary();
-    loadPaperSelect();
 }
 
-// 从文献创建卡片
-function createCardFromPaper(paperId) {
-    const paper = LibraryStore.getAll().find(p => p.id === paperId);
-    if (!paper) {
-        showToast('文献不存在', 'error');
-        return;
-    }
-    
-    // 预填充摘要
-    document.getElementById('paperSelect').value = paperId;
-    document.getElementById('customAbstract').value = paper.abstract || paper.titleEn || paper.titleCn || '';
-    
-    // 切换到卡片Tab
-    switchTab('cards');
-    
-    showToast('已加载文献信息，填写摘要后点击生成卡片', 'info');
-}
-
-// 生成卡片（AI或手动）
-async function generateCard() {
-    const paperSelect = document.getElementById('paperSelect');
-    const customAbstract = document.getElementById('customAbstract').value.trim();
-    
-    const paperId = paperSelect.value;
-    const paper = paperId ? LibraryStore.getAll().find(p => p.id === paperId) : null;
-    const abstract = customAbstract || paper?.abstract || '';
-    
-    if (!abstract) {
-        showToast('请提供摘要内容', 'error');
-        return;
-    }
-    
-    const settings = GlobalSettings.get();
-    
-    if (!settings.apiKey) {
-        // 没有API，使用简单解析
-        showToast('未配置API，使用基础解析模式', 'info');
-        createSimpleCard(paper, abstract);
-        return;
-    }
-    
-    // 显示加载状态
-    const btn = document.getElementById('generateCardBtn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner"></span> AI解析中...';
-    btn.disabled = true;
-    
-    try {
-        const card = await callAIForCard(abstract, settings);
-        saveCard(card, paper);
-    } catch (error) {
-        console.error('AI解析失败:', error);
-        showToast('AI解析失败，使用基础模式', 'warning');
-        createSimpleCard(paper, abstract);
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-}
-
-// 调用AI生成卡片
-async function callAIForCard(abstract, settings) {
-    const prompt = `请分析以下学术论文摘要，提取关键信息并生成简洁的文献卡片格式。
-
-摘要内容：
-${abstract}
-
-请以JSON格式返回，包含以下字段：
-- title: 论文标题（中文或英文）
-- summary: 简明摘要（100字以内）
-- keywords: 关键词数组（3-5个）
-- vocabulary: 学术词汇数组，每个词汇包含：
-  - word: 英文词汇
-  - word_cn: 中文翻译
-  - definition_cn: 中文释义
-  - definition_en: 英文释义（可选）
-  - example: 例句（可选，使用**词汇**标记）
-- keyPoints: 关键要点数组（2-3个）
-
-只返回JSON，不要有其他内容。`;
-
-    let apiUrl, requestBody;
-    
-    switch (settings.apiProvider) {
-        case 'siliconflow':
-            apiUrl = 'https://api.siliconflow.cn/v1/chat/completions';
-            requestBody = {
-                model: settings.model || 'Qwen/Qwen2.5-7B-Instruct',
-                messages: [{ role: 'user', content: prompt }],
-                stream: false
-            };
-            break;
-        case 'deepseek':
-            apiUrl = 'https://api.deepseek.com/v1/chat/completions';
-            requestBody = {
-                model: settings.model || 'deepseek-chat',
-                messages: [{ role: 'user', content: prompt }],
-                stream: false
-            };
-            break;
-        case 'qwen':
-            apiUrl = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
-            requestBody = {
-                model: settings.model || 'qwen-plus',
-                messages: [{ role: 'user', content: prompt }],
-                stream: false
-            };
-            break;
-        default:
-            throw new Error('不支持的API提供商');
-    }
-    
-    const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${settings.apiKey}`
-        },
-        body: JSON.stringify(requestBody)
+// 复制AI提示词
+function copyAiPrompt() {
+    const promptText = document.getElementById('aiPromptText').textContent;
+    navigator.clipboard.writeText(promptText).then(() => {
+        showToast('AI提示词已复制到剪贴板', 'success');
+    }).catch(err => {
+        console.error('复制失败:', err);
+        showToast('复制失败，请手动复制', 'error');
     });
-    
-    if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error?.message || 'API调用失败');
-    }
-    
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content || '';
-    
-    // 解析JSON响应
-    let card;
-    try {
-        // 尝试提取JSON
-        const jsonMatch = content.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            card = JSON.parse(jsonMatch[0]);
-        } else {
-            throw new Error('无法解析响应');
-        }
-    } catch (e) {
-        console.error('解析失败:', e);
-        throw e;
-    }
-    
-    return card;
-}
-
-// 创建简单卡片（无API）
-function createSimpleCard(paper, abstract) {
-    // 简单提取关键词
-    const commonWords = ['perovskite', 'solar', 'cell', 'efficiency', 'material', 'device', 'layer', 'film', 'interface', 'transport'];
-    const words = abstract.toLowerCase().match(/\b[a-z]{4,}\b/g) || [];
-    const wordCounts = {};
-    words.forEach(w => {
-        if (!commonWords.includes(w)) {
-            wordCounts[w] = (wordCounts[w] || 0) + 1;
-        }
-    });
-    const keywords = Object.entries(wordCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([word]) => word);
-    
-    const card = {
-        title: paper?.title || paper?.titleCn || '文献卡片',
-        summary: abstract.substring(0, 200) + (abstract.length > 200 ? '...' : ''),
-        keywords,
-        vocabulary: keywords.map(w => ({
-            word: w,
-            word_cn: '（待查）',
-            definition_cn: '（待查）'
-        })),
-        keyPoints: ['从摘要中提取的关键词已生成词汇卡片']
-    };
-    
-    saveCard(card, paper);
-}
-
-// 保存卡片
-function saveCard(card, paper) {
-    const cardData = {
-        title: card.title,
-        summary: card.summary,
-        keywords: card.keywords || [],
-        vocabulary: (card.vocabulary || []).map(v => ({
-            ...v,
-            status: 'new',
-            correct_count: 0,
-            error_count: 0,
-            correct_streak: 0
-        })),
-        keyPoints: card.keyPoints || [],
-        sourcePaperId: paper?.id || null,
-        sourceAbstract: paper?.abstract || null
-    };
-    
-    PapersStore.add(cardData);
-    
-    // 同时添加词汇到词汇本
-    if (cardData.vocabulary.length > 0) {
-        cardData.vocabulary.forEach(v => {
-            VocabularyStore.add(v);
-        });
-        showToast(`卡片创建成功！已将 ${cardData.vocabulary.length} 个词汇添加到词汇本`, 'success');
-    } else {
-        showToast('卡片创建成功！', 'success');
-    }
-    
-    // 清空表单
-    document.getElementById('paperSelect').value = '';
-    document.getElementById('customAbstract').value = '';
-    
-    // 重新加载卡片列表
-    loadCards();
 }
 
 // 打开卡片详情
@@ -618,13 +398,14 @@ function openCardDetail(cardId) {
         `;
     }
     
-    // 关键词
-    if (card.keywords?.length) {
+    // 关键词（支持中英文切换）
+    const keywords = cardLangCN ? (card.keywordsCn?.length ? card.keywordsCn : card.keywords) : card.keywords;
+    if (keywords?.length) {
         html += `
             <div class="card-section">
                 <h4>🏷️ ${cardLangCN ? '关键词' : 'Keywords'}</h4>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                    ${card.keywords.map(kw => `<span class="badge badge-primary">${escapeHtml(kw)}</span>`).join('')}
+                    ${keywords.map(kw => `<span class="badge badge-primary">${escapeHtml(kw)}</span>`).join('')}
                 </div>
             </div>
         `;
@@ -863,6 +644,7 @@ function processAndSaveCard(cardData) {
         abstract: cardData.abstract || '',
         abstractCn: cardData.abstract_cn || cardData.abstractCn || '',
         keywords: cardData.keywords || [],
+        keywordsCn: cardData.keywords_cn || cardData.keywordsCn || [],
         summary: cardData.summary || '',
         summaryCn: cardData.summary_cn || cardData.summaryCn || '',
         innovation: cardData.innovation || [],

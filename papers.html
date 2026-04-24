@@ -228,29 +228,56 @@
                     </div>
                 </div>
                 
-                <!-- AI生成卡片区域 -->
+                <!-- AI提示词模板 -->
                 <div class="card" style="margin-bottom: 24px;">
                     <div class="card-title">
-                        <span>✨</span> AI 生成卡片
+                        <span>📝</span> AI提示词模板
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">选择文献（可选）</label>
-                        <select class="form-select" id="paperSelect">
-                            <option value="">-- 选择文献 --</option>
-                        </select>
+                    <p style="color: var(--text-secondary); margin-bottom: 12px; font-size: 0.9rem;">
+                        将以下提示词和论文PDF发给AI，生成符合格式的文献卡片JSON
+                    </p>
+                    <div style="background: var(--bg); border-radius: 8px; padding: 16px; margin-bottom: 12px;">
+                        <pre id="aiPromptText" style="white-space: pre-wrap; word-wrap: break-word; font-size: 0.85rem; line-height: 1.6; margin: 0;">请阅读以下论文PDF，提取关键信息并生成文献卡片JSON。
+
+要求：
+1. 提取一作和通讯作者（通讯作者用*标注）
+2. 生成中英文标题、摘要、关键词
+3. 提取5-10个学术词汇，每个词汇包含：英文、中文翻译、中文释义、英文释义、例句
+4. 例句中使用 **词汇** 标记重点词
+
+JSON格式如下：
+{
+  "title": "中文标题",
+  "title_en": "English Title",
+  "authors": "一作姓名, 通讯作者姓名*",
+  "journal": "期刊名",
+  "publish_date": "2024-01-01",
+  "doi": "10.xxxx/xxx",
+  "abstract": "中文摘要",
+  "abstract_en": "English Abstract",
+  "keywords": ["keyword1", "keyword2"],
+  "keywords_cn": ["关键词1", "关键词2"],
+  "summary": "工作总结（100字以内）",
+  "innovation": ["创新点1", "创新点2"],
+  "application": "应用领域",
+  "structure": "文章脉络",
+  "methods": ["表征技术1", "表征技术2"],
+  "vocabulary": [
+    {
+      "en": "perovskite",
+      "cn": "钙钛矿",
+      "defCn": "一种具有ABX3晶体结构的材料",
+      "defEn": "A material with ABX3 crystal structure",
+      "ex": "**Perovskite** solar cells have achieved high efficiency."
+    }
+  ]
+}
+
+只返回JSON，不要有其他内容。</pre>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">自定义摘要（可选）</label>
-                        <textarea class="form-textarea" id="customAbstract" placeholder="粘贴文献摘要或关键段落，AI将自动解析生成卡片..."></textarea>
-                    </div>
-                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
-                        <button class="btn btn-primary" id="generateCardBtn">
-                            <span>🤖</span> AI 生成卡片
-                        </button>
-                    </div>
-                    <div id="generatingHint" class="text-muted" style="margin-top: 8px; font-size: 0.85rem;">
-                        配置API后可以使用AI解析功能
-                    </div>
+                    <button class="btn btn-primary" id="copyAiPromptBtn">
+                        <span>📋</span> 复制提示词
+                    </button>
                 </div>
 
                 <!-- 卡片列表 -->
@@ -258,7 +285,7 @@
                     <div class="empty-state">
                         <div class="empty-state-icon">🃏</div>
                         <p>暂无文献卡片</p>
-                        <p class="text-muted">使用AI生成或手动创建卡片</p>
+                        <p class="text-muted">使用AI生成JSON后粘贴导入</p>
                     </div>
                 </div>
             </div>
