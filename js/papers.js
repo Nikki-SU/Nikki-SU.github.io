@@ -361,7 +361,7 @@ function openCardDetail(cardId) {
     document.getElementById('cardLangSwitch').checked = cardLangCN;
     
     // 标题（驼峰命名字段）
-    const title = cardLangCN ? (card.titleCn || card.title) : card.title;
+    const title = cardLangCN ? card.titleCn : card.titleEn;
     document.getElementById('cardDetailTitle').textContent = title || '文献卡片';
     
     // 构建内容
@@ -388,7 +388,7 @@ function openCardDetail(cardId) {
     }
     
     // 摘要
-    const abstract = cardLangCN ? (card.abstractCn || card.abstract) : card.abstract;
+    const abstract = cardLangCN ? card.abstractCn : card.abstractEn;
     if (abstract) {
         html += `
             <div class="card-section">
@@ -412,7 +412,7 @@ function openCardDetail(cardId) {
     }
     
     // 工作总结
-    const summary = cardLangCN ? (card.summaryCn || card.summary) : card.summary;
+    const summary = cardLangCN ? card.summaryCn : card.summaryEn;
     if (summary) {
         html += `
             <div class="card-section">
@@ -423,7 +423,7 @@ function openCardDetail(cardId) {
     }
     
     // 创新点
-    const innovations = cardLangCN ? (card.innovationCn || card.innovation) : card.innovation;
+    const innovations = cardLangCN ? card.innovationCn : card.innovationEn;
     if (innovations) {
         const items = Array.isArray(innovations) ? innovations : [innovations];
         if (items.length && items[0]) {
@@ -439,7 +439,7 @@ function openCardDetail(cardId) {
     }
     
     // 应用领域
-    const application = cardLangCN ? (card.applicationCn || card.application) : card.application;
+    const application = cardLangCN ? card.applicationCn : card.applicationEn;
     if (application) {
         html += `
             <div class="card-section">
@@ -450,7 +450,7 @@ function openCardDetail(cardId) {
     }
     
     // 论证思路
-    const structure = cardLangCN ? (card.structureCn || card.structure) : card.structure;
+    const structure = cardLangCN ? card.structureCn : card.structureEn;
     if (structure) {
         html += `
             <div class="card-section">
@@ -461,7 +461,7 @@ function openCardDetail(cardId) {
     }
     
     // 表征技术
-    const methods = cardLangCN ? (card.methodsCn || card.methods) : card.methods;
+    const methods = cardLangCN ? card.methodsCn : card.methodsEn;
     if (methods) {
         const methodItems = Array.isArray(methods) ? methods : methods.split(',').map(m => m.trim());
         if (methodItems.length && methodItems[0]) {
@@ -635,30 +635,30 @@ function processAndSaveCard(cardData) {
     
     // 构建卡片数据
     const card = {
-        title: cardData.title_cn || cardData.titleCn || cardData.title || '',
         titleCn: cardData.title_cn || cardData.titleCn || '',
+        titleEn: cardData.title_en || cardData.titleEn || '',
         authors: cardData.authors || '',
         journal: cardData.journal || '',
         publishDate: cardData.publish_date || cardData.publishDate || '',
         doi: cardData.doi || '',
-        abstract: cardData.abstract_cn || cardData.abstractCn || cardData.abstract || '',
         abstractCn: cardData.abstract_cn || cardData.abstractCn || '',
+        abstractEn: cardData.abstract_en || cardData.abstractEn || '',
         keywords: cardData.keywords || [],
         keywordsCn: cardData.keywords_cn || cardData.keywordsCn || [],
-        summary: cardData.summary || '',
         summaryCn: cardData.summary_cn || cardData.summaryCn || '',
-        innovation: cardData.innovation || [],
-        innovationCn: cardData.innovation_cn || cardData.innovationCn || '',
-        application: cardData.application || '',
+        summaryEn: cardData.summary_en || cardData.summaryEn || '',
+        innovationCn: cardData.innovation_cn || cardData.innovationCn || [],
+        innovationEn: cardData.innovation_en || cardData.innovationEn || [],
         applicationCn: cardData.application_cn || cardData.applicationCn || '',
-        structure: cardData.structure || '',
+        applicationEn: cardData.application_en || cardData.applicationEn || '',
         structureCn: cardData.structure_cn || cardData.structureCn || '',
-        methods: cardData.methods || [],
+        structureEn: cardData.structure_en || cardData.structureEn || '',
         methodsCn: cardData.methods_cn || cardData.methodsCn || [],
+        methodsEn: cardData.methods_en || cardData.methodsEn || [],
         category: cardData.category || '',
         vocabulary: vocabulary,
         sourcePaperId: null,
-        sourceAbstract: cardData.abstract || ''
+        sourceAbstract: cardData.abstract_cn || cardData.abstractCn || ''
     };
     
     // 保存卡片
