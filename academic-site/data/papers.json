@@ -1,0 +1,425 @@
+{
+  "last_update": "2026-04-27",
+  "papers": [
+    {
+      "id": "2026042707",
+      "title": "Photoswitchable Isomers for Grain Boundary Resilience and Light Cycling Stability",
+      "title_cn": "光开关异构体实现晶界韧性和光照循环稳定性",
+      "authors": "Southeastheast University, Henan University, Helmholtz-Zentrum Berlin, University of Stuttgart, Xiamen University",
+      "journal": "Nature Energy",
+      "doi": "10.1038/s41560-026-01993-z",
+      "published_date": "2026-02-25",
+      "category": "stability",
+      "efficiency": "27.2%",
+      "keywords": [
+        "photoswitchable molecules",
+        "azobenzene",
+        "grain boundary resilience",
+        "light cycling",
+        "thermal cycling"
+      ],
+      "abstract": "Researchers introduced photoswitchable azobenzene derivative Ca-Abz at grain boundaries, acting as 'molecular spring' to dynamically dissipate stress from lattice expansion/contraction during light cycling. Achieved 27.2% PCE (certified 26.7%), with >95% retention after 2,000h under UV-containing light cycling at 65°C.",
+      "synthesis_method": "Ca-Abz photoswitchable molecule integration at grain boundaries via carboxyl-Pb coordination",
+      "characterization": [
+        "light cycling tests",
+        "thermal cycling tests",
+        "stress dissipation analysis"
+      ],
+      "stability": ">95% retention after 2,000h light cycling (65°C with UV); 95.7% after 500 thermal cycles (-40°C to +85°C)",
+      "significance": "Introduces new material design concept for addressing dynamic stress damage under real-world outdoor conditions"
+    },
+    {
+      "id": "2026042706",
+      "title": "All-Perovskite Four-Terminal Spectral Splitting Solar Cells of 30% PCE with FAPbI3 Wide-Bandgap Perovskite",
+      "title_cn": "基于FAPbI3宽带隙钙钛矿的全钙钛矿四端光谱分束叠层电池实现30%效率",
+      "authors": "University of Tokyo",
+      "journal": "ACS Omega",
+      "doi": "10.1021/acsomega.2026.xxxxx",
+      "published_date": "2026-04-24",
+      "category": "tandem",
+      "efficiency": "30.2%",
+      "keywords": [
+        "all-perovskite tandem",
+        "FAPbI3 nanoparticles",
+        "spectral splitting",
+        "four-terminal",
+        "wide-bandgap"
+      ],
+      "abstract": "Japanese researchers fabricated all-perovskite tandem cells using FAPbI3 nanoparticles and spectral splitting architecture. The 4T device combines 24.4% wide-bandgap top cell with 21.5% narrow-bandgap bottom cell, achieving 30.2% efficiency. Dichroic mirrors enable optimal wavelength separation for each subcell.",
+      "synthesis_method": "FAPbI3 nanoparticles synthesized via hot injection method; two-step spin-coating process; spectral splitting 4T configuration",
+      "characterization": [
+        "spectral splitting optimization",
+        "efficiency measurement",
+        "wavelength-dependent performance analysis"
+      ],
+      "stability": "FAPbI3 phase stability addressed via nanoparticle synthesis approach",
+      "significance": "Demonstrates viable pathway for all-perovskite tandems with simplified architecture flexibility"
+    },
+    {
+      "id": "2026042705",
+      "title": "Defect Networks as Charge Highways in Lead-Halide Perovskites",
+      "title_cn": "铅卤钙钛矿中缺陷网络作为电荷超高速公路",
+      "authors": "Institute of Science and Technology Austria (ISTA)",
+      "journal": "Nature Communications",
+      "doi": "10.1038/s41467-026-0xxxx",
+      "published_date": "2026-04-10",
+      "category": "fundamental",
+      "efficiency": "N/A",
+      "keywords": [
+        "domain walls",
+        "charge separation",
+        "defect engineering",
+        "charge highways",
+        "silver ion visualization"
+      ],
+      "abstract": "ISTA researchers discovered that structural defects in perovskites actually help rather than harm. Domain walls form interconnected networks that separate and guide electrical charges efficiently, acting as 'highways' for charge carriers. Using silver ion markers, they visualized these internal structures, providing first physical explanation for perovskite efficiency.",
+      "synthesis_method": "Nonlinear optical techniques for charge injection; silver ion diffusion for domain wall visualization",
+      "characterization": [
+        "nonlinear optics",
+        "silver ion mapping",
+        "domain wall imaging"
+      ],
+      "stability": "Fundamental understanding enables future internal structure engineering for efficiency improvement",
+      "significance": "Resolves long-standing debate on perovskite efficiency mechanism; opens new research direction for internal structure engineering"
+    },
+    {
+      "id": "2026042704",
+      "title": "Cesium-Doping Strategy with Novel Organo-Cesium Salt for Stable High-Efficiency Perovskite Solar Cells",
+      "title_cn": "新型有机铯盐铯掺杂策略实现稳定高效钙钛矿太阳能电池",
+      "authors": "Nanchang University",
+      "journal": "Nature Energy",
+      "doi": "10.1038/s41560-026-0xxxx",
+      "published_date": "2026-04-18",
+      "category": "stability",
+      "efficiency": "26.91%",
+      "keywords": [
+        "cesium doping",
+        "organo-cesium salt",
+        "phase stability",
+        "FAPbI3",
+        "cation homogenization"
+      ],
+      "abstract": "Researchers designed 4-(diphenylphosphino)benzoic acid cesium (CsDPPBA) as a novel organo-cesium salt to achieve efficient Cs+ doping and uniform cation distribution in FAPb1-xCsxPbI3. This strategy enables high-quality films with improved phase stability. Certified efficiency reached 26.61%, with 95% retention after 1,500h at 85°C.",
+      "synthesis_method": "Two-step Cs+ doping using novel CsDPPBA organo-cesium salt; controlled phase transition via amorphous mixed-halide intermediate",
+      "characterization": [
+        "phase transformation analysis",
+        "thermal stability testing",
+        "efficiency certification"
+      ],
+      "stability": "95% retention after 1,500h continuous operation at 85°C;阐明了相变路径和Cs+驱动的晶格稳定机制",
+      "significance": "Provides new思路 for Cs+ doping and addresses phase stability challenges in FAPbI3-based perovskites"
+    },
+    {
+      "id": "2026042703",
+      "title": "Bulk Nano-Heterojunction Architecture for High-Efficiency and Stable Perovskite Solar Cells",
+      "title_cn": "体相纳米异质界面架构实现高效稳定钙钛矿太阳能电池",
+      "authors": "Zhejiang University",
+      "journal": "Nature Materials",
+      "doi": "10.1038/s41563-026-0xxxx",
+      "published_date": "2026-04-20",
+      "category": "stability",
+      "efficiency": "26.5%",
+      "keywords": [
+        "bulk nano-heterojunction",
+        "SiOx nanoparticles",
+        "molecular welding",
+        "SiOx-Py3 architecture",
+        "scalable coating"
+      ],
+      "abstract": "ZJU research team introduced SiOx nanoparticles as scaffolds to transform planar interfaces into 3D intertwined bulk nano-heterojunction structures. The Py3 molecules form strong covalent bonds (P-O-Si, -10.89 eV binding energy) with SiOx, fundamentally preventing molecular disorganization. Achieved 26.5% PCE (certified 26.3%), retaining 98% initial efficiency after 2,500h MPP tracking at 60°C.",
+      "synthesis_method": "SiOx nanoparticle scaffold forming 3D bulk nano-heterojunction with Py3 molecules via P-O-Si covalent bonds",
+      "characterization": [
+        "NMR",
+        "TR-DLS",
+        "DFT calculations",
+        "contact angle measurements"
+      ],
+      "stability": "98% retention after 2,500h MPP at 60°C; >99% after 2,000h at 65°C under continuous illumination; 23.0% on 32.5 cm² modules via blade coating",
+      "significance": "First demonstration of unified high efficiency and long lifetime at near-commercialization level; breaks efficiency-stability trade-off"
+    },
+    {
+      "id": "2026042702",
+      "title": "New approach to solar cell manufacture: contact-triggered cationic interaction (CCI)",
+      "title_cn": "接触触发阳离子相互作用实现钙钛矿电池效率与稳定性同步提升",
+      "authors": "Korea University, University of Surrey",
+      "journal": "Nature Energy",
+      "doi": "10.1038/s41560-026-0xxxx",
+      "published_date": "2026-04-22",
+      "category": "stability",
+      "efficiency": "25.61%",
+      "keywords": [
+        "contact-triggered cationic interaction",
+        "crystal restructuring",
+        "efficiency-stability trade-off",
+        "photo-induced force microscopy"
+      ],
+      "abstract": "Researchers demonstrated that simply placing two perovskite films in contact triggers molecular interactions that reorganize crystal structure throughout the material depth. This contact-triggered cationic interaction (CCI) approach achieved certified 25.61% PCE. The treated material requires approximately twice the thermal energy to degrade compared to recent literature, representing significant stability improvement.",
+      "synthesis_method": "Contact-triggered cationic interaction (CCI) by physical contact between two perovskite films",
+      "characterization": [
+        "photo-induced force microscopy (PiFM)",
+        "accelerated ageing tests",
+        "SERIS certification"
+      ],
+      "stability": "Treated material requires ~2x thermal energy to degrade; charge carrier lifetime increased from 4.48 to 5.89 μs",
+      "significance": "Simple physical contact reorganizes material at molecular level without adding any chemicals or complexity"
+    },
+    {
+      "id": "2026042701",
+      "title": "Crystal-solvate pre-seeded synthesis for scalable perovskite solar cell fabrication",
+      "title_cn": "晶体溶剂化物预成核策略实现可扩展钙钛矿太阳能电池制备",
+      "authors": "Hong Kong University of Science and Technology, Chinese Academy of Sciences",
+      "journal": "Nature Synthesis",
+      "doi": "10.1038/s41563-026-0xxxx",
+      "published_date": "2026-04-24",
+      "category": "synthesis",
+      "efficiency": "26.13%",
+      "keywords": [
+        "crystal-solvate seeding",
+        "slow-release solvent",
+        "buried interface",
+        "scalable manufacturing",
+        "p-i-n architecture"
+      ],
+      "abstract": "HKUST researchers developed a crystal-solvate (CSV) seeding strategy with slow-release solvent function to address buried interface defects. Solvent molecules encapsulated within crystal lattice are gradually released during annealing, enabling gentle interfacial crystallization control. Achieved 26.13% PCE with 86.75% fill factor, and 23.15% efficiency on 49.91 cm² large-area devices, demonstrating minimal trans-scale efficiency loss.",
+      "synthesis_method": "Crystal-solvate seeding with low-dimensional CSV materials as buried-interface nucleation layers; slow-release solvent regulation during annealing",
+      "characterization": [
+        "Grazing incidence X-ray diffraction",
+        "nuclear magnetic resonance",
+        "operando characterization"
+      ],
+      "stability": "Enhanced operational stability under light and heat stress compared to control devices",
+      "significance": "Provides scalable manufacturing pathway by controlling buried interfacial microstructure from crystallization origin"
+    },
+    {
+      "id": "2026042001",
+      "title": "Three Papers Published in Nature Energy: JinkoSolar's Breakthroughs in TOPCon/Perovskite Tandem Technology",
+      "title_cn": "晶科能源在TOPCon/钙钛矿叠层技术领域取得突破，三篇论文发表于Nature Energy",
+      "authors": "JinkoSolar, Ningbo Institute of Materials Technology and Engineering, Soochow University, National University of Singapore",
+      "journal": "Nature Energy",
+      "doi": "10.1038/s41560-026-01982-2",
+      "published_date": "2026-04-18",
+      "category": "tandem",
+      "efficiency": "32.76%",
+      "keywords": [
+        "perovskite/TOPCon tandem",
+        "industrial scalability",
+        "crystallization control",
+        "FA+ regulation"
+      ],
+      "abstract": "JinkoSolar, in collaboration with research institutions, developed three major breakthroughs: (1) Industrial-scale TOPCon cells achieving 26.66% certified efficiency; (2) Monolithic perovskite/TOPCon tandem cells with 32.73% certified efficiency and 1,961 V open-circuit voltage, maintaining 80% initial efficiency after 2,000 hours; (3) Using dual-mode-coupled ligand (MBT) to regulate FA+ crystallization kinetics, achieving 32.76% certified efficiency with 91% retention after 1,700 hours operation.",
+      "synthesis_method": "Additive-assisted perovskite crystallization on industrial TOPCon silicon",
+      "characterization": [
+        "maximum power point tracking",
+        "IEC stability protocols",
+        "NPVM certification"
+      ],
+      "stability": "91% retention after 1,700 hours MPP tracking",
+      "significance": "Provides scalable and industrially compatible pathway for perovskite/crystalline silicon tandem technology"
+    },
+    {
+      "id": "2026042002",
+      "title": "Strongly Spatial-Confined Self-Assembled Monolayers for High-Performance Perovskite Photovoltaics",
+      "title_cn": "强空间限域自组装单分子层用于高性能钙钛矿光伏器件",
+      "authors": "Southern University of Science and Technology, The Hong Kong Polytechnic University",
+      "journal": "Science Bulletin",
+      "doi": "10.1016/j.scib.2026.04.001",
+      "published_date": "2026-04-16",
+      "category": "interface_engineering",
+      "efficiency": "26.54%",
+      "keywords": [
+        "self-assembled monolayer",
+        "spatial confinement",
+        "molecular lock",
+        "hole extraction"
+      ],
+      "abstract": "Researchers developed multidimensional spatial confinement strategy using custom molecule MeO-PABDCB with rigid phenylene backbone. The molecular lock architecture suppresses molecular desorption and disorder while improving perovskite film quality. Devices achieved 26.54% PCE with 86.4% fill factor, retaining ~90% initial efficiency after 1,000 hours continuous operation and 250 thermal cycles.",
+      "synthesis_method": "Custom SAM molecule design with rigid phenylene backbone for multidimensional spatial confinement",
+      "characterization": [
+        "J-V curves",
+        "thermal cycling tests",
+        "operational stability tracking"
+      ],
+      "stability": "~90% retention after 1,000h operation; 94% after 250 thermal cycles (-40 to 85°C)",
+      "significance": "Establishes spatial confinement as general molecular design principle for stabilizing ultra-thin functional interfaces"
+    },
+    {
+      "id": "2026041801",
+      "title": "Perovskite-silicon Tandem Solar Cells: The Next Leap in Ultra-Efficient Solar Power",
+      "title_cn": "钙钛矿-硅叠层太阳能电池：超高效率太阳能的下一跃升",
+      "authors": "Multiple research institutions and companies",
+      "journal": "Science Reviews",
+      "published_date": "2026-04-10",
+      "category": "review",
+      "efficiency": "34%",
+      "keywords": [
+        "perovskite-silicon tandem",
+        "commercialization",
+        "Shockley-Queisser limit",
+        "stability challenges"
+      ],
+      "abstract": "Comprehensive review of perovskite-silicon tandem solar cells progress toward commercialization. Discusses efficiency milestones (>30% certified), stability improvements, key challenges including long-term durability and lead toxicity, and market outlook. Oxford PV, LONGi, and Chinese manufacturers have announced pilot-line products. Commercial targets set for 26-28% module efficiency in late 2020s.",
+      "synthesis_method": "Review of various deposition techniques including solution processing and vacuum evaporation",
+      "characterization": [
+        "efficiency certification",
+        "IEC standards",
+        "outdoor stability testing"
+      ],
+      "stability": "Thousands of hours demonstrated in lab conditions",
+      "significance": "Provides comprehensive outlook on commercialization pathway and remaining challenges"
+    },
+    {
+      "id": "2026041701",
+      "title": "Bifacial Tunnel Oxide Passivating Contacts for Silicon and Perovskite-Silicon Tandem Solar Cells with Improved Efficiency",
+      "title_cn": "双面隧穿氧化物钝化接触用于硅及钙钛矿-硅叠层太阳能电池",
+      "authors": "JinkoSolar, Soochow University",
+      "journal": "Nature Energy",
+      "doi": "10.1038/s41560-026-02007-8",
+      "published_date": "2026-04-18",
+      "category": "tandem",
+      "efficiency": "32.73%",
+      "keywords": [
+        "bifacial TOPCon",
+        "perovskite/silicon tandem",
+        "patterned finger contacts",
+        "polysilicon structure"
+      ],
+      "abstract": "Developed full-size bifacial TOPCon crystalline silicon solar cell (26.34% certified) with innovative patterned n-type TOPCon finger contacts on front surface. Fabricated monolithic perovskite/TOPCon tandem cell achieving 32.73% certified efficiency and 1.961 V open-circuit voltage with excellent long-term stability (80% retention after 2,000 hours).",
+      "synthesis_method": "Patterned n-type TOPCon finger contacts with full-area p-type TOPCon on back",
+      "characterization": [
+        "certified efficiency measurement",
+        "MPP tracking",
+        "long-term stability testing"
+      ],
+      "stability": "80% initial efficiency retention after 2,000 hours continuous operation",
+      "significance": "Sets new performance record for perovskite/TOPCon tandem cells; provides scalable industrial pathway"
+    },
+    {
+      "id": "2026041601",
+      "title": "Dual-side Electrical Refinement Enables Efficient Industrial Tunnel Oxide Passivating Contact Silicon Solar Cells",
+      "title_cn": "双面电学优化实现高效工业级隧穿氧化物钝化接触硅太阳能电池",
+      "authors": "JinkoSolar, Ningbo Institute of Materials Technology and Engineering, Chinese Academy of Sciences",
+      "journal": "Nature Energy",
+      "doi": "10.1038/s41560-026-01982-2",
+      "published_date": "2026-04-18",
+      "category": "silicon_battery",
+      "efficiency": "26.66%",
+      "keywords": [
+        "industrial TOPCon",
+        "dual-side optimization",
+        "high-resistance boron emitter",
+        "double-layer tunneling structure"
+      ],
+      "abstract": "Achieved certified efficiency of 26.66% on M10-sized silicon wafers, setting new record for industrial-scale TOPCon cells. Key innovations include high-resistance boron emitter on front side, optimized fine-line grid design, and innovative double-layer tunneling SiO2/polysilicon structure on rear side. Achieved Voc of 744.6 mV, FF of 85.57%, and bifaciality of 88.3%.",
+      "synthesis_method": "Dual-sided electrical synergy optimization with localized polysilicon thinning technology",
+      "characterization": [
+        "efficiency certification",
+        "photovoltaic parameter analysis",
+        "industrial scalability assessment"
+      ],
+      "stability": "N/A for silicon baseline cell",
+      "significance": "Narrows gap between industrial TOPCon cells and theoretical efficiency limit (29.4%)"
+    },
+    {
+      "id": "2026041501",
+      "title": "Additive-Assisted Perovskite Crystallization on Industrial TOPCon Silicon for Tandem Solar Cells with Improved Efficiency",
+      "title_cn": "添加剂辅助钙钛矿结晶用于高效工业级TOPCon硅基叠层太阳能电池",
+      "authors": "JinkoSolar, National University of Singapore et al.",
+      "journal": "Nature Energy",
+      "doi": "10.1038/s41560-026-02010-z",
+      "published_date": "2026-04-18",
+      "category": "tandem",
+      "efficiency": "32.76%",
+      "keywords": [
+        "additive engineering",
+        "TOPCon integration",
+        "FA+ regulation",
+        "MBT ligand",
+        "industrial crystallization"
+      ],
+      "abstract": "Addressed rapid perovskite crystallization challenge on industrial thin silicon substrates using dual-mode-coupled ligand (MBT) to regulate major organic cation (FA+) crystallization kinetics. Achieved certified 32.76% efficiency (NPVM certified), approaching current tandem efficiency record. Cell maintained 91% initial efficiency after 1,700 hours continuous operation.",
+      "synthesis_method": "Dual-mode-coupled ligand (MBT) additive for controlled FA+ crystallization on industrial TOPCon",
+      "characterization": [
+        "NPVM certification",
+        "long-term operational reliability testing",
+        "crystallization kinetics analysis"
+      ],
+      "stability": "91% retention after 1,700 hours continuous operation",
+      "significance": "Bridges laboratory perovskite materials with market-dominant TOPCon silicon technology"
+    },
+    {
+      "id": "2026041401",
+      "title": "GW级钙钛矿正式量产：光伏四大赛道洗牌，谁能领跑",
+      "title_cn": "GW-level Perovskite Mass Production: Competition in Four Major PV Technology Tracks",
+      "authors": "Industry Analysis",
+      "journal": "Industry News",
+      "published_date": "2026-04-10",
+      "category": "industry",
+      "efficiency": "26.5-28%",
+      "keywords": [
+        "GW-level production",
+        "GCL Integration",
+        "perovskite/silicon tandem",
+        "commercialization",
+        "China manufacturing"
+      ],
+      "abstract": "Global first GW-level perovskite tandem production line achieved small-batch mass production in March 2026. GCL Integration's Kunshan facility operates at 26.5-28% efficiency with >98% yield. Plans to scale to 5GW by end of 2026. Longi achieved 34.85% lab efficiency. Market shows severe undersupply with demand 8-13GW vs supply 3-5GW.",
+      "synthesis_method": "Industrial-scale production with solution processing",
+      "characterization": [
+        "commercial production metrics",
+        "yield monitoring",
+        "cost analysis"
+      ],
+      "stability": "Ongoing field deployment tracking",
+      "significance": "Marks official entry into perovskite tandem commercialization era"
+    },
+    {
+      "id": "2026041301",
+      "title": "中国钙钛矿电池技术大会发布重磅成果：国产钙钛矿/晶硅叠层电池效率突破35%",
+      "title_cn": "China Perovskite Solar Cell Technology Conference: Domestic Perovskite/Silicon Tandem Efficiency Exceeds 35%",
+      "authors": "Multiple Chinese Research Institutions",
+      "journal": "Conference Report",
+      "published_date": "2026-04-13",
+      "category": "industry",
+      "efficiency": "35%",
+      "keywords": [
+        "perovskite/silicon tandem",
+        "lab efficiency record",
+        "China technology breakthrough",
+        "commercialization progress"
+      ],
+      "abstract": "At the 2026 China Perovskite Battery Technology Conference in Suzhou, domestic perovskite/silicon tandem cells achieved 35% lab efficiency, surpassing traditional silicon cell efficiency ceiling of ~26%. Key challenges remaining: mass production stability and operational lifetime. Multiple leading companies advancing pilot line construction.",
+      "synthesis_method": "Various laboratory deposition techniques",
+      "characterization": [
+        "lab efficiency certification"
+      ],
+      "stability": "Focus on addressing mass production stability challenges",
+      "significance": "Demonstrates China's leading position in perovskite tandem research"
+    },
+    {
+      "id": "2026041201",
+      "title": "Perovskite Solar Cell Outdoor Test Achieves Near-Zero Degradation After Six Months",
+      "title_cn": "钙钛矿太阳能电池户外实证：连续运行半年功率几乎零衰减",
+      "authors": "Zhejiang University, Huaneng Group",
+      "journal": "Nature Photonics",
+      "published_date": "2026-03-14",
+      "category": "stability",
+      "efficiency": "N/A",
+      "keywords": [
+        "outdoor stability",
+        "carrier nanocache",
+        "silicon nitride nanocomposites",
+        "buried interface"
+      ],
+      "abstract": "Zhejiang University research team developed 'carrier nanocache' structure using core-shell silicon nitride nanoparticles at buried interface. Large-area component (1200+ cm²) operated continuously for 6 months in Beijing outdoor environment with negligible power degradation, while unmodified component showed 67% degradation. Small cells retained 95% efficiency after 3,000 hours MPP tracking.",
+      "synthesis_method": "Core-shell α-Si3N4 nanoparticles with ~1.5 nm amorphous shell introduced at buried interface",
+      "characterization": [
+        "outdoor field testing",
+        "Beijing real-environment exposure",
+        "Kelvin probe force microscopy",
+        "capacitance-voltage measurements"
+      ],
+      "stability": "Near-zero degradation after 6 months outdoor operation; 95% retention after 3,000h MPP tracking",
+      "significance": "Bridges lab-to-real-environment gap; demonstrates viable pathway for engineering-stable perovskite devices"
+    }
+  ]
+}
