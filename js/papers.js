@@ -369,8 +369,6 @@ function copyAiPrompt() {
 }
 
 // 打开卡片详情
-let (cardListLang === 'cn') = true; // 默认显示中文
-
 function openCardDetail(cardId) {
     const card = PapersStore.getById(cardId);
     if (!card) {

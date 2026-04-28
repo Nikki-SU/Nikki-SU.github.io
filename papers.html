@@ -211,25 +211,7 @@
 
             <!-- 文献卡片 Tab -->
             <div id="cardsTab" class="tab-content">
-                <!-- 导入卡片区域 -->
-                <div class="card" style="margin-bottom: 24px;">
-                    <div class="card-title">
-                        <span>📥</span> 导入文献卡片
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">粘贴JSON数据</label>
-                        <textarea class="form-textarea" id="importJsonData" placeholder="直接粘贴JSON格式的文献卡片数据..." rows="6"></textarea>
-                    </div>
-                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" id="importJsonBtn">
-                            <span>✅</span> 导入JSON数据
-                        </button>
-                        <button class="btn btn-secondary" id="importCardBtn">
-                            <span>📁</span> 选择JSON文件
-                        </button>
-                        <input type="file" id="cardFileInput" accept=".json" style="display: none;">
-                    </div>
-                </div>
+                
                 
                 <!-- AI提示词模板（可折叠） -->
                 <details style="margin-top: 16px;">
@@ -328,11 +310,31 @@
 
 只返回JSON，不要有其他内容。</pre>
                     </div>
-                    <button class="btn btn-primary" id="copyAiPromptBtn">
-                        <span>📋</span> 复制提示词
-                    </button>
                     </div>
                 </details>
+                <button class="btn btn-primary" id="copyAiPromptBtn" style="margin-top: 12px;">
+                    <span>📋</span> 复制提示词
+                </button>
+
+            <!-- 导入卡片区域 -->
+                <div class="card" style="margin-bottom: 24px;">
+                    <div class="card-title">
+                        <span>📥</span> 导入文献卡片
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">粘贴JSON数据</label>
+                        <textarea class="form-textarea" id="importJsonData" placeholder="直接粘贴JSON格式的文献卡片数据..." rows="6"></textarea>
+                    </div>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button class="btn btn-primary" id="importJsonBtn">
+                            <span>✅</span> 导入JSON数据
+                        </button>
+                        <button class="btn btn-secondary" id="importCardBtn">
+                            <span>📁</span> 选择JSON文件
+                        </button>
+                        <input type="file" id="cardFileInput" accept=".json" style="display: none;">
+                    </div>
+                </div>
 
                 <!-- 卡片工具栏 -->
                 <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
