@@ -513,12 +513,6 @@ async function syncToGitHub() {
         if (putResponse.ok) {
             statusEl.textContent = `✅ 上传成功 (${new Date().toLocaleString()})`;
             showToast('数据已同步到 GitHub', 'success');
-            
-            // 更新自动同步的最后同步时间
-            const syncConfig = getAutoSyncConfig();
-            syncConfig.lastSync = new Date().toISOString();
-            saveAutoSyncConfig(syncConfig);
-            updateAutoSyncStatus();
         } else {
             const error = await putResponse.json();
             throw new Error(error.message || '上传失败');
@@ -671,11 +665,179 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = getGitHubToken();
     updateGitHubStatus(!!token);
     
-    // 初始化自动同步状态
+    // 初始化自动同步
     updateAutoSyncStatus();
-    
-    // 如果自动同步已开启，启动定时器
     const config = getAutoSyncConfig();
+    if (config.enabled && token) {
+        startAutoSync();
+    }
+});
+
+
+// ===== 自动同步功能 =====
+const AUTO_SYNC_KEY = 'autoSyncConfig';
+let autoSyncTimer = null;
+
+function getAutoSyncConfig() {
+    return Storage.get(AUTO_SYNC_KEY, {
+        enabled: false,
+        interval: 30,
+        lastSync: null
+    });
+}
+
+function saveAutoSyncConfig(config) {
+    Storage.set(AUTO_SYNC_KEY, config);
+}
+
+function toggleAutoSync() {
+    const toggle = document.getElementById('autoSyncToggle');
+    const config = getAutoSyncConfig();
+    config.enabled = toggle.checked;
+    saveAutoSyncConfig(config);
+    
+    if (config.enabled) {
+        startAutoSync();
+        showToast('自动同步已开启', 'success');
+    } else {
+        stopAutoSync();
+        showToast('自动同步已关闭', 'info');
+    }
+    updateAutoSyncStatus();
+}
+
+function saveAutoSyncInterval() {
+    const interval = parseInt(document.getElementById('autoSyncInterval').value);
+    const config = getAutoSyncConfig();
+    config.interval = interval;
+    saveAutoSyncConfig(config);
+    
+    if (config.enabled) {
+        stopAutoSync();
+        startAutoSync();
+        showToast(`同步间隔已更新为 ${interval} 分钟`, 'success');
+    }
+}
+
+function startAutoSync() {
+    const config = getAutoSyncConfig();
+    if (!config.enabled) return;
+    
+    const intervalMs = config.interval * 60 * 1000;
+    
+    if (autoSyncTimer) {
+        clearInterval(autoSyncTimer);
+    }
+    
+    autoSyncTimer = setInterval(() => {
+        console.log('自动同步触发...');
+        doAutoSync();
+    }, intervalMs);
+    
+    updateAutoSyncStatus();
+}
+
+async function doAutoSync() {
+    const token = getGitHubToken();
+    if (!token) {
+        console.warn('未配置GitHub Token，跳过自动同步');
+        return;
+    }
+    
+    try {
+        const backupData = {
+            version: '1.0',
+            lastSync: new Date().toISOString(),
+            data: {
+                libraryPapers: LibraryStore.getAll(),
+                papersData: PapersStore.getAll(),
+                vocabularyData: VocabularyStore.getAll(),
+                abstractTranslationData: AbstractTranslationStore.getAll(),
+                categoriesData: CategoriesStore.getAll(),
+                tagsData: TagsStore.getAll(),
+                trackingConfig: TrackingConfig.get(),
+                globalSettings: GlobalSettings.get()
+            }
+        };
+        
+        let sha = null;
+        const getResponse = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            { headers: { 'Authorization': `token ${token}` } }
+        );
+        
+        if (getResponse.ok) {
+            const fileData = await getResponse.json();
+            sha = fileData.sha;
+        }
+        
+        const body = {
+            message: `auto-sync: ${new Date().toISOString()}`,
+            content: btoa(unescape(encodeURIComponent(JSON.stringify(backupData, null, 2)))),
+            branch: GITHUB_CONFIG.branch
+        };
+        
+        if (sha) body.sha = sha;
+        
+        const putResponse = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            }
+        );
+        
+        if (putResponse.ok) {
+            console.log('自动同步成功');
+            const syncConfig = getAutoSyncConfig();
+            syncConfig.lastSync = lastSync = new Date().toISOString();
+            saveAutoSyncConfig(syncConfig);
+            updateAutoSyncStatus();
+        }
+    } catch (error) {
+        console.error('自动同步失败:', error);
+    }
+}
+
+function stopAutoSync() {
+    if (autoSyncTimer) {
+        clearInterval(autoSyncTimer);
+        autoSyncTimer = null;
+    }
+}
+
+function updateAutoSyncStatus() {
+    const config = getAutoSyncConfig();
+    const statusEl = document.getElementById('autoSyncStatus');
+    const toggle = document.getElementById('autoSyncToggle');
+    const intervalSelect = document.getElementById('autoSyncInterval');
+    
+    if (!statusEl) return;
+    
+    if (toggle) toggle.checked = config.enabled;
+    if (intervalSelect) intervalSelect.value = config.interval.toString();
+    
+    if (config.enabled) {
+        const nextSync = config.lastSync 
+            ? new Date(new Date(config.lastSync).getTime() + config.interval * 60 * 1000)
+            : new Date(Date.now() + config.interval * 60 * 1000);
+        statusEl.textContent = `✅ 已开启 · 下次同步: ${nextSync.toLocaleTimeString()}`;
+        statusEl.style.color = 'var(--primary)';
+    } else {
+        statusEl.textContent = '未开启';
+        statusEl.style.color = 'var(--text-secondary)';
+    }
+}
+
+// 初始化自动同步
+document.addEventListener('DOMContentLoaded', () => {
+    const config = getAutoSyncConfig();
+    const token = getGitHubToken();
+    updateAutoSyncStatus();
     if (config.enabled && token) {
         startAutoSync();
     }
