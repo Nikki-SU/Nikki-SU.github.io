@@ -548,6 +548,37 @@ const TagsStore = {
     getUncategorized() {
         const tags = this.getAll();
         return tags.filter(t => !t.categoryIds || t.categoryIds.length === 0);
+    },
+    
+    // 清理无关联标签
+    cleanupOrphanTags() {
+        const tags = this.getAll();
+        const orphanTags = [];
+        
+        tags.forEach(tag => {
+            // 检查是否有文献卡片关联
+            const papersWithTag = PapersStore.getAll().filter(p => 
+                p.tagIds && p.tagIds.includes(tag.id)
+            );
+            
+            // 检查是否有文献库词条关联
+            const libraryWithTag = LibraryStore.getAll().filter(p => 
+                p.tagIds && p.tagIds.includes(tag.id)
+            );
+            
+            // 如果没有任何数据关联，标记为孤儿标签
+            if (papersWithTag.length === 0 && libraryWithTag.length === 0) {
+                orphanTags.push(tag.id);
+            }
+        });
+        
+        // 删除孤儿标签
+        if (orphanTags.length > 0) {
+            const remainingTags = tags.filter(t => !orphanTags.includes(t.id));
+            Storage.set(this.key, remainingTags);
+        }
+        
+        return orphanTags.length;
     }
 };
 

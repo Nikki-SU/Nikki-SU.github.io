@@ -149,7 +149,7 @@ function renderDataList() {
     }
 }
 
-// 按标签渲染数据
+// 按标签渲染数据（分类型显示）
 function renderDataByTag(tagId) {
     const tag = TagsStore.getById(tagId);
     if (!tag) return;
@@ -165,10 +165,33 @@ function renderDataByTag(tagId) {
     if (papers.length === 0 && library.length === 0) {
         html += '<div class="empty-state"><p>暂无数据</p></div>';
     } else {
-        html += '<div class="data-list">';
-        papers.forEach(paper => html += renderDataCard(paper, 'paper'));
-        library.forEach(paper => html += renderDataCard(paper, 'library'));
-        html += '</div>';
+        // 文献库词条
+        if (library.length > 0) {
+            html += `
+                <details open style="margin-bottom: 16px;">
+                    <summary style="cursor: pointer; padding: 12px 16px; background: var(--bg); border-radius: 8px; font-weight: 500;">
+                        📚 ${currentLang === 'cn' ? '文献库词条' : 'Library'} (${library.length})
+                    </summary>
+                    <div class="data-list" style="margin-top: 8px;">
+                        ${library.map(p => renderDataCard(p, 'library')).join('')}
+                    </div>
+                </details>
+            `;
+        }
+        
+        // 文献卡片
+        if (papers.length > 0) {
+            html += `
+                <details open style="margin-bottom: 16px;">
+                    <summary style="cursor: pointer; padding: 12px 16px; background: var(--bg); border-radius: 8px; font-weight: 500;">
+                        🃏 ${currentLang === 'cn' ? '文献卡片' : 'Cards'} (${papers.length})
+                    </summary>
+                    <div class="data-list" style="margin-top: 8px;">
+                        ${papers.map(p => renderDataCard(p, 'paper')).join('')}
+                    </div>
+                </details>
+            `;
+        }
     }
     
     document.getElementById('dataList').innerHTML = html;

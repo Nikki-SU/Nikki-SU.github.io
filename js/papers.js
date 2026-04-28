@@ -5,7 +5,8 @@
 // 状态
 let currentTab = 'library';
 let currentCardId = null;
-let libraryLangCN = true; // 文献库语言，true=中文，false=英文
+let libraryLangCN = true;
+let libraryDetailMode = false; // false=简, true=详 // 文献库语言，true=中文，false=英文
 
 // DOM加载完成后执行
 document.addEventListener('DOMContentLoaded', () => {
@@ -150,10 +151,25 @@ function loadLibrary() {
             ? (paper.titleEn ? paper.titleEn : '') 
             : (paper.titleCn ? paper.titleCn : '');
         
+        // 摘要（详模式显示）
+        const abstract = libraryLangCN 
+            ? (paper.abstractCn || paper.abstract || '') 
+            : (paper.abstract || paper.abstractCn || '');
+        
+        // 标签
+        const uniqueTagIds = [...new Set(paper.tagIds || [])];
+        const tags = uniqueTagIds.map(id => TagsStore.getById(id)).filter(Boolean);
+        const tagHtml = tags.map(t => {
+            const name = libraryLangCN ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
+            return `<span class="badge badge-primary" style="font-size: 0.75rem;">${escapeHtml(name)}</span>`;
+        }).join('');
+        
         return `
             <div class="paper-card" data-id="${paper.id}">
                 <div class="paper-card-title">${escapeHtml(mainTitle)}</div>
                 ${subTitle ? `<div class="text-muted" style="font-size: 0.9rem; margin-bottom: 8px;">${escapeHtml(subTitle)}</div>` : ''}
+                ${libraryDetailMode && abstract ? `<div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5;">${escapeHtml(abstract.substring(0, 300))}${abstract.length > 300 ? '...' : ''}</div>` : ''}
+                ${tagHtml ? `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">${tagHtml}</div>` : ''}
                 <div class="paper-card-meta">
                     ${paper.authors ? `<span>${escapeHtml(paper.authors.join(', '))}</span>` : ''}
                     ${paper.year ? `<span> · ${paper.year}</span>` : ''}
@@ -353,7 +369,15 @@ function deletePaper(id) {
     if (!confirm('确定要删除这篇文献吗？')) return;
     
     LibraryStore.remove(id);
-    showToast('文献已删除', 'success');
+    
+    // 清理无关联标签
+    const cleaned = TagsStore.cleanupOrphanTags();
+    if (cleaned > 0) {
+        showToast(`文献已删除，清理了 ${cleaned} 个无用标签`, 'success');
+    } else {
+        showToast('文献已删除', 'success');
+    }
+    
     loadLibrary();
 }
 
@@ -625,6 +649,9 @@ function deleteCurrentCard() {
     if (!currentCardId || !confirm('确定要删除这个卡片吗？')) return;
     
     PapersStore.remove(currentCardId);
+    
+    // 清理无关联标签
+    TagsStore.cleanupOrphanTags();
     showToast('卡片已删除', 'success');
     closeCardDetailModal();
     loadCards();
