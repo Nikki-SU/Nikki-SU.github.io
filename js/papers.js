@@ -658,11 +658,13 @@ function processAndSaveCard(cardData) {
         category: cardData.category || '',
         vocabulary: vocabulary,
         sourcePaperId: null,
-        sourceAbstract: cardData.abstract_cn || cardData.abstractCn || ''
+        sourceAbstract: cardData.abstract_cn || cardData.abstractCn || '',
+        tagIds: []
     };
     
     // 保存卡片
-    PapersStore.add(card);
+    const result = PapersStore.add(card);
+    card.id = result.id;
     
     // 同时添加词汇到词汇本
     if (vocabulary.length > 0) {
@@ -674,7 +676,11 @@ function processAndSaveCard(cardData) {
         showToast('卡片导入成功！', 'success');
     }
     
-    // 自动创建摘要翻译练习卡片（如果有英文摘要）
+    
+    // 自动创建标签
+    autoCreateTagsForCard(card, cardData);
+    
+// 自动创建摘要翻译练习卡片（如果有英文摘要）
     if (cardData.abstract_cn || cardData.abstract_en || cardData.abstractCn || cardData.abstractEn) {
         const transCard = {
             paperId: card.id,
@@ -695,4 +701,81 @@ function processAndSaveCard(cardData) {
     
     // 重新加载卡片列表
     loadCards();
+}
+
+
+// 自动创建标签并关联到卡片
+function autoCreateTagsForCard(card, cardData) {
+    // 确保分类已初始化
+    CategoriesStore.initPresetCategories();
+    
+    const tagIds = [];
+    const categories = CategoriesStore.getAll();
+    
+    // 找到预置分类
+    const unnamedCategory = categories.find(c => c.name === '未命名');
+    const methodCategory = categories.find(c => c.name === '表征技术');
+    
+    // 处理关键词标签（加入"未命名"分类）
+    const keywords = cardData.keywords || [];
+    const keywordsCn = cardData.keywords_cn || cardData.keywordsCn || [];
+    
+    // 合并中英文关键词
+    for (let i = 0; i < Math.max(keywords.length, keywordsCn.length); i++) {
+        const nameEn = keywords[i] || '';
+        const nameCn = keywordsCn[i] || '';
+        
+        if (nameEn || nameCn) {
+            const result = TagsStore.addOrGet({
+                nameCn: nameCn,
+                nameEn: nameEn,
+                source: 'keyword',
+                categoryIds: unnamedCategory ? [unnamedCategory.id] : []
+            });
+            
+            if (result.success && result.tag) {
+                tagIds.push(result.tag.id);
+                
+                // 如果标签已存在但没有加入未命名分类，则加入
+                if (unnamedCategory && result.tag.categoryIds && !result.tag.categoryIds.includes(unnamedCategory.id)) {
+                    TagsStore.addToCategory(result.tag.id, unnamedCategory.id);
+                }
+            }
+        }
+    }
+    
+    // 处理表征技术标签（加入"表征技术"分类）
+    const methodsCn = cardData.methods_cn || cardData.methodsCn || [];
+    const methodsEn = cardData.methods_en || cardData.methodsEn || [];
+    
+    // 合并中英文表征技术
+    for (let i = 0; i < Math.max(methodsCn.length, methodsEn.length); i++) {
+        const nameCn = methodsCn[i] || '';
+        const nameEn = methodsEn[i] || '';
+        
+        if (nameEn || nameCn) {
+            const result = TagsStore.addOrGet({
+                nameCn: nameCn,
+                nameEn: nameEn,
+                source: 'method',
+                categoryIds: methodCategory ? [methodCategory.id] : []
+            });
+            
+            if (result.success && result.tag) {
+                tagIds.push(result.tag.id);
+                
+                // 如果标签已存在但没有加入表征技术分类，则加入
+                if (methodCategory && result.tag.categoryIds && !result.tag.categoryIds.includes(methodCategory.id)) {
+                    TagsStore.addToCategory(result.tag.id, methodCategory.id);
+                }
+            }
+        }
+    }
+    
+    // 更新卡片的 tagIds
+    if (tagIds.length > 0 && card.id) {
+        PapersStore.update(card.id, { tagIds: tagIds.slice(0, 20) });
+    }
+    
+    return tagIds;
 }

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件管理 - 小N学术站</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .files-container {
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 180px);
+            min-height: 500px;
+        }
+        
+        .sidebar {
+            width: 280px;
+            flex-shrink: 0;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            flex: 1;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            font-size: 18px;
+            color: var(--text);
+            border-radius: 4px;
+        }
+        
+        .btn-icon:hover {
+            background: var(--bg);
+        }
+        
+        .category-item {
+            margin-bottom: 8px;
+        }
+        
+        .category-header {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--bg);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .category-header:hover {
+            background: var(--primary-light);
+        }
+        
+        .category-header.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .category-toggle {
+            margin-right: 8px;
+            transition: transform 0.2s;
+        }
+        
+        .category-toggle.expanded {
+            transform: rotate(90deg);
+        }
+        
+        .category-name {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .category-count {
+            font-size: 12px;
+            opacity: 0.7;
+        }
+        
+        .tags-list {
+            margin-left: 20px;
+            margin-top: 4px;
+            display: none;
+        }
+        
+        .tags-list.expanded {
+            display: block;
+        }
+        
+        .tag-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: var(--card-bg);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .tag-item:hover {
+            border-color: var(--primary);
+        }
+        
+        .tag-item.active {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+        
+        .tag-name {
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .tag-source {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: var(--bg);
+            color: var(--text-secondary);
+        }
+        
+        .uncategorized-tags {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .uncategorized-title {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+        
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--bg);
+        }
+        
+        .search-box::before {
+            content: '🔍';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .lang-toggle {
+            display: flex;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .lang-btn {
+            padding: 8px 16px;
+            border: none;
+            background: var(--bg);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .data-list {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .data-card {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .data-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .data-card-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+        
+        .data-card-meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .data-card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .data-tag {
+            font-size: 12px;
+            padding: 2px 8px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 12px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            background: var(--bg);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .files-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">
+                小N学术站
+            </h1>
+            <nav class="nav" id="navMenu">
+                <a href="index.html" class="nav-link">
+                    <span>🏠</span> 首页
+                </a>
+                <a href="papers.html" class="nav-link">
+                    <span>📚</span> 文献
+                </a>
+                <a href="vocabulary.html" class="nav-link">
+                    <span>📖</span> 学习
+                </a>
+                <a href="files.html" class="nav-link active">
+                    <span>📁</span> 文件管理
+                </a>
+                <a href="settings.html" class="nav-link">
+                    <span>⚙️</span> 设置
+                </a>
+            </nav>
+            <button class="menu-toggle" id="menuToggle">☰</button>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <div class="toolbar">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="搜索标签、分类、文献...">
+                </div>
+                <div class="lang-toggle">
+                    <button class="lang-btn active" data-lang="cn">中文</button>
+                    <button class="lang-btn" data-lang="en">English</button>
+                </div>
+            </div>
+            
+            <div class="files-container">
+                <div class="sidebar">
+                    <div class="sidebar-header">
+                        <span class="sidebar-title">📂 分类管理</span>
+                        <button class="btn-icon" onclick="openAddCategoryModal()" title="添加分类">+</button>
+                    </div>
+                    <div id="categoryList"></div>
+                </div>
+                
+                <div class="main-content">
+                    <div id="dataList" class="data-list">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📁</div>
+                            <p>选择左侧分类或标签查看相关数据</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 添加分类模态框 -->
+    <div class="modal" id="addCategoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">添加分类</h3>
+                <button class="modal-close" onclick="closeModal('addCategoryModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>分类名称</label>
+                <input type="text" id="categoryName" placeholder="输入分类名称">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="closeModal('addCategoryModal')">取消</button>
+                <button class="btn btn-primary" onclick="addCategory()">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加标签模态框 -->
+    <div class="modal" id="addTagModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">添加标签</h3>
+                <button class="modal-close" onclick="closeModal('addTagModal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>中文名称</label>
+                <input type="text" id="tagNameCn" placeholder="输入中文名称">
+            </div>
+            <div class="form-group">
+                <label>英文名称</label>
+                <input type="text" id="tagNameEn" placeholder="输入英文名称">
+            </div>
+            <div class="form-group">
+                <label>所属分类（可选）</label>
+                <select id="tagCategory">
+                    <option value="">无分类</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="closeModal('addTagModal')">取消</button>
+                <button class="btn btn-primary" onclick="addTag()">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑标签模态框 -->
+    <div class="modal" id="editTagModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">编辑标签</h3>
+                <button class="modal-close" onclick="closeModal('editTagModal')">&times;</button>
+            </div>
+            <input type="hidden" id="editTagId">
+            <div class="form-group">
+                <label>中文名称</label>
+                <input type="text" id="editTagNameCn">
+            </div>
+            <div class="form-group">
+                <label>英文名称</label>
+                <input type="text" id="editTagNameEn">
+            </div>
+            <div class="form-group">
+                <label>所属分类</label>
+                <div id="editTagCategories"></div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-danger" onclick="deleteTag()">删除标签</button>
+                <button class="btn btn-primary" onclick="saveTag()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑分类模态框 -->
+    <div class="modal" id="editCategoryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">编辑分类</h3>
+                <button class="modal-close" onclick="closeModal('editCategoryModal')">&times;</button>
+            </div>
+            <input type="hidden" id="editCategoryId">
+            <div class="form-group">
+                <label>分类名称</label>
+                <input type="text" id="editCategoryName">
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-danger" onclick="deleteCategory()">删除分类</button>
+                <button class="btn btn-primary" onclick="saveCategory()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/files.js"></script>
+</body>
+</html>

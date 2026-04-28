@@ -333,6 +333,186 @@ const VocabularyStore = {
     }
 };
 
+
+
+// 分类数据
+const CategoriesStore = {
+    key: 'categoriesData',
+    
+    getAll() {
+        return Storage.get(this.key, []);
+    },
+    
+    getById(id) {
+        const categories = this.getAll();
+        return categories.find(c => c.id === id);
+    },
+    
+    getByName(name) {
+        const categories = this.getAll();
+        return categories.find(c => c.name === name);
+    },
+    
+    add(category) {
+        const categories = this.getAll();
+        const newCategory = {
+            id: 'cat_' + Date.now(),
+            name: category.name,
+            createdAt: new Date().toISOString()
+        };
+        categories.push(newCategory);
+        Storage.set(this.key, categories);
+        return { success: true, category: newCategory };
+    },
+    
+    update(id, data) {
+        const categories = this.getAll();
+        const index = categories.findIndex(c => c.id === id);
+        if (index !== -1) {
+            categories[index] = { ...categories[index], ...data };
+            Storage.set(this.key, categories);
+            return true;
+        }
+        return false;
+    },
+    
+    remove(id) {
+        const categories = this.getAll();
+        const filtered = categories.filter(c => c.id !== id);
+        Storage.set(this.key, filtered);
+    },
+    
+    initPresetCategories() {
+        const categories = this.getAll();
+        if (categories.length === 0) {
+            this.add({ name: '表征技术' });
+            this.add({ name: '未命名' });
+        }
+    }
+};
+
+// 标签数据
+const TagsStore = {
+    key: 'tagsData',
+    
+    getAll() {
+        return Storage.get(this.key, []);
+    },
+    
+    getById(id) {
+        const tags = this.getAll();
+        return tags.find(t => t.id === id);
+    },
+    
+    findByName(nameCn, nameEn) {
+        const tags = this.getAll();
+        return tags.find(t => {
+            const tNameCn = t.nameCn || t.name_cn || '';
+            const tNameEn = t.nameEn || t.name_en || '';
+            const searchCn = nameCn || '';
+            const searchEn = nameEn || '';
+            return tNameCn === searchCn || tNameEn === searchEn ||
+                   tNameEn === searchCn || tNameCn === searchEn;
+        });
+    },
+    
+    add(tag) {
+        const tags = this.getAll();
+        const exists = this.findByName(tag.nameCn, tag.nameEn);
+        if (exists) {
+            return { success: false, message: '标签已存在', tag: exists };
+        }
+        
+        const newTag = {
+            id: 'tag_' + Date.now(),
+            nameCn: tag.nameCn || tag.name_cn || '',
+            nameEn: tag.nameEn || tag.name_en || '',
+            source: tag.source || 'custom',
+            categoryIds: tag.categoryIds || [],
+            createdAt: new Date().toISOString()
+        };
+        tags.push(newTag);
+        Storage.set(this.key, tags);
+        return { success: true, tag: newTag };
+    },
+    
+    addOrGet(tag) {
+        const exists = this.findByName(tag.nameCn, tag.nameEn);
+        if (exists) {
+            return { success: true, tag: exists, isNew: false };
+        }
+        return { ...this.add(tag), isNew: true };
+    },
+    
+    update(id, data) {
+        const tags = this.getAll();
+        const index = tags.findIndex(t => t.id === id);
+        if (index !== -1) {
+            const updateData = {
+                ...data,
+                nameCn: data.nameCn || data.name_cn,
+                nameEn: data.nameEn || data.name_en
+            };
+            tags[index] = { ...tags[index], ...updateData };
+            Storage.set(this.key, tags);
+            return true;
+        }
+        return false;
+    },
+    
+    remove(id) {
+        const tags = this.getAll();
+        const filtered = tags.filter(t => t.id !== id);
+        Storage.set(this.key, filtered);
+        this.removeFromAllData(id);
+    },
+    
+    removeFromAllData(tagId) {
+        const papers = PapersStore.getAll();
+        papers.forEach(paper => {
+            if (paper.tagIds && paper.tagIds.includes(tagId)) {
+                paper.tagIds = paper.tagIds.filter(id => id !== tagId);
+            }
+        });
+        Storage.set(PapersStore.key, papers);
+        
+        const library = LibraryStore.getAll();
+        library.forEach(paper => {
+            if (paper.tagIds && paper.tagIds.includes(tagId)) {
+                paper.tagIds = paper.tagIds.filter(id => id !== tagId);
+            }
+        });
+        Storage.set(LibraryStore.key, library);
+    },
+    
+    addToCategory(tagId, categoryId) {
+        const tags = this.getAll();
+        const tag = tags.find(t => t.id === tagId);
+        if (tag) {
+            if (!tag.categoryIds) tag.categoryIds = [];
+            if (tag.categoryIds.length >= 5) {
+                return { success: false, message: '标签最多属于5个分类' };
+            }
+            if (!tag.categoryIds.includes(categoryId)) {
+                tag.categoryIds.push(categoryId);
+                Storage.set(this.key, tags);
+            }
+            return { success: true };
+        }
+        return { success: false, message: '标签不存在' };
+    },
+    
+    getByCategory(categoryId) {
+        const tags = this.getAll();
+        return tags.filter(t => t.categoryIds && t.categoryIds.includes(categoryId));
+    },
+    
+    getUncategorized() {
+        const tags = this.getAll();
+        return tags.filter(t => !t.categoryIds || t.categoryIds.length === 0);
+    }
+};
+
 // 摘要翻译练习数据
 const AbstractTranslationStore = {
     key: 'abstractTranslationData',
@@ -573,6 +753,8 @@ window.Storage = Storage;
 window.LibraryStore = LibraryStore;
 window.PapersStore = PapersStore;
 window.VocabularyStore = VocabularyStore;
+window.CategoriesStore = CategoriesStore;
+window.TagsStore = TagsStore;
 window.AbstractTranslationStore = AbstractTranslationStore;
 window.TrackingConfig = TrackingConfig;
 window.GlobalSettings = GlobalSettings;
