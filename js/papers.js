@@ -169,6 +169,21 @@ function loadLibrary() {
     }).join('');
 }
 
+
+// 文献卡片列表全局语言
+let cardListLang = 'cn';
+
+function setCardListLang(lang) {
+    cardListLang = lang;
+    // 更新按钮状态
+    document.getElementById('cardListLangCn').style.background = lang === 'cn' ? 'var(--primary)' : 'var(--bg)';
+    document.getElementById('cardListLangCn').style.color = lang === 'cn' ? 'white' : 'var(--text)';
+    document.getElementById('cardListLangEn').style.background = lang === 'en' ? 'var(--primary)' : 'var(--bg)';
+    document.getElementById('cardListLangEn').style.color = lang === 'en' ? 'white' : 'var(--text)';
+    // 重新加载卡片
+    loadCards();
+}
+
 // 加载卡片列表
 function loadCards() {
     const container = document.getElementById('cardList');
@@ -185,20 +200,35 @@ function loadCards() {
         return;
     }
     
-    container.innerHTML = cards.map(card => `
+    container.innerHTML = cards.map(card => {
+        // 根据全局语言选择显示内容
+        const title = cardListLang === 'cn' 
+            ? (card.titleCn || card.titleEn || '文献卡片')
+            : (card.titleEn || card.titleCn || 'Paper Card');
+        
+        const abstract = cardListLang === 'cn'
+            ? (card.abstractCn || card.abstractEn || '')
+            : (card.abstractEn || card.abstractCn || '');
+        
+        const keywords = cardListLang === 'cn'
+            ? (card.keywordsCn && card.keywordsCn.length ? card.keywordsCn : card.keywords || [])
+            : (card.keywords || []);
+        
+        return `
         <div class="card" onclick="openCardDetail('${card.id}')" style="cursor: pointer;">
-            <div style="font-weight: 600; margin-bottom: 8px;">
-                ${escapeHtml(card.title || '文献卡片')}
+            <div style="font-weight: 600; margin-bottom: 8px; line-height: 1.4;">
+                ${escapeHtml(title)}
             </div>
-            ${card.summary ? `<p class="text-muted" style="font-size: 0.9rem; margin-bottom: 12px;">${escapeHtml(card.summary.substring(0, 100))}...</p>` : ''}
-            <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
-                ${(card.keywords || []).slice(0, 3).map(kw => `<span class="badge badge-primary">${escapeHtml(kw)}</span>`).join('')}
-            </div>
-            <div class="text-muted" style="font-size: 0.8rem;">
-                ${card.vocabulary?.length || 0} 个词汇 · ${formatDate(card.createdAt)}
+            ${abstract ? `<p class="text-muted" style="font-size: 0.85rem; margin-bottom: 12px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${escapeHtml(abstract)}</p>` : ''}
+            ${keywords.length > 0 ? `<div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;">
+                ${keywords.slice(0, 4).map(kw => `<span class="badge badge-primary">${escapeHtml(kw)}</span>`).join('')}
+            </div>` : ''}
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-secondary);">
+                <span>${card.doi ? `DOI: ${escapeHtml(card.doi)}` : ''}</span>
+                <span>${card.vocabulary?.length || 0} 词</span>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 // 通过DOI添加文献
@@ -339,14 +369,7 @@ function copyAiPrompt() {
 }
 
 // 打开卡片详情
-let cardLangCN = true; // 默认显示中文
-
-function toggleCardLang() {
-    cardLangCN = document.getElementById('cardLangSwitch').checked;
-    if (currentCardId) {
-        openCardDetail(currentCardId);
-    }
-}
+let (cardListLang === 'cn') = true; // 默认显示中文
 
 function openCardDetail(cardId) {
     const card = PapersStore.getById(cardId);
@@ -358,10 +381,10 @@ function openCardDetail(cardId) {
     currentCardId = cardId;
     
     // 设置开关状态
-    document.getElementById('cardLangSwitch').checked = cardLangCN;
+    // 使用全局语言设置
     
     // 标题（驼峰命名字段）
-    const title = cardLangCN ? card.titleCn : card.titleEn;
+    const title = (cardListLang === 'cn') ? card.titleCn : card.titleEn;
     document.getElementById('cardDetailTitle').textContent = title || '文献卡片';
     
     // 构建内容
@@ -381,29 +404,29 @@ function openCardDetail(cardId) {
     if (card.authors) {
         html += `
             <div class="card-section">
-                <h4>👥 ${cardLangCN ? '作者' : 'Authors'}</h4>
+                <h4>👥 ${(cardListLang === 'cn') ? '作者' : 'Authors'}</h4>
                 <p style="font-size:13px;">${escapeHtml(card.authors)}</p>
             </div>
         `;
     }
     
     // 摘要
-    const abstract = cardLangCN ? card.abstractCn : card.abstractEn;
+    const abstract = (cardListLang === 'cn') ? card.abstractCn : card.abstractEn;
     if (abstract) {
         html += `
             <div class="card-section">
-                <h4>📝 ${cardLangCN ? '摘要' : 'Abstract'}</h4>
+                <h4>📝 ${(cardListLang === 'cn') ? '摘要' : 'Abstract'}</h4>
                 <p>${escapeHtml(abstract)}</p>
             </div>
         `;
     }
     
     // 关键词（支持中英文切换）
-    const keywords = cardLangCN ? (card.keywordsCn?.length ? card.keywordsCn : card.keywords) : card.keywords;
+    const keywords = (cardListLang === 'cn') ? (card.keywordsCn?.length ? card.keywordsCn : card.keywords) : card.keywords;
     if (keywords?.length) {
         html += `
             <div class="card-section">
-                <h4>🏷️ ${cardLangCN ? '关键词' : 'Keywords'}</h4>
+                <h4>🏷️ ${(cardListLang === 'cn') ? '关键词' : 'Keywords'}</h4>
                 <div style="display:flex;flex-wrap:wrap;gap:8px;">
                     ${keywords.map(kw => `<span class="badge badge-primary">${escapeHtml(kw)}</span>`).join('')}
                 </div>
@@ -412,24 +435,24 @@ function openCardDetail(cardId) {
     }
     
     // 工作总结
-    const summary = cardLangCN ? card.summaryCn : card.summaryEn;
+    const summary = (cardListLang === 'cn') ? card.summaryCn : card.summaryEn;
     if (summary) {
         html += `
             <div class="card-section">
-                <h4>💡 ${cardLangCN ? '工作总结' : 'Summary'}</h4>
+                <h4>💡 ${(cardListLang === 'cn') ? '工作总结' : 'Summary'}</h4>
                 <p>${escapeHtml(summary)}</p>
             </div>
         `;
     }
     
     // 创新点
-    const innovations = cardLangCN ? card.innovationCn : card.innovationEn;
+    const innovations = (cardListLang === 'cn') ? card.innovationCn : card.innovationEn;
     if (innovations) {
         const items = Array.isArray(innovations) ? innovations : [innovations];
         if (items.length && items[0]) {
             html += `
                 <div class="card-section">
-                    <h4>⭐ ${cardLangCN ? '创新点' : 'Innovation'}</h4>
+                    <h4>⭐ ${(cardListLang === 'cn') ? '创新点' : 'Innovation'}</h4>
                     <ul>
                         ${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
                     </ul>
@@ -439,35 +462,35 @@ function openCardDetail(cardId) {
     }
     
     // 应用领域
-    const application = cardLangCN ? card.applicationCn : card.applicationEn;
+    const application = (cardListLang === 'cn') ? card.applicationCn : card.applicationEn;
     if (application) {
         html += `
             <div class="card-section">
-                <h4>🎯 ${cardLangCN ? '应用领域' : 'Application'}</h4>
+                <h4>🎯 ${(cardListLang === 'cn') ? '应用领域' : 'Application'}</h4>
                 <p>${escapeHtml(application)}</p>
             </div>
         `;
     }
     
     // 论证思路
-    const structure = cardLangCN ? card.structureCn : card.structureEn;
+    const structure = (cardListLang === 'cn') ? card.structureCn : card.structureEn;
     if (structure) {
         html += `
             <div class="card-section">
-                <h4>📊 ${cardLangCN ? '论证思路' : 'Structure'}</h4>
+                <h4>📊 ${(cardListLang === 'cn') ? '论证思路' : 'Structure'}</h4>
                 <p>${escapeHtml(structure)}</p>
             </div>
         `;
     }
     
     // 表征技术
-    const methods = cardLangCN ? card.methodsCn : card.methodsEn;
+    const methods = (cardListLang === 'cn') ? card.methodsCn : card.methodsEn;
     if (methods) {
         const methodItems = Array.isArray(methods) ? methods : methods.split(',').map(m => m.trim());
         if (methodItems.length && methodItems[0]) {
             html += `
                 <div class="card-section">
-                    <h4>🔬 ${cardLangCN ? '表征技术' : 'Methods'}</h4>
+                    <h4>🔬 ${(cardListLang === 'cn') ? '表征技术' : 'Methods'}</h4>
                     <div style="display:flex;flex-wrap:wrap;gap:6px;">
                         ${methodItems.map(m => `<span class="badge" style="background:var(--bg);color:var(--text);">${escapeHtml(m)}</span>`).join('')}
                     </div>
@@ -480,7 +503,7 @@ function openCardDetail(cardId) {
     if (card.vocabulary?.length) {
         html += `
             <div class="card-section">
-                <h4>📖 ${cardLangCN ? '学术词汇' : 'Vocabulary'} (${card.vocabulary.length})</h4>
+                <h4>📖 ${(cardListLang === 'cn') ? '学术词汇' : 'Vocabulary'} (${card.vocabulary.length})</h4>
                 <div class="vocab-list">
                     ${card.vocabulary.map(v => {
                         const wordEn = v.en || v.word || '';
@@ -488,7 +511,7 @@ function openCardDetail(cardId) {
                         const defCn = v.defCn || v.definition_cn || '';
                         const defEn = v.defEn || v.definition_en || '';
                         const ex = v.ex || v.example || '';
-                        const def = cardLangCN ? defCn : defEn;
+                        const def = (cardListLang === 'cn') ? defCn : defEn;
                         
                         // 格式化例句（标粗词汇）
                         let exFormatted = ex;
@@ -506,7 +529,7 @@ function openCardDetail(cardId) {
                                         <span class="word">${escapeHtml(wordEn)}</span>
                                         <span class="cn">${escapeHtml(wordCn)}</span>
                                     </div>
-                                    <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy(JSON.stringify({en: wordEn, cn: wordCn, defCn: defCn, defEn: defEn, ex: ex}).replace(/"/g, '&quot;'))">📚 ${cardLangCN ? '加入学习' : 'Study'}</button>
+                                    <button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); addVocabToStudy(JSON.stringify({en: wordEn, cn: wordCn, defCn: defCn, defEn: defEn, ex: ex}).replace(/"/g, '&quot;'))">📚 ${(cardListLang === 'cn') ? '加入学习' : 'Study'}</button>
                                 </div>
                                 ${def ? `<div class="def">${escapeHtml(def)}</div>` : ''}
                                 ${ex ? `<div class="ex">${exFormatted}</div>` : ''}
@@ -523,24 +546,24 @@ function openCardDetail(cardId) {
     const cardTags = (card.tagIds || []).map(id => TagsStore.getById(id)).filter(Boolean);
     html += `
         <div class="card-section">
-            <h4>🏷️ ${cardLangCN ? '标签' : 'Tags'}</h4>
+            <h4>🏷️ ${(cardListLang === 'cn') ? '标签' : 'Tags'}</h4>
             <div id="cardTagsContainer" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
                 ${cardTags.map(t => {
-                    const name = cardLangCN ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
+                    const name = (cardListLang === 'cn') ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
                     return `<span class="badge badge-primary" style="cursor:pointer;" onclick="removeTagFromCard('${t.id}')">${escapeHtml(name)} ×</span>`;
                 }).join('')}
             </div>
             <div style="display:flex;gap:8px;">
                 <select id="tagSelect" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;">
-                    <option value="">${cardLangCN ? '选择标签...' : 'Select tag...'}</option>
+                    <option value="">${(cardListLang === 'cn') ? '选择标签...' : 'Select tag...'}</option>
                     ${TagsStore.getAll().map(t => {
-                        const name = cardLangCN ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
+                        const name = (cardListLang === 'cn') ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
                         const selected = cardTags.some(ct => ct.id === t.id);
                         return selected ? '' : `<option value="${t.id}">${escapeHtml(name)}</option>`;
                     }).join('')}
                 </select>
                 <button class="btn btn-sm btn-primary" onclick="addTagToCard()" style="padding:8px 16px;border:none;border-radius:6px;background:var(--primary);color:white;cursor:pointer;">
-                    ${cardLangCN ? '添加' : 'Add'}
+                    ${(cardListLang === 'cn') ? '添加' : 'Add'}
                 </button>
             </div>
         </div>
@@ -816,7 +839,7 @@ function addTagToCard() {
     const select = document.getElementById('tagSelect');
     const tagId = select.value;
     if (!tagId) {
-        showToast(cardLangCN ? '请选择标签' : 'Please select a tag', 'error');
+        showToast((cardListLang === 'cn') ? '请选择标签' : 'Please select a tag', 'error');
         return;
     }
     
@@ -825,19 +848,19 @@ function addTagToCard() {
     
     const tagIds = card.tagIds || [];
     if (tagIds.length >= 20) {
-        showToast(cardLangCN ? '最多添加20个标签' : 'Maximum 20 tags', 'error');
+        showToast((cardListLang === 'cn') ? '最多添加20个标签' : 'Maximum 20 tags', 'error');
         return;
     }
     
     if (tagIds.includes(tagId)) {
-        showToast(cardLangCN ? '标签已存在' : 'Tag already exists', 'warning');
+        showToast((cardListLang === 'cn') ? '标签已存在' : 'Tag already exists', 'warning');
         return;
     }
     
     tagIds.push(tagId);
     PapersStore.update(currentCardId, { tagIds });
     openCardDetail(currentCardId); // 刷新详情
-    showToast(cardLangCN ? '标签已添加' : 'Tag added', 'success');
+    showToast((cardListLang === 'cn') ? '标签已添加' : 'Tag added', 'success');
 }
 
 // 从卡片移除标签
@@ -850,6 +873,6 @@ function removeTagFromCard(tagId) {
     const tagIds = (card.tagIds || []).filter(id => id !== tagId);
     PapersStore.update(currentCardId, { tagIds });
     openCardDetail(currentCardId); // 刷新详情
-    showToast(cardLangCN ? '标签已移除' : 'Tag removed', 'success');
+    showToast((cardListLang === 'cn') ? '标签已移除' : 'Tag removed', 'success');
 }
 
