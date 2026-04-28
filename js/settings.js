@@ -471,7 +471,9 @@ async function syncToGitHub() {
                 vocabularyData: VocabularyStore.getAll(),
                 abstractTranslationData: AbstractTranslationStore.getAll(),
                 categoriesData: CategoriesStore.getAll(),
-                tagsData: TagsStore.getAll()
+                tagsData: TagsStore.getAll(),
+                trackingConfig: TrackingConfig.get(),
+                globalSettings: GlobalSettings.get()
             }
         };
         
@@ -559,6 +561,8 @@ async function syncFromGitHub() {
         if (content.data.abstractTranslationData) Storage.set('abstractTranslationData', content.data.abstractTranslationData);
         if (content.data.categoriesData) Storage.set('categoriesData', content.data.categoriesData);
         if (content.data.tagsData) Storage.set('tagsData', content.data.tagsData);
+        if (content.data.trackingConfig) Storage.set('trackingConfig', content.data.trackingConfig);
+        if (content.data.globalSettings) Storage.set('globalSettings', content.data.globalSettings);
         
         statusEl.textContent = `✅ 下载成功 (备份时间: ${content.lastSync || '未知'})`;
         showToast('数据已恢复，请刷新页面', 'success');
