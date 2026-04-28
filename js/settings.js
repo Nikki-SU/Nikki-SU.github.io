@@ -393,3 +393,271 @@ function exportData(type, name) {
     
     showToast(`${name}已导出: ${filename}`, 'success');
 }
+
+// ===== GitHub 同步功能 =====
+
+const GITHUB_CONFIG = {
+    owner: 'Nikki-SU',
+    repo: 'Nikki-SU.github.io',
+    branch: 'main',
+    path: 'data/backup.json'
+};
+
+// 获取 GitHub Token
+function getGitHubToken() {
+    return Storage.get('githubToken', '');
+}
+
+// 保存 GitHub Token
+function saveGitHubToken() {
+    const token = document.getElementById('githubToken').value.trim();
+    if (!token) {
+        showToast('请输入 Token', 'error');
+        return;
+    }
+    
+    // 验证 Token
+    fetch('https://api.github.com/user', {
+        headers: { 'Authorization': `token ${token}` }
+    })
+    .then(res => {
+        if (res.ok) {
+            Storage.set('githubToken', token);
+            showToast('Token 保存成功', 'success');
+            updateGitHubStatus(true);
+            document.getElementById('githubToken').value = '';
+        } else {
+            showToast('Token 无效', 'error');
+        }
+    })
+    .catch(() => showToast('验证失败，请检查网络', 'error'));
+}
+
+// 更新 GitHub 状态显示
+function updateGitHubStatus(configured) {
+    const statusEl = document.getElementById('githubStatus');
+    if (configured) {
+        statusEl.className = 'status-indicator configured';
+        statusEl.style.background = '#d4edda';
+        statusEl.style.color = '#155724';
+        statusEl.textContent = '✅ 已配置';
+    } else {
+        statusEl.className = 'status-indicator not-configured';
+        statusEl.style.background = '#f8d7da';
+        statusEl.style.color = '#721c24';
+        statusEl.textContent = '❌ 未配置';
+    }
+}
+
+// 同步到 GitHub
+async function syncToGitHub() {
+    const token = getGitHubToken();
+    if (!token) {
+        showToast('请先配置 GitHub Token', 'error');
+        return;
+    }
+    
+    const statusEl = document.getElementById('syncStatus');
+    statusEl.textContent = '正在上传...';
+    
+    try {
+        // 收集所有数据
+        const backupData = {
+            version: '1.0',
+            lastSync: new Date().toISOString(),
+            data: {
+                libraryPapers: LibraryStore.getAll(),
+                papersData: PapersStore.getAll(),
+                vocabularyData: VocabularyStore.getAll(),
+                abstractTranslationData: AbstractTranslationStore.getAll(),
+                categoriesData: CategoriesStore.getAll(),
+                tagsData: TagsStore.getAll()
+            }
+        };
+        
+        // 获取当前文件的 SHA（如果存在）
+        let sha = null;
+        const getResponse = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            { headers: { 'Authorization': `token ${token}` } }
+        );
+        
+        if (getResponse.ok) {
+            const fileData = await getResponse.json();
+            sha = fileData.sha;
+        }
+        
+        // 上传文件
+        const body = {
+            message: `backup: ${new Date().toISOString()}`,
+            content: btoa(unescape(encodeURIComponent(JSON.stringify(backupData, null, 2)))),
+            branch: GITHUB_CONFIG.branch
+        };
+        
+        if (sha) body.sha = sha;
+        
+        const putResponse = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            }
+        );
+        
+        if (putResponse.ok) {
+            statusEl.textContent = `✅ 上传成功 (${new Date().toLocaleString()})`;
+            showToast('数据已同步到 GitHub', 'success');
+        } else {
+            const error = await putResponse.json();
+            throw new Error(error.message || '上传失败');
+        }
+    } catch (error) {
+        statusEl.textContent = `❌ 上传失败: ${error.message}`;
+        showToast('同步失败', 'error');
+    }
+}
+
+// 从 GitHub 下载
+async function syncFromGitHub() {
+    const token = getGitHubToken();
+    if (!token) {
+        showToast('请先配置 GitHub Token', 'error');
+        return;
+    }
+    
+    const statusEl = document.getElementById('syncStatus');
+    statusEl.textContent = '正在下载...';
+    
+    try {
+        const response = await fetch(
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            { headers: { 'Authorization': `token ${token}` } }
+        );
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('未找到备份文件，请先上传');
+            }
+            throw new Error('下载失败');
+        }
+        
+        const fileData = await response.json();
+        const content = JSON.parse(decodeURIComponent(escape(atob(fileData.content))));
+        
+        if (!content.data) {
+            throw new Error('备份文件格式错误');
+        }
+        
+        // 恢复数据
+        if (content.data.libraryPapers) Storage.set('libraryPapers', content.data.libraryPapers);
+        if (content.data.papersData) Storage.set('papersData', content.data.papersData);
+        if (content.data.vocabularyData) Storage.set('vocabularyData', content.data.vocabularyData);
+        if (content.data.abstractTranslationData) Storage.set('abstractTranslationData', content.data.abstractTranslationData);
+        if (content.data.categoriesData) Storage.set('categoriesData', content.data.categoriesData);
+        if (content.data.tagsData) Storage.set('tagsData', content.data.tagsData);
+        
+        statusEl.textContent = `✅ 下载成功 (备份时间: ${content.lastSync || '未知'})`;
+        showToast('数据已恢复，请刷新页面', 'success');
+    } catch (error) {
+        statusEl.textContent = `❌ 下载失败: ${error.message}`;
+        showToast('同步失败', 'error');
+    }
+}
+
+// ===== 数据迁移功能 =====
+
+async function migrateData() {
+    const statusEl = document.getElementById('migrateStatus');
+    statusEl.textContent = '正在迁移...';
+    
+    // 初始化预置分类
+    CategoriesStore.initPresetCategories();
+    
+    const categories = CategoriesStore.getAll();
+    const unnamedCategory = categories.find(c => c.name === '未命名');
+    const methodCategory = categories.find(c => c.name === '表征技术');
+    
+    let tagCount = 0;
+    let paperCount = 0;
+    
+    // 遍历所有文献卡片
+    const papers = PapersStore.getAll();
+    
+    for (const paper of papers) {
+        // 如果已经有标签，跳过
+        if (paper.tagIds && paper.tagIds.length > 0) continue;
+        
+        const tagIds = [];
+        
+        // 处理关键词
+        const keywords = paper.keywords || [];
+        const keywordsCn = paper.keywordsCn || paper.keywords_cn || [];
+        
+        for (let i = 0; i < Math.max(keywords.length, keywordsCn.length); i++) {
+            const nameEn = keywords[i] || '';
+            const nameCn = keywordsCn[i] || '';
+            
+            if (nameEn || nameCn) {
+                const result = TagsStore.addOrGet({
+                    nameCn, nameEn,
+                    source: 'keyword',
+                    categoryIds: unnamedCategory ? [unnamedCategory.id] : []
+                });
+                
+                if (result.success && result.tag) {
+                    tagIds.push(result.tag.id);
+                    if (result.isNew) tagCount++;
+                    
+                    if (unnamedCategory && result.tag.categoryIds && !result.tag.categoryIds.includes(unnamedCategory.id)) {
+                        TagsStore.addToCategory(result.tag.id, unnamedCategory.id);
+                    }
+                }
+            }
+        }
+        
+        // 处理表征技术
+        const methodsCn = paper.methodsCn || paper.methods_cn || [];
+        const methodsEn = paper.methodsEn || paper.methods_en || [];
+        
+        for (let i = 0; i < Math.max(methodsCn.length, methodsEn.length); i++) {
+            const nameCn = methodsCn[i] || '';
+            const nameEn = methodsEn[i] || '';
+            
+            if (nameEn || nameCn) {
+                const result = TagsStore.addOrGet({
+                    nameCn, nameEn,
+                    source: 'method',
+                    categoryIds: methodCategory ? [methodCategory.id] : []
+                });
+                
+                if (result.success && result.tag) {
+                    tagIds.push(result.tag.id);
+                    if (result.isNew) tagCount++;
+                    
+                    if (methodCategory && result.tag.categoryIds && !result.tag.categoryIds.includes(methodCategory.id)) {
+                        TagsStore.addToCategory(result.tag.id, methodCategory.id);
+                    }
+                }
+            }
+        }
+        
+        // 更新卡片
+        if (tagIds.length > 0) {
+            PapersStore.update(paper.id, { tagIds: tagIds.slice(0, 20) });
+            paperCount++;
+        }
+    }
+    
+    statusEl.textContent = `✅ 迁移完成：创建了 ${tagCount} 个标签，更新了 ${paperCount} 条文献`;
+    showToast('数据迁移完成', 'success');
+}
+
+// 页面加载时检查 GitHub 状态
+document.addEventListener('DOMContentLoaded', () => {
+    const token = getGitHubToken();
+    updateGitHubStatus(!!token);
+});

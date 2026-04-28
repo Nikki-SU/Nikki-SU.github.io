@@ -23,6 +23,9 @@
                 <a href="vocabulary.html" class="nav-link">
                     <span>📖</span> 学习
                 </a>
+                <a href="files.html" class="nav-link">
+                    <span>📁</span> 文件管理
+                </a>
                 <a href="settings.html" class="nav-link active">
                     <span>⚙️</span> 设置
                 </a>
@@ -183,7 +186,55 @@
                 </div>
             </div>
 
-            <!-- 关于 -->
+            
+            <!-- GitHub 同步 -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-title">
+                    <span>☁️</span> GitHub 同步
+                </div>
+                <div id="githubStatus" class="status-indicator not-configured" style="margin-bottom: 20px; padding: 12px; border-radius: 8px;">
+                    ❌ 未配置
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">GitHub Personal Access Token</label>
+                    <input type="password" id="githubToken" class="form-input" placeholder="ghp_xxxx..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 12px;">
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+                        需要仓库读写权限。获取方式：<a href="https://github.com/settings/tokens/new?description=学术站同步&scopes=repo" target="_blank" style="color: var(--primary);">点击创建Token</a>
+                    </p>
+                    <button onclick="saveGitHubToken()" class="btn btn-primary" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; background: var(--primary); color: white;">
+                        保存 Token
+                    </button>
+                </div>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button onclick="syncToGitHub()" class="btn btn-secondary" style="padding: 10px 20px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: var(--bg);">
+                            ⬆️ 上传到 GitHub
+                        </button>
+                        <button onclick="syncFromGitHub()" class="btn btn-secondary" style="padding: 10px 20px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: var(--bg);">
+                            ⬇️ 从 GitHub 下载
+                        </button>
+                    </div>
+                    <p id="syncStatus" style="margin-top: 12px; font-size: 0.85rem; color: var(--text-secondary);"></p>
+                </div>
+            </div>
+
+            <!-- 数据迁移 -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-title">
+                    <span>🔄</span> 数据迁移
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                    为现有数据自动创建标签（基于文献卡片的关键词和表征技术字段）
+                </p>
+                <button onclick="migrateData()" class="btn btn-primary" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; background: var(--primary); color: white;">
+                    执行迁移
+                </button>
+                <p id="migrateStatus" style="margin-top: 12px; font-size: 0.85rem; color: var(--text-secondary);"></p>
+            </div>
+
+<!-- 关于 -->
             <div class="card" style="margin-top: 24px;">
                 <div class="card-title">
                     <span>ℹ️</span> 关于

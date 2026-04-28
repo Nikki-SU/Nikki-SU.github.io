@@ -518,6 +518,34 @@ function openCardDetail(cardId) {
         `;
     }
     
+
+    // 标签编辑
+    const cardTags = (card.tagIds || []).map(id => TagsStore.getById(id)).filter(Boolean);
+    html += `
+        <div class="card-section">
+            <h4>🏷️ ${cardLangCN ? '标签' : 'Tags'}</h4>
+            <div id="cardTagsContainer" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                ${cardTags.map(t => {
+                    const name = cardLangCN ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
+                    return `<span class="badge badge-primary" style="cursor:pointer;" onclick="removeTagFromCard('${t.id}')">${escapeHtml(name)} ×</span>`;
+                }).join('')}
+            </div>
+            <div style="display:flex;gap:8px;">
+                <select id="tagSelect" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;">
+                    <option value="">${cardLangCN ? '选择标签...' : 'Select tag...'}</option>
+                    ${TagsStore.getAll().map(t => {
+                        const name = cardLangCN ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
+                        const selected = cardTags.some(ct => ct.id === t.id);
+                        return selected ? '' : `<option value="${t.id}">${escapeHtml(name)}</option>`;
+                    }).join('')}
+                </select>
+                <button class="btn btn-sm btn-primary" onclick="addTagToCard()" style="padding:8px 16px;border:none;border-radius:6px;background:var(--primary);color:white;cursor:pointer;">
+                    ${cardLangCN ? '添加' : 'Add'}
+                </button>
+            </div>
+        </div>
+    `;
+
     document.getElementById('cardDetailBody').innerHTML = html;
     document.getElementById('cardDetailModal').classList.remove('hidden');
 }
@@ -779,3 +807,49 @@ function autoCreateTagsForCard(card, cardData) {
     
     return tagIds;
 }
+
+
+// 添加标签到卡片
+function addTagToCard() {
+    if (!currentCardId) return;
+    
+    const select = document.getElementById('tagSelect');
+    const tagId = select.value;
+    if (!tagId) {
+        showToast(cardLangCN ? '请选择标签' : 'Please select a tag', 'error');
+        return;
+    }
+    
+    const card = PapersStore.getById(currentCardId);
+    if (!card) return;
+    
+    const tagIds = card.tagIds || [];
+    if (tagIds.length >= 20) {
+        showToast(cardLangCN ? '最多添加20个标签' : 'Maximum 20 tags', 'error');
+        return;
+    }
+    
+    if (tagIds.includes(tagId)) {
+        showToast(cardLangCN ? '标签已存在' : 'Tag already exists', 'warning');
+        return;
+    }
+    
+    tagIds.push(tagId);
+    PapersStore.update(currentCardId, { tagIds });
+    openCardDetail(currentCardId); // 刷新详情
+    showToast(cardLangCN ? '标签已添加' : 'Tag added', 'success');
+}
+
+// 从卡片移除标签
+function removeTagFromCard(tagId) {
+    if (!currentCardId) return;
+    
+    const card = PapersStore.getById(currentCardId);
+    if (!card) return;
+    
+    const tagIds = (card.tagIds || []).filter(id => id !== tagId);
+    PapersStore.update(currentCardId, { tagIds });
+    openCardDetail(currentCardId); // 刷新详情
+    showToast(cardLangCN ? '标签已移除' : 'Tag removed', 'success');
+}
+
