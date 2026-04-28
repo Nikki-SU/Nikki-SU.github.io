@@ -1,5 +1,5 @@
 /**
- * files.js - 文件管理页面逻辑
+ * files.js - 文件管理页面逻辑（重构版）
  */
 
 let currentLang = 'cn';
@@ -52,7 +52,8 @@ function renderCategoryList() {
     // 渲染分类
     categories.forEach(category => {
         const categoryTags = TagsStore.getByCategory(category.id);
-        const count = categoryTags.length;
+        const categoryItems = category.itemIds || [];
+        const count = categoryTags.length + categoryItems.length;
         
         html += `
             <div class="category-item">
@@ -153,8 +154,9 @@ function renderDataByTag(tagId) {
     const tag = TagsStore.getById(tagId);
     if (!tag) return;
     
-    const papers = PapersStore.getAll().filter(p => p.tagIds && p.tagIds.includes(tagId));
-    const library = LibraryStore.getAll().filter(p => p.tagIds && p.tagIds.includes(tagId));
+    // 去重后的数据
+    const papers = PapersStore.getAll().filter(p => p.tagIds && [...new Set(p.tagIds)].includes(tagId));
+    const library = LibraryStore.getAll().filter(p => p.tagIds && [...new Set(p.tagIds)].includes(tagId));
     
     const displayName = currentLang === 'cn' ? (tag.nameCn || tag.nameEn) : (tag.nameEn || tag.nameCn);
     
@@ -172,16 +174,33 @@ function renderDataByTag(tagId) {
     document.getElementById('dataList').innerHTML = html;
 }
 
-// 按分类渲染数据
+// 按分类渲染数据（包含标签关联 + 直接关联）
 function renderDataByCategory(categoryId) {
     const category = CategoriesStore.getById(categoryId);
     if (!category) return;
     
+    // 通过标签关联的数据
     const tags = TagsStore.getByCategory(categoryId);
     const tagIds = tags.map(t => t.id);
     
-    const papers = PapersStore.getAll().filter(p => p.tagIds && p.tagIds.some(id => tagIds.includes(id)));
-    const library = LibraryStore.getAll().filter(p => p.tagIds && p.tagIds.some(id => tagIds.includes(id)));
+    // 直接关联的数据ID
+    const directItemIds = category.itemIds || [];
+    
+    // 获取所有数据
+    const allPapers = PapersStore.getAll();
+    const allLibrary = LibraryStore.getAll();
+    
+    // 通过标签关联
+    const papersByTags = allPapers.filter(p => p.tagIds && [...new Set(p.tagIds)].some(id => tagIds.includes(id)));
+    const libraryByTags = allLibrary.filter(p => p.tagIds && [...new Set(p.tagIds)].some(id => tagIds.includes(id)));
+    
+    // 直接关联
+    const papersDirect = allPapers.filter(p => directItemIds.includes(p.id));
+    const libraryDirect = allLibrary.filter(p => directItemIds.includes(p.id));
+    
+    // 合并去重
+    const papers = [...new Map([...papersByTags, ...papersDirect].map(p => [p.id, p])).values()];
+    const library = [...new Map([...libraryByTags, ...libraryDirect].map(p => [p.id, p])).values()];
     
     let html = `<h3 style="margin-bottom: 16px; color: var(--primary);">分类: ${escapeHtml(category.name)} (${papers.length + library.length}条)</h3>`;
     
@@ -208,8 +227,18 @@ function renderDataCard(data, type) {
     if (data.publishDate || data.year) meta.push(data.publishDate || data.year);
     if (data.doi) meta.push(`DOI: ${data.doi}`);
     
-    const tags = (data.tagIds || []).map(id => TagsStore.getById(id)).filter(Boolean);
-    const tagHtml = tags.map(t => {
+    // 去重 tagIds 后再展示
+    const uniqueTagIds = [...new Set(data.tagIds || [])];
+    const tags = uniqueTagIds.map(id => TagsStore.getById(id)).filter(Boolean);
+    
+    // 标签也去重展示（按名称去重）
+    const seenTags = new Set();
+    const tagHtml = tags.filter(t => {
+        const key = t.nameCn || t.nameEn;
+        if (seenTags.has(key)) return false;
+        seenTags.add(key);
+        return true;
+    }).map(t => {
         const name = currentLang === 'cn' ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
         return `<span class="data-tag">${escapeHtml(name)}</span>`;
     }).join('');
@@ -225,61 +254,133 @@ function renderDataCard(data, type) {
     `;
 }
 
-// 搜索所有
+// 搜索所有（重构版 - 5类可折叠）
 function searchAll(query) {
-    const results = [];
+    let html = '';
     
-    // 搜索标签
+    // 1. 文献库词条
+    const library = LibraryStore.getAll().filter(p => {
+        const titleCn = p.titleCn || p.title || '';
+        const titleEn = p.titleEn || p.title || '';
+        const doi = p.doi || '';
+        const abstract = p.abstract || p.abstractCn || '';
+        return titleCn.toLowerCase().includes(query) || 
+               titleEn.toLowerCase().includes(query) ||
+               doi.toLowerCase().includes(query) ||
+               abstract.toLowerCase().includes(query);
+    });
+    
+    if (library.length > 0) {
+        html += `
+            <details open style="margin-bottom: 16px;">
+                <summary style="cursor: pointer; padding: 12px 16px; background: var(--bg); border-radius: 8px; font-weight: 500;">
+                    📚 文献库词条 (${library.length})
+                </summary>
+                <div class="data-list" style="margin-top: 8px;">
+                    ${library.map(p => renderDataCard(p, 'library')).join('')}
+                </div>
+            </details>
+        `;
+    }
+    
+    // 2. 文献卡片
+    const papers = PapersStore.getAll().filter(p => {
+        const titleCn = p.titleCn || '';
+        const titleEn = p.titleEn || '';
+        const doi = p.doi || '';
+        const abstractCn = p.abstractCn || '';
+        const abstractEn = p.abstractEn || '';
+        return titleCn.toLowerCase().includes(query) ||
+               titleEn.toLowerCase().includes(query) ||
+               doi.toLowerCase().includes(query) ||
+               abstractCn.toLowerCase().includes(query) ||
+               abstractEn.toLowerCase().includes(query);
+    });
+    
+    if (papers.length > 0) {
+        html += `
+            <details open style="margin-bottom: 16px;">
+                <summary style="cursor: pointer; padding: 12px 16px; background: var(--bg); border-radius: 8px; font-weight: 500;">
+                    🃏 文献卡片 (${papers.length})
+                </summary>
+                <div class="data-list" style="margin-top: 8px;">
+                    ${papers.map(p => renderDataCard(p, 'paper')).join('')}
+                </div>
+            </details>
+        `;
+    }
+    
+    // 3. 词汇
+    const vocabulary = VocabularyStore.getAll().filter(v => {
+        const en = v.en || v.english || '';
+        const cn = v.cn || v.chinese || '';
+        const defCn = v.defCn || '';
+        const defEn = v.defEn || '';
+        return en.toLowerCase().includes(query) ||
+               cn.toLowerCase().includes(query) ||
+               defCn.toLowerCase().includes(query) ||
+               defEn.toLowerCase().includes(query);
+    });
+    
+    if (vocabulary.length > 0) {
+        html += `
+            <details open style="margin-bottom: 16px;">
+                <summary style="cursor: pointer; padding: 12px 16px; background: var(--bg); border-radius: 8px; font-weight: 500;">
+                    📖 词汇 (${vocabulary.length})
+                </summary>
+                <div style="margin-top: 8px;">
+                    ${vocabulary.map(v => {
+                        const en = v.en || v.english || '';
+                        const cn = v.cn || v.chinese || '';
+                        const display = currentLang === 'cn' ? `${cn || en} ${en ? `(${en})` : ''}` : `${en || cn} ${cn ? `(${cn})` : ''}`;
+                        return `<div class="tag-item" onclick="window.location.href='vocabulary.html'">${escapeHtml(display)}</div>`;
+                    }).join('')}
+                </div>
+            </details>
+        `;
+    }
+    
+    // 4. 标签
     const tags = TagsStore.getAll().filter(t => {
-        const nameCn = t.nameCn || t.name_cn || '';
-        const nameEn = t.nameEn || t.name_en || '';
+        const nameCn = t.nameCn || '';
+        const nameEn = t.nameEn || '';
         return nameCn.toLowerCase().includes(query) || nameEn.toLowerCase().includes(query);
     });
     
-    // 搜索分类
+    if (tags.length > 0) {
+        html += `
+            <details open style="margin-bottom: 16px;">
+                <summary style="cursor: pointer; padding: 12px 16px; background: var(--bg); border-radius: 8px; font-weight: 500;">
+                    🏷️ 标签 (${tags.length})
+                </summary>
+                <div style="margin-top: 8px;">
+                    ${tags.map(t => {
+                        const name = currentLang === 'cn' ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
+                        return `<div class="tag-item" onclick="selectTag('${t.id}')">${escapeHtml(name)}</div>`;
+                    }).join('')}
+                </div>
+            </details>
+        `;
+    }
+    
+    // 5. 分类
     const categories = CategoriesStore.getAll().filter(c => 
         c.name.toLowerCase().includes(query)
     );
     
-    // 搜索文献卡片
-    const papers = PapersStore.getAll().filter(p => {
-        const title = (p.titleCn || p.titleEn || '').toLowerCase();
-        const doi = (p.doi || '').toLowerCase();
-        const abstract = (p.abstractCn || p.abstractEn || '').toLowerCase();
-        return title.includes(query) || doi.includes(query) || abstract.includes(query);
-    });
-    
-    // 搜索文献库
-    const library = LibraryStore.getAll().filter(p => {
-        const title = (p.titleCn || p.title || p.titleEn || '').toLowerCase();
-        const doi = (p.doi || '').toLowerCase();
-        const abstract = (p.abstract || p.abstractCn || '').toLowerCase();
-        return title.includes(query) || doi.includes(query) || abstract.includes(query);
-    });
-    
-    let html = '';
-    
-    if (tags.length > 0) {
-        html += `<h4 style="margin: 16px 0 8px; color: var(--text-secondary);">标签 (${tags.length})</h4>`;
-        tags.forEach(t => {
-            const name = currentLang === 'cn' ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
-            html += `<div class="tag-item" onclick="selectTag('${t.id}')">${escapeHtml(name)}</div>`;
-        });
-    }
-    
     if (categories.length > 0) {
-        html += `<h4 style="margin: 16px 0 8px; color: var(--text-secondary);">分类 (${categories.length})</h4>`;
-        categories.forEach(c => {
-            html += `<div class="tag-item" onclick="currentCategory='${c.id}';currentTag=null;renderDataList();">${escapeHtml(c.name)}</div>`;
-        });
-    }
-    
-    if (papers.length > 0 || library.length > 0) {
-        html += `<h4 style="margin: 16px 0 8px; color: var(--text-secondary);">文献 (${papers.length + library.length})</h4>`;
-        html += '<div class="data-list">';
-        papers.forEach(p => html += renderDataCard(p, 'paper'));
-        library.forEach(p => html += renderDataCard(p, 'library'));
-        html += '</div>';
+        html += `
+            <details open style="margin-bottom: 16px;">
+                <summary style="cursor: pointer; padding: 12px 16px; background: var(--bg); border-radius: 8px; font-weight: 500;">
+                    📂 分类 (${categories.length})
+                </summary>
+                <div style="margin-top: 8px;">
+                    ${categories.map(c => {
+                        return `<div class="tag-item" onclick="currentCategory='${c.id}';currentTag=null;renderDataList();">${escapeHtml(c.name)}</div>`;
+                    }).join('')}
+                </div>
+            </details>
+        `;
     }
     
     if (!html) {

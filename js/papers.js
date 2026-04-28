@@ -567,6 +567,33 @@ function openCardDetail(cardId) {
         </div>
     `;
 
+    // 分类管理
+    const categories = CategoriesStore.getAll();
+    const cardCategories = categories.filter(c => (c.itemIds || []).includes(card.id));
+    html += `
+        <div class="card-section">
+            <h4>📂 ${(cardListLang === 'cn') ? '所属分类' : 'Categories'}</h4>
+            <div id="cardCategoriesContainer" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                ${cardCategories.map(c => `
+                    <span class="badge" style="cursor:pointer;background:var(--bg);border:1px solid var(--border);" onclick="removeCardFromCategory('${c.id}')">
+                        ${escapeHtml(c.name)} ×
+                    </span>
+                `).join('')}
+            </div>
+            <div style="display:flex;gap:8px;">
+                <select id="categorySelect" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;">
+                    <option value="">${(cardListLang === 'cn') ? '选择分类...' : 'Select category...'}</option>
+                    ${categories.filter(c => !(c.itemIds || []).includes(card.id)).map(c => `
+                        <option value="${c.id}">${escapeHtml(c.name)}</option>
+                    `).join('')}
+                </select>
+                <button class="btn btn-sm btn-secondary" onclick="addCardToCategory()" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:var(--bg);cursor:pointer;">
+                    ${(cardListLang === 'cn') ? '添加' : 'Add'}
+                </button>
+            </div>
+        </div>
+    `;
+
     document.getElementById('cardDetailBody').innerHTML = html;
     document.getElementById('cardDetailModal').classList.remove('hidden');
 }
@@ -872,5 +899,31 @@ function removeTagFromCard(tagId) {
     PapersStore.update(currentCardId, { tagIds });
     openCardDetail(currentCardId); // 刷新详情
     showToast((cardListLang === 'cn') ? '标签已移除' : 'Tag removed', 'success');
+}
+
+
+// 添加卡片到分类
+function addCardToCategory() {
+    if (!currentCardId) return;
+    
+    const select = document.getElementById('categorySelect');
+    const categoryId = select.value;
+    if (!categoryId) {
+        showToast((cardListLang === 'cn') ? '请选择分类' : 'Please select a category', 'error');
+        return;
+    }
+    
+    CategoriesStore.addItem(categoryId, currentCardId);
+    openCardDetail(currentCardId); // 刷新详情
+    showToast((cardListLang === 'cn') ? '已添加到分类' : 'Added to category', 'success');
+}
+
+// 从分类移除卡片
+function removeCardFromCategory(categoryId) {
+    if (!currentCardId) return;
+    
+    CategoriesStore.removeItem(categoryId, currentCardId);
+    openCardDetail(currentCardId); // 刷新详情
+    showToast((cardListLang === 'cn') ? '已从分类移除' : 'Removed from category', 'success');
 }
 

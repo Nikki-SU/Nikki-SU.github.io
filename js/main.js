@@ -358,11 +358,49 @@ const CategoriesStore = {
         const newCategory = {
             id: 'cat_' + Date.now(),
             name: category.name,
+            itemIds: [],
             createdAt: new Date().toISOString()
         };
         categories.push(newCategory);
         Storage.set(this.key, categories);
         return { success: true, category: newCategory };
+    },
+    
+    // 添加数据到分类
+    addItem(categoryId, itemId) {
+        const categories = this.getAll();
+        const category = categories.find(c => c.id === categoryId);
+        if (category) {
+            if (!category.itemIds) category.itemIds = [];
+            if (!category.itemIds.includes(itemId)) {
+                category.itemIds.push(itemId);
+                Storage.set(this.key, categories);
+            }
+            return { success: true };
+        }
+        return { success: false, message: '分类不存在' };
+    },
+    
+    // 从分类移除数据
+    removeItem(categoryId, itemId) {
+        const categories = this.getAll();
+        const category = categories.find(c => c.id === categoryId);
+        if (category && category.itemIds) {
+            category.itemIds = category.itemIds.filter(id => id !== itemId);
+            Storage.set(this.key, categories);
+            return { success: true };
+        }
+        return { success: false };
+    },
+    
+    // 获取分类下的直接关联数据
+    getItems(categoryId) {
+        const category = this.getById(categoryId);
+        if (!category || !category.itemIds) return [];
+        
+        const papers = PapersStore.getAll().filter(p => category.itemIds.includes(p.id));
+        const library = LibraryStore.getAll().filter(p => category.itemIds.includes(p.id));
+        return { papers, library };
     },
     
     update(id, data) {
