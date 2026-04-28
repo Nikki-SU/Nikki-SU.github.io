@@ -513,6 +513,12 @@ async function syncToGitHub() {
         if (putResponse.ok) {
             statusEl.textContent = `✅ 上传成功 (${new Date().toLocaleString()})`;
             showToast('数据已同步到 GitHub', 'success');
+            
+            // 更新自动同步的最后同步时间
+            const syncConfig = getAutoSyncConfig();
+            syncConfig.lastSync = new Date().toISOString();
+            saveAutoSyncConfig(syncConfig);
+            updateAutoSyncStatus();
         } else {
             const error = await putResponse.json();
             throw new Error(error.message || '上传失败');
@@ -664,4 +670,13 @@ async function migrateData() {
 document.addEventListener('DOMContentLoaded', () => {
     const token = getGitHubToken();
     updateGitHubStatus(!!token);
+    
+    // 初始化自动同步状态
+    updateAutoSyncStatus();
+    
+    // 如果自动同步已开启，启动定时器
+    const config = getAutoSyncConfig();
+    if (config.enabled && token) {
+        startAutoSync();
+    }
 });
