@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 - 小N学术站</title>
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        /* 开关样式 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 26px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">
+                <span class="logo-icon">🧪</span>
+                小N学术站
+            </h1>
+            <nav class="nav" id="navMenu">
+                <a href="index.html" class="nav-link">
+                    <span>🏠</span> 首页
+                </a>
+                <a href="papers.html" class="nav-link">
+                    <span>📚</span> 文献
+                </a>
+                <a href="vocabulary.html" class="nav-link">
+                    <span>📖</span> 学习
+                </a>
+                <a href="files.html" class="nav-link">
+                    <span>📁</span> 文件管理
+                </a>
+                <a href="settings.html" class="nav-link active">
+                    <span>⚙️</span> 设置
+                </a>
+            </nav>
+            <button class="menu-toggle" id="menuToggle">☰</button>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <!-- 页面标题 -->
+            <div class="section-header">
+                <h3 class="section-title">
+                    <span>⚙️</span>
+                    设置
+                </h3>
+            </div>
+
+            <!-- API配置 -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-title">
+                    <span>🤖</span> AI API 配置
+                </div>
+                <div id="statusIndicator" class="status-indicator not-configured" style="margin-bottom: 20px; padding: 12px; border-radius: 8px;">
+                    ❌ 未配置
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">API 服务商</label>
+                    <div class="grid grid-2" style="gap: 12px;">
+                        <div class="provider-card selected" data-provider="siliconflow" onclick="selectProvider('siliconflow')">
+                            <div class="provider-card-name">💧 硅基流动</div>
+                            <div class="provider-card-desc">新用户有免费额度，支持Qwen等模型</div>
+                        </div>
+                        <div class="provider-card" data-provider="deepseek" onclick="selectProvider('deepseek')">
+                            <div class="provider-card-name">🧠 DeepSeek</div>
+                            <div class="provider-card-desc">性价比高，推理能力强</div>
+                        </div>
+                        <div class="provider-card" data-provider="qwen" onclick="selectProvider('qwen')">
+                            <div class="provider-card-name">🐰 通义千问</div>
+                            <div class="provider-card-desc">阿里云服务，稳定性好</div>
+                        </div>
+                        <div class="provider-card" data-provider="gemini" onclick="selectProvider('gemini')">
+                            <div class="provider-card-name">✨ Google Gemini</div>
+                            <div class="provider-card-desc">Google AI，需科学上网</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="providerInfo" style="margin: 16px 0; padding: 16px; background: var(--bg); border-radius: 8px;">
+                    <h4 style="margin-bottom: 8px;">💡 硅基流动</h4>
+                    <div id="providerHint" style="font-size: 0.9rem; color: var(--text-secondary);">
+                        1. 访问 <a href="https://cloud.siliconflow.cn" target="_blank" style="color: var(--primary);">硅基流动官网</a> 注册账号<br>
+                        2. 进入控制台 → API密钥 → 创建新密钥<br>
+                        3. 新用户有免费额度可用
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">API Key</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="password" class="form-input" id="apiKeyInput" placeholder="输入您的API Key" style="flex: 1;">
+                        <button class="btn btn-secondary" id="toggleKeyVisibility" style="padding: 0 16px;">👁️</button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">模型选择</label>
+                    <select class="form-select" id="modelSelect">
+                        <option value="Qwen/Qwen2.5-7B-Instruct">Qwen2.5-7B-Instruct</option>
+                        <option value="Qwen/Qwen2.5-14B-Instruct">Qwen2.5-14B-Instruct</option>
+                        <option value="deepseek-chat">DeepSeek Chat</option>
+                        <option value="deepseek-coder">DeepSeek Coder</option>
+                        <option value="qwen-plus">Qwen Plus</option>
+                        <option value="qwen-max">Qwen Max</option>
+                        <option value="gemini-pro">Gemini Pro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">每次生成词汇数</label>
+                    <select class="form-select" id="vocabCountInput" style="width: 150px;">
+                        <option value="10">10个</option>
+                        <option value="15">15个</option>
+                        <option value="20" selected>20个</option>
+                        <option value="30">30个</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" id="saveBtn">
+                        <span>💾</span> 保存设置
+                    </button>
+                    <button class="btn btn-secondary" id="testBtn">
+                        <span>🔗</span> 测试连接
+                    </button>
+                    <button class="btn btn-outline" id="clearBtn">
+                        <span>🗑️</span> 清除设置
+                    </button>
+                </div>
+                
+                <div id="testResult" class="test-result" style="margin-top: 16px;"></div>
+            </div>
+
+            <!-- 数据管理 -->
+            <div class="card">
+                <div class="card-title">
+                    <span>💾</span> 数据管理
+                </div>
+                
+                <div class="settings-section">
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">文献库数据</div>
+                            <div class="settings-hint" id="libraryDataInfo">0 条记录</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" id="exportLibraryBtn">导出</button>
+                            <button class="btn btn-sm btn-danger" id="clearLibraryBtn">清空</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">文献卡片数据</div>
+                            <div class="settings-hint" id="cardsDataInfo">0 条记录</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" id="exportCardsBtn">导出</button>
+                            <button class="btn btn-sm btn-danger" id="clearCardsBtn">清空</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">词汇本数据</div>
+                            <div class="settings-hint" id="vocabDataInfo">0 条记录</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm btn-secondary" id="exportVocabBtn">导出</button>
+                            <button class="btn btn-sm btn-danger" id="clearVocabBtn">清空</button>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div>
+                            <div class="settings-label">追踪历史</div>
+                            <div class="settings-hint" id="historyDataInfo">0 条记录</div>
+                        </div>
+                        <button class="btn btn-sm btn-danger" id="clearHistoryBtn">清空</button>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                    <button class="btn btn-danger" id="clearAllBtn">
+                        <span>⚠️</span> 清空所有数据
+                    </button>
+                </div>
+            </div>
+
+            
+            <!-- GitHub 同步 -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-title">
+                    <span>☁️</span> GitHub 同步
+                </div>
+                <div id="githubStatus" class="status-indicator not-configured" style="margin-bottom: 20px; padding: 12px; border-radius: 8px;">
+                    ❌ 未配置
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">GitHub Personal Access Token</label>
+                    <input type="password" id="githubToken" class="form-input" placeholder="ghp_xxxx..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 12px;">
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+                        需要 repo 权限。<a href="https://github.com/settings/tokens/new?description=学术站同步&scopes=repo" target="_blank" style="color: var(--primary);">点击创建Token</a>
+                    </p>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">私有仓库配置</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <input type="text" id="githubOwner" class="form-input" placeholder="用户名 (如: Nikki-SU)" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;">
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">GitHub 用户名</p>
+                        </div>
+                        <div>
+                            <input type="text" id="githubRepo" class="form-input" placeholder="仓库名 (如: academic-backup)" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px;">
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">私有仓库名称</p>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;">
+                        💡 网页代码在公开仓库，数据备份到你的私有仓库。<a href="https://github.com/new" target="_blank" style="color: var(--primary);">创建私有仓库</a>
+                    </p>
+                    <button onclick="saveGitHubConfig()" class="btn btn-primary" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; background: var(--primary); color: white;">
+                        保存配置
+                    </button>
+                </div>
+                
+                <!-- 自动同步设置 -->
+                <div style="margin: 20px 0; padding: 16px; background: var(--bg); border-radius: 8px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <div>
+                            <div style="font-weight: 500;">🔄 自动同步</div>
+                            <div style="font-size: 0.85rem; color: var(--text-secondary);">定期自动备份所有数据到 GitHub</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="autoSyncToggle" onchange="toggleAutoSync()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">同步间隔：</span>
+                        <select id="autoSyncInterval" class="form-select" style="width: 120px;" onchange="saveAutoSyncInterval()">
+                            <option value="5">5 分钟</option>
+                            <option value="10">10 分钟</option>
+                            <option value="30" selected>30 分钟</option>
+                            <option value="60">1 小时</option>
+                        </select>
+                    </div>
+                    <p id="autoSyncStatus" style="margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary);"></p>
+                </div>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button onclick="syncToGitHub()" class="btn btn-secondary" style="padding: 10px 20px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: var(--bg);">
+                            ⬆️ 上传到 GitHub
+                        </button>
+                        <button onclick="syncFromGitHub()" class="btn btn-secondary" style="padding: 10px 20px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; background: var(--bg);">
+                            ⬇️ 从 GitHub 下载
+                        </button>
+                    </div>
+                    <p id="syncStatus" style="margin-top: 12px; font-size: 0.85rem; color: var(--text-secondary);"></p>
+                </div>
+            </div>
+
+            <!-- 数据迁移 -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-title">
+                    <span>🔄</span> 数据迁移
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                    为现有数据自动创建标签（基于文献卡片的关键词和表征技术字段）
+                </p>
+                <button onclick="migrateData()" class="btn btn-primary" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; background: var(--primary); color: white;">
+                    执行迁移
+                </button>
+                <p id="migrateStatus" style="margin-top: 12px; font-size: 0.85rem; color: var(--text-secondary);"></p>
+            </div>
+
+<!-- 关于 -->
+            <div class="card" style="margin-top: 24px;">
+                <div class="card-title">
+                    <span>ℹ️</span> 关于
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 8px;">
+                    小N学术站 v1.0
+                </p>
+                <p style="color: var(--text-secondary); font-size: 0.85rem;">
+                    集文献追踪、文献卡片和学术词汇学习于一体的学术工具。
+                    <br>所有数据均保存在本地浏览器中。
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/main.js"></script>
+    <script src="js/settings.js"></script>
+</body>
+</html>
