@@ -396,12 +396,15 @@ function exportData(type, name) {
 
 // ===== GitHub 同步功能 =====
 
-const GITHUB_CONFIG = {
-    owner: 'Nikki-SU',
-    repo: 'Nikki-SU.github.io',
-    branch: 'main',
-    path: 'data/backup.json'
-};
+// GitHub 同步配置（从用户设置读取）
+function getGitHubConfig() {
+    return {
+        owner: Storage.get('githubOwner', ''),
+        repo: Storage.get('githubRepo', ''),
+        branch: 'main',
+        path: 'academic-data.json'
+    };
+}
 
 // 获取 GitHub Token
 function getGitHubToken() {
@@ -409,28 +412,43 @@ function getGitHubToken() {
 }
 
 // 保存 GitHub Token
-function saveGitHubToken() {
+// 保存GitHub配置（Token + 仓库）
+function saveGitHubConfig() {
     const token = document.getElementById('githubToken').value.trim();
+    const owner = document.getElementById('githubOwner').value.trim();
+    const repo = document.getElementById('githubRepo').value.trim();
+    
     if (!token) {
         showToast('请输入 Token', 'error');
         return;
     }
+    if (!owner || !repo) {
+        showToast('请输入用户名和仓库名', 'error');
+        return;
+    }
     
-    // 验证 Token
-    fetch('https://api.github.com/user', {
+    // 验证 Token 和仓库访问权限
+    fetch(`https://api.github.com/repos/${owner}/${repo}`, {
         headers: { 'Authorization': `token ${token}` }
     })
     .then(res => {
         if (res.ok) {
             Storage.set('githubToken', token);
-            showToast('Token 保存成功', 'success');
+            Storage.set('githubOwner', owner);
+            Storage.set('githubRepo', repo);
+            showToast('配置保存成功', 'success');
             updateGitHubStatus(true);
-            document.getElementById('githubToken').value = '';
+        } else if (res.status === 404) {
+            showToast('仓库不存在或无访问权限', 'error');
         } else {
-            showToast('Token 无效', 'error');
+            showToast('Token 无效或权限不足', 'error');
         }
     })
     .catch(() => showToast('验证失败，请检查网络', 'error'));
+}
+
+function saveGitHubToken() {
+    saveGitHubConfig();
 }
 
 // 更新 GitHub 状态显示
@@ -452,8 +470,14 @@ function updateGitHubStatus(configured) {
 // 同步到 GitHub
 async function syncToGitHub() {
     const token = getGitHubToken();
+    const config = getGitHubConfig();
+    
     if (!token) {
         showToast('请先配置 GitHub Token', 'error');
+        return;
+    }
+    if (!config.owner || !config.repo) {
+        showToast('请配置私有仓库信息', 'error');
         return;
     }
     
@@ -480,7 +504,7 @@ async function syncToGitHub() {
         // 获取当前文件的 SHA（如果存在）
         let sha = null;
         const getResponse = await fetch(
-            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
             { headers: { 'Authorization': `token ${token}` } }
         );
         
@@ -493,13 +517,13 @@ async function syncToGitHub() {
         const body = {
             message: `backup: ${new Date().toISOString()}`,
             content: btoa(unescape(encodeURIComponent(JSON.stringify(backupData, null, 2)))),
-            branch: GITHUB_CONFIG.branch
+            branch: config.branch
         };
         
         if (sha) body.sha = sha;
         
         const putResponse = await fetch(
-            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
             {
                 method: 'PUT',
                 headers: {
@@ -526,8 +550,14 @@ async function syncToGitHub() {
 // 从 GitHub 下载
 async function syncFromGitHub() {
     const token = getGitHubToken();
+    const config = getGitHubConfig();
+    
     if (!token) {
         showToast('请先配置 GitHub Token', 'error');
+        return;
+    }
+    if (!config.owner || !config.repo) {
+        showToast('请配置私有仓库信息', 'error');
         return;
     }
     
@@ -536,7 +566,7 @@ async function syncFromGitHub() {
     
     try {
         const response = await fetch(
-            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
             { headers: { 'Authorization': `token ${token}` } }
         );
         
@@ -739,8 +769,10 @@ function startAutoSync() {
 
 async function doAutoSync() {
     const token = getGitHubToken();
-    if (!token) {
-        console.warn('未配置GitHub Token，跳过自动同步');
+    const config = getGitHubConfig();
+    
+    if (!token || !config.owner || !config.repo) {
+        console.warn('未配置GitHub同步，跳过自动同步');
         return;
     }
     
@@ -762,7 +794,7 @@ async function doAutoSync() {
         
         let sha = null;
         const getResponse = await fetch(
-            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
             { headers: { 'Authorization': `token ${token}` } }
         );
         
@@ -774,13 +806,13 @@ async function doAutoSync() {
         const body = {
             message: `auto-sync: ${new Date().toISOString()}`,
             content: btoa(unescape(encodeURIComponent(JSON.stringify(backupData, null, 2)))),
-            branch: GITHUB_CONFIG.branch
+            branch: config.branch
         };
         
         if (sha) body.sha = sha;
         
         const putResponse = await fetch(
-            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
+            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
             {
                 method: 'PUT',
                 headers: {
