@@ -64,6 +64,9 @@ function initEventListeners() {
     // 详简切换
     document.getElementById('libraryDetailBtn')?.addEventListener('click', toggleLibraryDetail);
     
+    // 文献库词条详情语言切换
+    document.getElementById('detailLibraryLangBtn')?.addEventListener('click', toggleDetailLibraryLang);
+    
     // 筛选
     document.getElementById('libraryFilter')?.addEventListener('change', loadLibrary);
     document.getElementById('librarySearch')?.addEventListener('input', debounce(loadLibrary, 300));
@@ -127,6 +130,28 @@ function toggleLibraryDetail() {
     btn.classList.toggle('btn-primary', libraryDetailMode);
     btn.classList.toggle('btn-outline', !libraryDetailMode);
     loadLibrary();
+}
+
+// 切换文献库词条详情语言
+function toggleDetailLibraryLang() {
+    libraryLangCN = !libraryLangCN;
+    const btn = document.getElementById('detailLibraryLangBtn');
+    if (btn) {
+        btn.textContent = libraryLangCN ? '中' : 'EN';
+        btn.classList.toggle('btn-primary', !libraryLangCN);
+        btn.classList.toggle('btn-outline', libraryLangCN);
+    }
+    // 如果有打开的文献库词条详情，重新渲染
+    if (currentLibraryId) {
+        openLibraryDetail(currentLibraryId);
+    }
+    // 同时更新列表页的按钮状态
+    const listBtn = document.getElementById('libraryLangBtn');
+    if (listBtn) {
+        listBtn.textContent = libraryLangCN ? '中' : 'EN';
+        listBtn.classList.toggle('btn-primary', !libraryLangCN);
+        listBtn.classList.toggle('btn-outline', libraryLangCN);
+    }
 }
 
 // 加载文献库
@@ -681,7 +706,7 @@ function openLibraryDetail(libraryId) {
     }
     
     // 标题
-    const title = (libraryLang === 'cn') ? (paper.titleCn || paper.title || paper.titleEn) : (paper.titleEn || paper.title || paper.titleCn);
+    const title = (libraryLangCN) ? (paper.titleCn || paper.title || paper.titleEn) : (paper.titleEn || paper.title || paper.titleCn);
     document.getElementById('cardDetailTitle').textContent = title || '文献库词条';
     
     // 构建内容
@@ -700,18 +725,18 @@ function openLibraryDetail(libraryId) {
     if (paper.authors) {
         html += `
             <div class="card-section">
-                <h4>👥 ${(libraryLang === 'cn') ? '作者' : 'Authors'}</h4>
+                <h4>👥 ${(libraryLangCN) ? '作者' : 'Authors'}</h4>
                 <p style="font-size:13px;">${escapeHtml(paper.authors)}</p>
             </div>
         `;
     }
     
     // 摘要
-    const abstract = (libraryLang === 'cn') ? paper.abstractCn : paper.abstractEn;
+    const abstract = (libraryLangCN) ? paper.abstractCn : paper.abstractEn;
     if (abstract) {
         html += `
             <div class="card-section">
-                <h4>📝 ${(libraryLang === 'cn') ? '摘要' : 'Abstract'}</h4>
+                <h4>📝 ${(libraryLangCN) ? '摘要' : 'Abstract'}</h4>
                 <p style="font-size:13px; line-height: 1.6;">${escapeHtml(abstract)}</p>
             </div>
         `;
@@ -721,7 +746,7 @@ function openLibraryDetail(libraryId) {
     if (paper.keywords) {
         html += `
             <div class="card-section">
-                <h4>🔑 ${(libraryLang === 'cn') ? '关键词' : 'Keywords'}</h4>
+                <h4>🔑 ${(libraryLangCN) ? '关键词' : 'Keywords'}</h4>
                 <p style="font-size:13px;">${escapeHtml(paper.keywords)}</p>
             </div>
         `;
@@ -738,20 +763,20 @@ function openLibraryDetail(libraryId) {
             seenTags.add(key);
             return true;
         }).map(t => {
-            const name = (libraryLang === 'cn') ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
+            const name = (libraryLangCN) ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
             return `<span class="data-tag">${escapeHtml(name)}</span>`;
         }).join('');
         
         html += `
             <div class="card-section">
-                <h4>🏷️ ${(libraryLang === 'cn') ? '标签' : 'Tags'}</h4>
+                <h4>🏷️ ${(libraryLangCN) ? '标签' : 'Tags'}</h4>
                 <div>${tagHtml}</div>
             </div>
         `;
     }
     
     document.getElementById('cardDetailBody').innerHTML = html;
-    document.getElementById('cardDetailModal').classList.add('active');
+    document.getElementById('cardDetailModal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 }
 function addVocabToStudy(vocabJson) {
