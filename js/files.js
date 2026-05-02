@@ -578,3 +578,261 @@ function deleteTag() {
         renderDataList();
     }
 }
+
+
+
+// ==================== 条目管理功能 ====================
+let currentTitleLang = 'en';
+let allEntries = [];
+let filteredEntries = [];
+
+// 初始化条目管理
+function initEntryManagement() {
+    // 填充标签和分类下拉框
+    populateFilterOptions();
+    // 加载并渲染条目
+    loadAllEntries();
+}
+
+// 填充筛选下拉框
+function populateFilterOptions() {
+    const tags = TagsStore.getAll();
+    const categories = CategoriesStore.getAll();
+    
+    const tagSelect = document.getElementById('filterByTag');
+    const categorySelect = document.getElementById('filterByCategory');
+    
+    if (tagSelect) {
+        tagSelect.innerHTML = '<option value="">全部标签</option>' + 
+            tags.map(t => `<option value="${t.id}">${t.nameEn || t.nameCn}</option>`).join('');
+    }
+    
+    if (categorySelect) {
+        categorySelect.innerHTML = '<option value="">全部分类</option>' + 
+            categories.map(c => `<option value="${c.id}">${c.nameEn || c.nameCn}</option>`).join('');
+    }
+}
+
+// 合并去重，获取所有条目
+function loadAllEntries() {
+    const libraryPapers = LibraryStore.getAll();
+    const paperCards = PapersStore.getAll();
+    
+    const entryMap = new Map();
+    
+    // 先处理文献卡片
+    for (const paper of paperCards) {
+        if (paper.doi) {
+            entryMap.set(paper.doi, {
+                ...paper,
+                source: 'paper',
+                sourceName: '文献卡片',
+                hasBoth: false
+            });
+        }
+    }
+    
+    // 再处理文献库（优先级更高，覆盖已存在的DOI）
+    for (const paper of libraryPapers) {
+        if (paper.doi) {
+            const existing = entryMap.get(paper.doi);
+            entryMap.set(paper.doi, {
+                ...paper,
+                source: 'library',
+                sourceName: '文献库',
+                hasBoth: !!existing // 如果之前有文献卡片，说明两处都有
+            });
+        }
+    }
+    
+    // 处理没有DOI的文献（文献库）
+    for (const paper of libraryPapers) {
+        if (!paper.doi) {
+            const key = `library_${paper.id}`;
+            entryMap.set(key, {
+                ...paper,
+                source: 'library',
+                sourceName: '文献库',
+                hasBoth: false
+            });
+        }
+    }
+    
+    // 处理没有DOI的文献（文献卡片）
+    for (const paper of paperCards) {
+        if (!paper.doi) {
+            const key = `paper_${paper.id}`;
+            if (!entryMap.has(key)) {
+                entryMap.set(key, {
+                    ...paper,
+                    source: 'paper',
+                    sourceName: '文献卡片',
+                    hasBoth: false
+                });
+            }
+        }
+    }
+    
+    allEntries = Array.from(entryMap.values());
+    filterEntries();
+}
+
+// 筛选条目
+function filterEntries() {
+    const search = document.getElementById('entrySearch')?.value?.toLowerCase() || '';
+    const tagId = document.getElementById('filterByTag')?.value || '';
+    const categoryId = document.getElementById('filterByCategory')?.value || '';
+    const source = document.getElementById('filterBySource')?.value || '';
+    
+    filteredEntries = allEntries.filter(entry => {
+        // 搜索筛选
+        if (search) {
+            const titleMatch = (entry.title || entry.titleEn || entry.titleCn || '').toLowerCase().includes(search);
+            const authorMatch = (entry.authors || '').toLowerCase().includes(search);
+            const doiMatch = (entry.doi || '').toLowerCase().includes(search);
+            const journalMatch = (entry.journal || '').toLowerCase().includes(search);
+            if (!titleMatch && !authorMatch && !doiMatch && !journalMatch) {
+                return false;
+            }
+        }
+        
+        // 标签筛选
+        if (tagId) {
+            if (!entry.tagIds || !entry.tagIds.includes(tagId)) {
+                return false;
+            }
+        }
+        
+        // 分类筛选
+        if (categoryId) {
+            if (!entry.categoryIds || !entry.categoryIds.includes(categoryId)) {
+                return false;
+            }
+        }
+        
+        // 来源筛选
+        if (source) {
+            if (source === 'both' && !entry.hasBoth) return false;
+            if (source === 'library' && entry.source !== 'library') return false;
+            if (source === 'paper' && entry.source !== 'paper') return false;
+        }
+        
+        return true;
+    });
+    
+    renderEntries();
+}
+
+// 设置标题语言
+function setTitleLang(lang) {
+    currentTitleLang = lang;
+    renderEntries();
+}
+
+// 渲染条目列表
+function renderEntries() {
+    const container = document.getElementById('entriesList');
+    const statsEl = document.getElementById('entriesStats');
+    
+    if (!container) return;
+    
+    if (filteredEntries.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                <div style="font-size: 3rem; margin-bottom: 12px;">🔍</div>
+                <p>没有找到匹配的文献</p>
+            </div>
+        `;
+        if (statsEl) statsEl.textContent = `共 ${allEntries.length} 条文献，筛选后 0 条`;
+        return;
+    }
+    
+    // 更新统计
+    const libraryCount = filteredEntries.filter(e => e.source === 'library').length;
+    const paperCount = filteredEntries.filter(e => e.source === 'paper').length;
+    const bothCount = filteredEntries.filter(e => e.hasBoth).length;
+    
+    if (statsEl) {
+        statsEl.textContent = `共 ${allEntries.length} 条文献，筛选后 ${filteredEntries.length} 条（文献库 ${libraryCount}，文献卡片 ${paperCount}，两处都有 ${bothCount}）`;
+    }
+    
+    // 渲染列表
+    container.innerHTML = filteredEntries.map((entry, index) => {
+        const title = currentTitleLang === 'cn' 
+            ? (entry.titleCn || entry.title || entry.titleEn || '无标题')
+            : (entry.titleEn || entry.title || entry.titleCn || 'No Title');
+        
+        const authors = entry.authors || '未知作者';
+        const journal = entry.journal || '';
+        const year = entry.year || entry.publishDate?.substring(0, 4) || '';
+        const doi = entry.doi || '无DOI';
+        
+        // 来源标签
+        const sourceBadge = entry.hasBoth 
+            ? '<span style="background: #e3f2fd; color: #1976d2; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">文献库+卡片</span>'
+            : `<span style="background: ${entry.source === 'library' ? '#e8f5e9' : '#fff3e0'}; color: ${entry.source === 'library' ? '#2e7d32' : '#ef6c00'}; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">${entry.sourceName}</span>`;
+        
+        // 标签
+        const tags = [];
+        if (entry.tagIds) {
+            for (const tagId of entry.tagIds) {
+                const tag = TagsStore.getById(tagId);
+                if (tag) {
+                    const tagName = currentTitleLang === 'cn' ? (tag.nameCn || tag.nameEn) : (tag.nameEn || tag.nameCn);
+                    tags.push(`<span class="data-tag">${escapeHtml(tagName)}</span>`);
+                }
+            }
+        }
+        
+        return `
+            <div class="entry-item" style="padding: 16px; border-bottom: 1px solid var(--border); cursor: pointer;"
+                 onclick="openEntryDetail(${index})"
+                 onmouseover="this.style.background='var(--bg)'"
+                 onmouseout="this.style.background='transparent'">
+                <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 500; margin-bottom: 8px; line-height: 1.4;">${escapeHtml(title)}</div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 6px;">
+                            ${escapeHtml(authors)}
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px; display: flex; gap: 16px; flex-wrap: wrap;">
+                            ${journal ? `<span>📖 ${escapeHtml(journal)}</span>` : ''}
+                            ${year ? `<span>📅 ${year}</span>` : ''}
+                            ${doi !== '无DOI' ? `<span>🔗 ${escapeHtml(doi)}</span>` : ''}
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                            ${sourceBadge}
+                            ${tags.join('')}
+                        </div>
+                    </div>
+                    <div style="color: var(--text-secondary);">
+                        ✏️
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 打开条目详情（编辑）
+function openEntryDetail(index) {
+    const entry = filteredEntries[index];
+    if (!entry) return;
+    
+    // TODO: 打开编辑模态框
+    console.log('编辑条目:', entry);
+    showToast('编辑功能开发中...', 'info');
+}
+
+// 导出Excel
+function exportEntries() {
+    // TODO: 实现Excel导出
+    showToast('导出功能开发中...', 'info');
+}
+
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        initEntryManagement();
+    }, 300);
+});
