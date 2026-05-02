@@ -246,9 +246,9 @@ function renderDataCard(data, type) {
         : (data.titleEn || data.title || data.titleCn || 'No Title');
     
     const meta = [];
-    if (data.journal) meta.push(data.journal);
-    if (data.publishDate || data.year) meta.push(data.publishDate || data.year);
-    if (data.doi) meta.push(`DOI: ${data.doi}`);
+    if (data.journal) meta.push(escapeHtml(data.journal));
+    if (data.publishDate || data.year) meta.push(escapeHtml(data.publishDate || data.year));
+    if (data.doi) meta.push(`DOI: ${escapeHtml(data.doi)}`);
     
     // 去重 tagIds 后再展示
     const uniqueTagIds = [...new Set(data.tagIds || [])];
