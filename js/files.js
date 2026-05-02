@@ -266,7 +266,7 @@ function renderDataCard(data, type) {
         return `<span class="data-tag">${escapeHtml(name)}</span>`;
     }).join('');
     
-    const url = type === 'paper' ? `papers.html?id=${data.id}` : `papers.html?library=${data.id}`;
+    const url = type === 'paper' ? `papers.html?id=${data.id}&fromFiles=true` : `papers.html?library=${data.id}&fromFiles=true`;
     
     return `
         <div class="data-card" onclick="window.location.href='${url}'">
