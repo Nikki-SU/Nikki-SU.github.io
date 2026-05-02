@@ -426,10 +426,58 @@
                 </div>
                 
                 <div class="main-content">
-                    <div id="dataList" class="data-list">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📁</div>
-                            <p>选择左侧分类或标签查看相关数据</p>
+                    <!-- 顶部工具栏 -->
+                    <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                            <div style="min-width: 250px;">
+                                <input type="text" id="entrySearch" class="form-input" placeholder="🔍 搜索标题、作者、DOI..." 
+                                       style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px;"
+                                       oninput="filterEntries()">
+                            </div>
+                            <div style="min-width: 130px;">
+                                <select id="filterByTag" class="form-select" style="width: 100%; padding: 8px 12px;" onchange="filterEntries()">
+                                    <option value="">全部标签</option>
+                                </select>
+                            </div>
+                            <div style="min-width: 130px;">
+                                <select id="filterByCategory" class="form-select" style="width: 100%; padding: 8px 12px;" onchange="filterEntries()">
+                                    <option value="">全部分类</option>
+                                </select>
+                            </div>
+                            <div style="min-width: 110px;">
+                                <select id="filterBySource" class="form-select" style="width: 100%; padding: 8px 12px;" onchange="filterEntries()">
+                                    <option value="">全部来源</option>
+                                    <option value="library">仅文献库</option>
+                                    <option value="paper">仅文献卡片</option>
+                                    <option value="both">两者都有</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 12px; font-size: 0.85rem; margin-right: 8px;">
+                                <span>标题语言：</span>
+                                <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    <input type="radio" name="titleLang" value="en" checked onchange="setTitleLang('en')">
+                                    <span>英文</span>
+                                </label>
+                                <label style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    <input type="radio" name="titleLang" value="cn" onchange="setTitleLang('cn')">
+                                    <span>中文</span>
+                                </label>
+                            </div>
+                            <button onclick="exportEntries()" class="btn btn-primary btn-sm" style="padding: 8px 16px; border: none; border-radius: 6px; background: var(--primary); color: white; cursor: pointer; font-size: 0.9rem;">
+                                📥 导出 Excel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 条目统计 -->
+                    <div id="entriesStats" style="margin-bottom: 16px; font-size: 0.9rem; color: var(--text-secondary);"></div>
+                    
+                    <!-- 条目列表 -->
+                    <div id="entriesList" style="max-height: 600px; overflow-y: auto;">
+                        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                            加载中...
                         </div>
                     </div>
                 </div>
