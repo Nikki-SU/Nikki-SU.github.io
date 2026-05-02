@@ -1,3 +1,20 @@
+
+// 修复UTF-8被错误解码为Latin-1的乱码问题
+function fixEncoding(str) {
+    if (!str || typeof str !== 'string') return str;
+    try {
+        // 检测是否包含典型的UTF-8乱码字符
+        if (str.indexOf('Ã') !== -1 || str.indexOf('Â') !== -1 || str.indexOf('â') !== -1) {
+            // 将字符串按Latin-1编码，再按UTF-8解码
+            return decodeURIComponent(escape(str));
+        }
+        return str;
+    } catch (e) {
+        return str;
+    }
+}
+
+
 /**
  * files.js - 文件管理页面逻辑（重构版）
  */
@@ -59,7 +76,7 @@ function renderCategoryList() {
             <div class="category-item">
                 <div class="category-header" onclick="toggleCategory('${category.id}')" oncontextmenu="openEditCategoryModal('${category.id}', event)">
                     <span class="category-toggle" id="toggle-${category.id}">▶</span>
-                    <span class="category-name">${escapeHtml(typeof category.name === 'object' ? (category.name.cn || category.name.en || JSON.stringify(category.name)) : category.name)}</span>
+                    <span class="category-name">${escapeHtml(fixEncoding(typeof category.name === 'object' ? (category.name.cn || category.name.en || JSON.stringify(category.name)) : category.name))}</span>
                     <span class="category-count">${count}</span>
                 </div>
                 <div class="tags-list" id="tags-${category.id}">
@@ -103,7 +120,7 @@ function renderTagItem(tag) {
         <div class="tag-item ${currentTag === tag.id ? 'active' : ''}" 
              onclick="selectTag('${tag.id}')" 
              oncontextmenu="openEditTagModal('${tag.id}', event)">
-            <span class="tag-name">${escapeHtml(typeof displayName === 'object' ? (displayName.cn || displayName.en || JSON.stringify(displayName)) : displayName)}</span>
+            <span class="tag-name">${escapeHtml(fixEncoding(typeof displayName === 'object' ? (displayName.cn || displayName.en || JSON.stringify(displayName)) : displayName))}</span>
             <span class="tag-source">${sourceLabel}</span>
         </div>
     `;
@@ -160,7 +177,7 @@ function renderDataByTag(tagId) {
     
     const displayName = currentLang === 'cn' ? (tag.nameCn || tag.nameEn) : (tag.nameEn || tag.nameCn);
     
-    const tagDisplayName = typeof displayName === 'object' ? (displayName.cn || displayName.en || JSON.stringify(displayName)) : displayName;
+    const tagDisplayName = fixEncoding(typeof displayName === 'object' ? (displayName.cn || displayName.en || JSON.stringify(displayName)) : displayName);
     let html = `<h3 style="margin-bottom: 16px; color: var(--primary);">标签: ${escapeHtml(tagDisplayName)} (${papers.length + library.length}条)</h3>`;
     
     if (papers.length === 0 && library.length === 0) {
@@ -226,7 +243,7 @@ function renderDataByCategory(categoryId) {
     const papers = [...new Map([...papersByTags, ...papersDirect].map(p => [p.id, p])).values()];
     const library = [...new Map([...libraryByTags, ...libraryDirect].map(p => [p.id, p])).values()];
     
-    const categoryName = typeof category.name === 'object' ? (category.name.cn || category.name.en || JSON.stringify(category.name)) : category.name;
+    const categoryName = fixEncoding(typeof category.name === 'object' ? (category.name.cn || category.name.en || JSON.stringify(category.name)) : category.name);
     let html = `<h3 style="margin-bottom: 16px; color: var(--primary);">分类: ${escapeHtml(categoryName)} (${papers.length + library.length}条)</h3>`;
     
     if (papers.length === 0 && library.length === 0) {
