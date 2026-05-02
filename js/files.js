@@ -1,4 +1,69 @@
 
+// ============== 紧急编码修复 ==============
+// 问题根源：UTF-8字符串被错误地按Latin-1解码
+// 修复原理：检测到乱码特征时，将字符串按Latin-1编码，再按UTF-8解码
+(function() {
+    function fixUTF8(str) {
+        if (!str || typeof str !== 'string') return str;
+        // 检测UTF-8乱码的特征字节
+        if (/[ÃÂâäáéíóúàèìòù]/.test(str)) {
+            try {
+                // 将乱码字符串按Latin-1编码为字节，再按UTF-8解码
+                return decodeURIComponent(escape(str));
+            } catch(e) {
+                return str;
+            }
+        }
+        return str;
+    }
+    
+    function fixObject(obj) {
+        if (typeof obj !== 'object' || obj === null) return obj;
+        if (Array.isArray(obj)) {
+            return obj.map(item => fixObject(item));
+        }
+        const result = {};
+        for (const key in obj) {
+            if (typeof obj[key] === 'string') {
+                result[key] = fixUTF8(obj[key]);
+            } else if (typeof obj[key] === 'object') {
+                result[key] = fixObject(obj[key]);
+            } else {
+                result[key] = obj[key];
+            }
+        }
+        return result;
+    }
+    
+    // 保存原始的Storage.get
+    const originalGet = Storage.get;
+    
+    // 覆盖Storage.get，自动修复所有数据的编码
+    Storage.get = function(key, defaultValue) {
+        const value = originalGet.call(this, key, defaultValue);
+        return fixObject(value);
+    };
+    
+    // 立即修复所有localStorage中的数据
+    const keys = ['libraryPapers', 'papersData', 'vocabularyData', 'abstractTranslationData', 'categoriesData', 'tagsData'];
+    keys.forEach(key => {
+        try {
+            const data = localStorage.getItem(key);
+            if (data) {
+                const parsed = JSON.parse(data);
+                const fixed = fixObject(parsed);
+                localStorage.setItem(key, JSON.stringify(fixed));
+            }
+        } catch(e) {
+            console.error('修复失败:', key, e);
+        }
+    });
+    
+    console.log('✅ 紧急编码修复已应用');
+})();
+// ============== 编码修复结束 ==============
+
+
 // 修复UTF-8被错误解码为Latin-1的乱码问题
 function fixEncoding(str) {
     if (!str || typeof str !== 'string') return str;
