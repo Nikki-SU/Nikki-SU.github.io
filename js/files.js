@@ -4,13 +4,49 @@ function fixEncoding(str) {
     if (!str || typeof str !== 'string') return str;
     try {
         // 检测是否包含典型的UTF-8乱码字符
-        if (str.indexOf('Ã') !== -1 || str.indexOf('Â') !== -1 || str.indexOf('â') !== -1) {
+        if (str.indexOf('Ã') !== -1 || str.indexOf('Â') !== -1 || str.indexOf('â') !== -1 || str.indexOf('©') !== -1) {
             // 将字符串按Latin-1编码，再按UTF-8解码
             return decodeURIComponent(escape(str));
         }
         return str;
     } catch (e) {
         return str;
+    }
+}
+
+// 递归修复对象中所有字符串的编码
+function fixObjectEncoding(obj) {
+    if (typeof obj !== 'object' || obj === null) return obj;
+    if (Array.isArray(obj)) {
+        return obj.map(item => fixObjectEncoding(item));
+    }
+    const result = {};
+    for (const key in obj) {
+        if (typeof obj[key] === 'string') {
+            result[key] = fixEncoding(obj[key]);
+        } else if (typeof obj[key] === 'object') {
+            result[key] = fixObjectEncoding(obj[key]);
+        } else {
+            result[key] = obj[key];
+        }
+    }
+    return result;
+}
+
+// 修复localStorage中所有数据的编码
+function fixAllStorageEncoding() {
+    try {
+        const keys = ['categoriesData', 'tagsData'];
+        for (const key of keys) {
+            const data = localStorage.getItem(key);
+            if (data) {
+                const parsed = JSON.parse(data);
+                const fixed = fixObjectEncoding(parsed);
+                localStorage.setItem(key, JSON.stringify(fixed));
+            }
+        }
+    } catch (e) {
+        console.error('修复编码失败:', e);
     }
 }
 
@@ -25,6 +61,8 @@ let currentTag = null;
 
 // 页面初始化
 document.addEventListener('DOMContentLoaded', () => {
+    // 先修复localStorage中的编码问题
+    fixAllStorageEncoding();
     // 初始化预置分类
     CategoriesStore.initPresetCategories();
     
