@@ -581,6 +581,37 @@ function deleteTag() {
 
 
 
+
+// Tab切换功能
+function switchTab(tabName) {
+    // 更新按钮状态
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.borderBottomColor = 'transparent';
+        btn.style.color = 'var(--text-secondary)';
+    });
+    const activeBtn = document.getElementById(`tab-${tabName}`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.style.borderBottomColor = 'var(--primary)';
+        activeBtn.style.color = 'var(--primary)';
+    }
+    
+    // 显示对应内容
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    const activeContent = document.getElementById(`tab-content-${tabName}`);
+    if (activeContent) {
+        activeContent.style.display = 'block';
+    }
+    
+    // 如果切换到条目管理，重新加载
+    if (tabName === 'entries') {
+        loadAllEntries();
+    }
+}
+
 // ==================== 条目管理功能 ====================
 let currentTitleLang = 'en';
 let allEntries = [];
@@ -834,5 +865,11 @@ function exportEntries() {
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         initEntryManagement();
+        // 设置默认Tab样式
+        const defaultTab = document.getElementById('tab-data');
+        if (defaultTab) {
+            defaultTab.style.borderBottomColor = 'var(--primary)';
+            defaultTab.style.color = 'var(--primary)';
+        }
     }, 300);
 });
