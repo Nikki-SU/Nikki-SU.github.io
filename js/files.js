@@ -59,7 +59,7 @@ function renderCategoryList() {
             <div class="category-item">
                 <div class="category-header" onclick="toggleCategory('${category.id}')" oncontextmenu="openEditCategoryModal('${category.id}', event)">
                     <span class="category-toggle" id="toggle-${category.id}">▶</span>
-                    <span class="category-name">${escapeHtml(category.name)}</span>
+                    <span class="category-name">${escapeHtml(typeof category.name === 'object' ? (category.name.cn || category.name.en || JSON.stringify(category.name)) : category.name)}</span>
                     <span class="category-count">${count}</span>
                 </div>
                 <div class="tags-list" id="tags-${category.id}">
@@ -225,7 +225,8 @@ function renderDataByCategory(categoryId) {
     const papers = [...new Map([...papersByTags, ...papersDirect].map(p => [p.id, p])).values()];
     const library = [...new Map([...libraryByTags, ...libraryDirect].map(p => [p.id, p])).values()];
     
-    let html = `<h3 style="margin-bottom: 16px; color: var(--primary);">分类: ${escapeHtml(category.name)} (${papers.length + library.length}条)</h3>`;
+    const categoryName = typeof category.name === 'object' ? (category.name.cn || category.name.en || JSON.stringify(category.name)) : category.name;
+    let html = `<h3 style="margin-bottom: 16px; color: var(--primary);">分类: ${escapeHtml(categoryName)} (${papers.length + library.length}条)</h3>`;
     
     if (papers.length === 0 && library.length === 0) {
         html += '<div class="empty-state"><p>暂无数据</p></div>';
@@ -453,7 +454,7 @@ function openEditCategoryModal(categoryId, event) {
     if (!category) return;
     
     document.getElementById('editCategoryId').value = categoryId;
-    document.getElementById('editCategoryName').value = category.name;
+    document.getElementById('editCategoryName').value = typeof category.name === 'object' ? (category.name.cn || category.name.en || '') : category.name;
     openModal('editCategoryModal');
 }
 
