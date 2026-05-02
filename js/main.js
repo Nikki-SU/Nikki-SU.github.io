@@ -833,3 +833,226 @@ window.debounce = debounce;
 window.formatDate = formatDate;
 window.formatDateTime = formatDateTime;
 window.translateField = translateField;
+
+
+// ==================== GitHub 同步功能（所有页面共用） ====================
+
+// GitHub配置存储（与settings.js共用）
+function getGitHubToken() {
+    return Storage.get('githubToken', '');
+}
+
+function getGitHubConfig() {
+    return {
+        owner: Storage.get('githubOwner', ''),
+        repo: Storage.get('githubRepo', ''),
+        path: 'academic-data.json',
+        branch: 'main'
+    };
+}
+
+// 从GitHub下载数据
+async function syncFromGitHub() {
+    const token = getGitHubToken();
+    const config = getGitHubConfig();
+    
+    if (!token || !config.owner || !config.repo) {
+        console.log('未配置GitHub同步，跳过');
+        return { success: false, message: '未配置' };
+    }
+    
+    try {
+        const response = await fetch(
+            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+            { headers: { 'Authorization': `token ${token}` } }
+        );
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                return { success: true, message: '远端无数据，本地上传', needUpload: true };
+            }
+            throw new Error('下载失败');
+        }
+        
+        const data = await response.json();
+        const content = JSON.parse(atob(data.content));
+        
+        // 检查数据版本
+        if (!content.data || !content.version) {
+            throw new Error('数据格式错误');
+        }
+        
+        // 比较时间戳，只在远端更新时才覆盖
+        const remoteLastSync = new Date(content.lastSync || 0);
+        const localLastSync = new Date(Storage.get('lastSyncTime', 0));
+        
+        if (remoteLastSync > localLastSync) {
+            // 远端更新，更新本地
+            const d = content.data;
+            if (d.libraryPapers) Storage.set('libraryPapers', d.libraryPapers);
+            if (d.papersData) Storage.set('papersData', d.papersData);
+            if (d.vocabularyData) Storage.set('vocabularyData', d.vocabularyData);
+            if (d.abstractTranslationData) Storage.set('abstractTranslationData', d.abstractTranslationData);
+            if (d.categoriesData) Storage.set('categoriesData', d.categoriesData);
+            if (d.tagsData) Storage.set('tagsData', d.tagsData);
+            if (d.trackingConfig) Storage.set('trackingConfig', d.trackingConfig);
+            if (d.globalSettings) Storage.set('globalSettings', d.globalSettings);
+            
+            Storage.set('lastSyncTime', content.lastSync);
+            return { success: true, message: '已同步最新数据', updated: true };
+        } else {
+            return { success: true, message: '本地数据已是最新', updated: false };
+        }
+    } catch (e) {
+        console.error('同步失败:', e);
+        return { success: false, message: e.message };
+    }
+}
+
+// 上传数据到GitHub
+async function syncToGitHub() {
+    const token = getGitHubToken();
+    const config = getGitHubConfig();
+    
+    if (!token || !config.owner || !config.repo) {
+        return { success: false, message: '未配置' };
+    }
+    
+    try {
+        const backupData = {
+            version: '1.0',
+            lastSync: new Date().toISOString(),
+            data: {
+                libraryPapers: LibraryStore.getAll(),
+                papersData: PapersStore.getAll(),
+                vocabularyData: VocabularyStore.getAll(),
+                abstractTranslationData: AbstractTranslationStore.getAll(),
+                categoriesData: CategoriesStore.getAll(),
+                tagsData: TagsStore.getAll(),
+                trackingConfig: TrackingConfig.get(),
+                globalSettings: GlobalSettings.get()
+            }
+        };
+        
+        // 获取当前文件SHA
+        let sha = null;
+        try {
+            const getResponse = await fetch(
+                `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+                { headers: { 'Authorization': `token ${token}` } }
+            );
+            if (getResponse.ok) {
+                const fileData = await getResponse.json();
+                sha = fileData.sha;
+            }
+        } catch (e) {}
+        
+        // 上传文件
+        const body = {
+            message: `sync: ${new Date().toLocaleString()}`,
+            content: btoa(unescape(encodeURIComponent(JSON.stringify(backupData, null, 2)))),
+            branch: config.branch
+        };
+        if (sha) body.sha = sha;
+        
+        const putResponse = await fetch(
+            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            }
+        );
+        
+        if (putResponse.ok) {
+            Storage.set('lastSyncTime', backupData.lastSync);
+            return { success: true, message: '上传成功' };
+        }
+        throw new Error('上传失败');
+    } catch (e) {
+        console.error('上传失败:', e);
+        return { success: false, message: e.message };
+    }
+}
+
+// 页面加载时自动执行同步：先下载，再根据情况上传
+async function runSyncOnLoad() {
+    const token = getGitHubToken();
+    const config = getGitHubConfig();
+    
+    if (!token || !config.owner || !config.repo) {
+        return; // 未配置，静默跳过
+    }
+    
+    // 显示同步状态
+    const syncStatus = document.createElement('div');
+    syncStatus.id = 'pageSyncStatus';
+    syncStatus.style.cssText = `
+        position: fixed; top: 10px; right: 10px; z-index: 10000;
+        padding: 8px 16px; background: var(--primary); color: white;
+        border-radius: 6px; font-size: 13px; opacity: 0; transition: opacity 0.3s;
+    `;
+    document.body.appendChild(syncStatus);
+    
+    const showStatus = (text, bg = 'var(--primary)') => {
+        syncStatus.textContent = text;
+        syncStatus.style.background = bg;
+        syncStatus.style.opacity = '1';
+    };
+    
+    const hideStatus = () => {
+        setTimeout(() => syncStatus.style.opacity = '0', 2000);
+        setTimeout(() => syncStatus.remove(), 2500);
+    };
+    
+    try {
+        showStatus('🔄 正在同步...');
+        
+        // 1. 先下载
+        const downloadResult = await syncFromGitHub();
+        
+        if (downloadResult.success && downloadResult.needUpload) {
+            // 远端无数据，直接上传
+            showStatus('📤 上传本地数据...');
+            const uploadResult = await syncToGitHub();
+            if (uploadResult.success) {
+                showStatus('✓ 同步完成', '#28a745');
+            } else {
+                showStatus('✗ 上传失败: ' + uploadResult.message, '#dc3545');
+            }
+        } else if (downloadResult.success && downloadResult.updated) {
+            // 下载了新数据
+            showStatus('✓ 已同步最新数据', '#28a745');
+        } else if (downloadResult.success) {
+            // 本地已是最新，检查是否需要上传（本地有更新但未同步）
+            const localLastSync = new Date(Storage.get('lastSyncTime', 0));
+            const now = new Date();
+            // 如果距离上次同步超过5分钟，或者从未同步过，上传一次
+            if (!localLastSync || (now - localLastSync) > 5 * 60 * 1000) {
+                showStatus('📤 同步本地变更...');
+                const uploadResult = await syncToGitHub();
+                if (uploadResult.success) {
+                    showStatus('✓ 同步完成', '#28a745');
+                }
+            } else {
+                showStatus('✓ 数据已是最新', '#28a745');
+            }
+        } else {
+            showStatus('✗ 同步失败: ' + downloadResult.message, '#dc3545');
+        }
+    } catch (e) {
+        showStatus('✗ 同步失败', '#dc3545');
+        console.error('同步异常:', e);
+    }
+    
+    hideStatus();
+}
+
+// 页面加载完成后自动执行同步
+document.addEventListener('DOMContentLoaded', () => {
+    // 延迟执行，避免阻塞页面渲染
+    setTimeout(() => runSyncOnLoad(), 500);
+});
