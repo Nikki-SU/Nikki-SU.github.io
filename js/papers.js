@@ -126,9 +126,11 @@ function toggleLibraryLang() {
 function toggleLibraryDetail() {
     libraryDetailMode = !libraryDetailMode;
     const btn = document.getElementById('libraryDetailBtn');
-    btn.textContent = libraryDetailMode ? '简' : '详';
-    btn.classList.toggle('btn-primary', libraryDetailMode);
-    btn.classList.toggle('btn-outline', !libraryDetailMode);
+    if (btn) {
+        btn.textContent = libraryDetailMode ? '简' : '详';
+        btn.classList.toggle('btn-primary', libraryDetailMode);
+        btn.classList.toggle('btn-outline', !libraryDetailMode);
+    }
     loadLibrary();
 }
 
@@ -166,6 +168,15 @@ function loadLibrary() {
         langBtn.classList.toggle('btn-primary', !libraryLangCN);
         langBtn.classList.toggle('btn-outline', libraryLangCN);
     }
+ 
+    // 更新详简按钮状态
+    const detailBtn = document.getElementById('libraryDetailBtn');
+    if (detailBtn) {
+        detailBtn.textContent = libraryDetailMode ? '简' : '详';
+        detailBtn.classList.toggle('btn-primary', libraryDetailMode);
+        detailBtn.classList.toggle('btn-outline', !libraryDetailMode);
+    }
+
     
     // 筛选
     const filter = document.getElementById('libraryFilter')?.value;
