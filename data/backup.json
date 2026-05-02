@@ -1,0 +1,879 @@
+{
+  "version": "1.0",
+  "lastSync": "2026-05-02T08:28:22.812Z",
+  "data": {
+    "libraryPapers": [
+      {
+        "id": "1777361011330",
+        "doi": "10.1038/s41560-026-02037-2",
+        "title": "Mitigating lead toxicity towards safer commercialization of perovskite solar cells",
+        "titleCn": "",
+        "titleEn": "Mitigating lead toxicity towards safer commercialization of perovskite solar cells",
+        "authors": [
+          "Dongxu Lin",
+          "Yuanfang Huang",
+          "Qi Chen",
+          "Zhibin Yang",
+          "Fengqi You",
+          "Yabing Qi",
+          "Yan Jiang"
+        ],
+        "year": 2026,
+        "journal": "Nature Energy",
+        "abstract": "",
+        "abstractCn": "",
+        "addedAt": "2026-04-28T07:23:31.330Z"
+      }
+    ],
+    "papersData": [
+      {
+        "id": "1777709802874",
+        "titleCn": "通过均匀化氯分布实现钙钛矿太阳能电池>27%的功率转换效率",
+        "titleEn": "Homogenized chlorine distribution for>27% power conversion efficiency in perovskite solar cells",
+        "authors": "Zhuang Xiong, Jingbi You*",
+        "journal": "Science",
+        "publishDate": "2025-11-06",
+        "doi": "10.1126/science.adw8780",
+        "abstractCn": "钙钛矿薄膜中卤素分布的空间不均一性是限制其太阳能电池效率和稳定性的关键因素。本研究发现，在甲脒碘化铅（FAPbI3）薄膜中使用常用的添加剂甲基氯化铵（MACl）会导致显著的膜内氯分布不均。研究证明，引入碱金属草酸盐可有效均匀化氯分布。这些化合物在热处理过程中解离，释放出的碱金属阳离子（如K+）可选择性结合氯离子，从而显著抑制表面缺陷并消除界面势垒。该方法实现了经认证的稳态功率转换效率（PCE）为27.2%的钙钛矿太阳能电池，并且在1个太阳光照、连续最大功率点跟踪（MPPT）1529小时后，器件仍保持其初始PCE的86.3%。此外，未额外钝化的器件在85°C、1个太阳光照、MPPT下老化1000小时后，仍保持其原始PCE的82.8%。这项研究为提高钙钛矿太阳能电池的性能和稳定性提供了有效策略。",
+        "abstractEn": "The spatial heterogeneity of halogen distribution in perovskite thin films represents a critical factor currently limiting both the power conversion efficiency and stability of solar cells. We identified pronounced through-film inhomogeneity in chlorine distribution in formamidinium lead iodide (FAPbI3) films with the generally used additive methylammonium chloride (MACl). We demonstrated that incorporating alkali metal oxalates could effectively homogenize the chlorine distribution. These compounds underwent thermal dissociation, releasing alkali metal cations that selectively bound chloride ions, which considerably suppressed surface defects and eliminated interfacial barriers. A certified steady-state power conversion efficiency (PCE) of 27.2% in perovskite solar cells was achieved, and devices retained 86.3% of their initial PCE after 1529 hours of continuous maximum power point tracking (MPPT) under 1 Sun condition. Moreover, the unpassivated device maintained 82.8% of its original PCE under MPPT at 85°C aging under 1 Sun illumination after 1000 hours.",
+        "keywords": [
+          "perovskite solar cells",
+          "homogenized vertical chlorine distribution (HVCD)",
+          "power conversion efficiency (PCE)",
+          "methylammonium chloride (MACl)",
+          "alkali metal oxalates",
+          "potassium binoxalate (PB)",
+          "interfacial defects",
+          "stability"
+        ],
+        "keywordsCn": [
+          "钙钛矿太阳能电池",
+          "均匀化垂直氯分布（HVCD）",
+          "功率转换效率（PCE）",
+          "甲基氯化铵（MACl）",
+          "碱金属草酸盐",
+          "草酸氢钾（PB）",
+          "界面缺陷",
+          "稳定性"
+        ],
+        "summaryCn": "本研究提出了“均匀化垂直氯分布”策略，解决了由传统MACl添加剂引起的钙钛矿薄膜中氯离子纵向分布不均问题。通过在FAPbI3钙钛矿前驱体中加入碱金属草酸盐（如草酸氢钾），利用其热解离释放的碱金属阳离子（K+）结合并锚定氯离子，从而抑制了界面缺陷和能级失配。该策略成功应用于倒置钙钛矿太阳能电池，实现了27.2%的认证稳态效率，并在光照和热老化下表现出优异的运行稳定性。",
+        "summaryEn": "This study proposed a “Homogenized Vertical Chlorine Distribution” strategy to address the pronounced vertical inhomogeneity of chloride ions in FAPbI3 perovskite films caused by the conventional MACl additive. By incorporating alkali metal oxalates (e.g., potassium binoxalate) into the perovskite precursor, the thermally dissociated alkali metal cations (e.g., K+) bind and anchor chloride ions, thereby suppressing interfacial defects and energy-level misalignment. Applied in inverted perovskite solar cells, this strategy achieved a certified steady-state PCE of 27.2% and demonstrated excellent operational stability under light soaking and thermal aging.",
+        "innovationCn": [
+          "提出“均匀化垂直氯分布”策略，通过在钙钛矿前驱体中加入碱金属草酸盐，利用其热解离特性原位锚定氯离子，彻底解决了MACl导致的氯纵向分布不均问题。",
+          "利用碱金属阳离子（如K+）对氯离子的特异性化学锚定作用，在退火过程中同步实现氯的均匀化和缺陷钝化，显著提升了薄膜质量和载流子寿命。",
+          "该策略不依赖苛刻的湿度控制，在常规空气环境中即可实现高性能，工艺鲁棒性强，为高效稳定钙钛矿太阳能电池的规模化制造提供了可行路径。"
+        ],
+        "innovationEn": [
+          "Proposed the “Homogenized Vertical Chlorine Distribution” strategy, utilizing the thermal dissociation of alkali metal oxalates to in-situ anchor chloride ions, thereby fundamentally solving the vertical inhomogeneity issue caused by MACl.",
+          "Employed the specific chemical anchoring effect of alkali metal cations (e.g., K+) on chloride ions to simultaneously achieve chlorine homogenization and defect passivation during annealing, significantly improving film quality and carrier lifetime.",
+          "The strategy does not require stringent humidity control and delivers high performance under conventional ambient air conditions, offering a robust and scalable route for fabricating efficient and stable perovskite solar cells."
+        ],
+        "applicationCn": "用于制备高效率、高稳定性的倒置结构钙钛矿太阳能电池，推动其商业化应用。",
+        "applicationEn": "Applied in fabricating high-efficiency and high-stability inverted-structure perovskite solar cells, promoting their commercialization.",
+        "structureCn": "研究首先通过多种深度分析技术，揭示了传统MACl添加剂在FAPbI3钙钛矿薄膜中造成氯离子纵向分布不均的关键问题及其对缺陷和能级的负面影响。为解决问题，作者创新性地提出HVCD策略，引入碱金属草酸盐（如PB）。通过系统的物性表征证实PB添加剂可有效均匀化氯分布并形成KCl。光电学表征进一步表明HVCD薄膜具有优化的载流子动力学和抑制的非辐射复合。最终，基于此策略的倒置结构太阳能电池实现了27.2%的认证效率和优异的稳定性，验证了该方法的有效性和应用潜力。",
+        "structureEn": "The study first utilized various depth-profiling techniques to reveal the key issue of vertical chlorine inhomogeneity in FAPbI3 films caused by conventional MACl additive and its negative impact on defects and energy levels. To address this, the authors innovatively proposed the HVCD strategy by incorporating alkali metal oxalates (e.g., PB). Systematic physical characterizations confirmed that the PB additive effectively homogenized chlorine distribution and formed KCl. Subsequent optoelectronic characterizations demonstrated that HVCD films possessed optimized carrier dynamics and suppressed non-radiative recombination. Finally, inverted solar cells based on this strategy achieved a certified efficiency of 27.2% and excellent stability, validating the effectiveness and application potential of the method.",
+        "methodsCn": [
+          "X射线光电子能谱（XPS）",
+          "飞行时间二次离子质谱（ToF-SIMS）",
+          "掠入射X射线衍射（GIXRD）",
+          "扫描电子显微镜（SEM）",
+          "原子力显微镜（AFM）",
+          "开尔文探针力显微镜（KPFM）",
+          "稳态/瞬态光致发光光谱（SSPL/TRPL）",
+          "紫外光电子能谱（UPS）",
+          "驱动级电容分析（DLCP）",
+          "电流密度-电压（J-V）测试",
+          "最大功率点跟踪（MPPT）"
+        ],
+        "methodsEn": [
+          "X-ray photoelectron spectroscopy (XPS)",
+          "Time-of-flight secondary-ion mass spectroscopy (ToF-SIMS)",
+          "Grazing-incident x-ray diffraction (GIXRD)",
+          "Scanning electron microscopy (SEM)",
+          "Atomic force microscopy (AFM)",
+          "Kelvin probe force microscopy (KPFM)",
+          "Steady-state/Time-resolved photoluminescence (SSPL/TRPL)",
+          "Ultraviolet photoelectron spectroscopy (UPS)",
+          "Drive-level capacitance profiling (DLCP)",
+          "Current density-voltage (J-V) measurement",
+          "Maximum power point tracking (MPPT)"
+        ],
+        "category": "",
+        "vocabulary": [
+          {
+            "en": "Homogenized vertical chlorine distribution (HVCD)",
+            "cn": "均匀化垂直氯分布",
+            "defCn": "使氯离子在钙钛矿薄膜厚度方向均匀分布的策略。",
+            "defEn": "Strategy to achieve uniform distribution of chloride ions along the film thickness.",
+            "ex": "The **Homogenized vertical chlorine distribution (HVCD)** strategy addresses the inhomogeneity issue from MACl.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Methylammonium chloride (MACl)",
+            "cn": "甲基氯化铵",
+            "defCn": "钙钛矿薄膜制备中常用的挥发性结晶添加剂。",
+            "defEn": "A volatile crystallization additive commonly used in perovskite film fabrication.",
+            "ex": "The control film with **methylammonium chloride (MACl)** additive showed severe vertical phase segregation.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Potassium binoxalate (PB)",
+            "cn": "草酸氢钾",
+            "defCn": "本研究采用的一种碱金属草酸盐添加剂，用于HVCD策略。",
+            "defEn": "An alkali metal oxalate additive used in this study for the HVCD strategy.",
+            "ex": "The device with **potassium binoxalate (PB)** additive achieved a PCE of 27.2%.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Power conversion efficiency (PCE)",
+            "cn": "功率转换效率",
+            "defCn": "太阳能电池输出电功率与入射光功率的百分比。",
+            "defEn": "The percentage of incident light power converted to electrical power by a solar cell.",
+            "ex": "A steady-state **power conversion efficiency (PCE)** of 27.2% was certified.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Maximum power point tracking (MPPT)",
+            "cn": "最大功率点跟踪",
+            "defCn": "使太阳能电池始终工作在最大功率输出点的控制方法。",
+            "defEn": "A control method to keep a solar cell operating at its maximum power output point.",
+            "ex": "Stability was tested under continuous **maximum power point tracking (MPPT)**.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Trap-assisted recombination",
+            "cn": "陷阱辅助复合",
+            "defCn": "载流子通过缺陷态发生的非辐射复合。",
+            "defEn": "Non-radiative recombination of carriers via defect states.",
+            "ex": "**Trap-assisted recombination** was significantly reduced in the HVCD film.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Interfacial barrier",
+            "cn": "界面势垒",
+            "defCn": "不同材料界面处阻碍电荷传输的能垒。",
+            "defEn": "An energy barrier at material interfaces hindering charge transport.",
+            "ex": "The HVCD strategy effectively eliminated the **interfacial barrier**.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Vertical phase segregation",
+            "cn": "垂直相分离",
+            "defCn": "组分在薄膜厚度方向上发生的不均匀分布。",
+            "defEn": "Inhomogeneous distribution of components along the film thickness.",
+            "ex": "**Vertical phase segregation** of chlorine was observed in the control film.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Passivator",
+            "cn": "钝化剂",
+            "defCn": "用于钝化材料缺陷，减少非辐射复合的物质。",
+            "defEn": "Substance used to passivate material defects and reduce non-radiative recombination.",
+            "ex": "The **passivator** layer was deposited on top of the perovskite film.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Drive-level capacitance profiling (DLCP)",
+            "cn": "驱动级电容分析",
+            "defCn": "通过电容分析表征半导体中载流子和陷阱密度分布的技术。",
+            "defEn": "Technique to profile carrier and trap density distributions via capacitance analysis.",
+            "ex": "**Drive-level capacitance profiling (DLCP)** was used to analyze trap density distribution.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Buried interface",
+            "cn": "埋入界面",
+            "defCn": "在器件叠层中被覆盖、不可直接接触的界面。",
+            "defEn": "An interface covered by upper layers and not directly accessible.",
+            "ex": "Defects at the **buried interface** were significantly passivated.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Chemical anchoring",
+            "cn": "化学锚定",
+            "defCn": "通过化学键合将特定离子或分子固定。",
+            "defEn": "Fixing specific ions or molecules via chemical bonding.",
+            "ex": "K+ ions provided **chemical anchoring** for chloride ions.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          },
+          {
+            "en": "Certified efficiency",
+            "cn": "认证效率",
+            "defCn": "经权威第三方测试机构认证的器件效率。",
+            "defEn": "Device efficiency certified by an accredited third-party testing laboratory.",
+            "ex": "The device achieved a **certified efficiency** of 27.2%.",
+            "status": "new",
+            "correct_count": 0,
+            "error_count": 0,
+            "correct_streak": 0
+          }
+        ],
+        "sourcePaperId": null,
+        "sourceAbstract": "钙钛矿薄膜中卤素分布的空间不均一性是限制其太阳能电池效率和稳定性的关键因素。本研究发现，在甲脒碘化铅（FAPbI3）薄膜中使用常用的添加剂甲基氯化铵（MACl）会导致显著的膜内氯分布不均。研究证明，引入碱金属草酸盐可有效均匀化氯分布。这些化合物在热处理过程中解离，释放出的碱金属阳离子（如K+）可选择性结合氯离子，从而显著抑制表面缺陷并消除界面势垒。该方法实现了经认证的稳态功率转换效率（PCE）为27.2%的钙钛矿太阳能电池，并且在1个太阳光照、连续最大功率点跟踪（MPPT）1529小时后，器件仍保持其初始PCE的86.3%。此外，未额外钝化的器件在85°C、1个太阳光照、MPPT下老化1000小时后，仍保持其原始PCE的82.8%。这项研究为提高钙钛矿太阳能电池的性能和稳定性提供了有效策略。",
+        "tagIds": [
+          "tag_1777709802877",
+          "tag_1777709802877",
+          "tag_1777709802877",
+          "tag_1777709802877",
+          "tag_1777709802878",
+          "tag_1777709802878",
+          "tag_1777709802878",
+          "tag_1777709802878",
+          "tag_1777709802878",
+          "tag_1777709802878",
+          "tag_1777709802878",
+          "tag_1777709802879",
+          "tag_1777709802879",
+          "tag_1777709802879",
+          "tag_1777709802879",
+          "tag_1777709802879",
+          "tag_1777709802879",
+          "tag_1777709802880",
+          "tag_1777709802880"
+        ],
+        "createdAt": "2026-05-02T08:16:42.874Z",
+        "updatedAt": "2026-05-02T08:16:42.880Z"
+      }
+    ],
+    "vocabularyData": [
+      {
+        "id": "1777709802876",
+        "en": "certified efficiency",
+        "cn": "认证效率",
+        "defCn": "经权威第三方测试机构认证的器件效率。",
+        "defEn": "Device efficiency certified by an accredited third-party testing laboratory.",
+        "ex": "The device achieved a **certified efficiency** of 27.2%.",
+        "status": "new",
+        "streak": 0,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-05-02T08:16:42.876Z"
+      },
+      {
+        "id": "1777709802876",
+        "en": "chemical anchoring",
+        "cn": "化学锚定",
+        "defCn": "通过化学键合将特定离子或分子固定。",
+        "defEn": "Fixing specific ions or molecules via chemical bonding.",
+        "ex": "K+ ions provided **chemical anchoring** for chloride ions.",
+        "status": "new",
+        "streak": 0,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-05-02T08:16:42.876Z"
+      },
+      {
+        "id": "1777709802876",
+        "en": "buried interface",
+        "cn": "埋入界面",
+        "defCn": "在器件叠层中被覆盖、不可直接接触的界面。",
+        "defEn": "An interface covered by upper layers and not directly accessible.",
+        "ex": "Defects at the **buried interface** were significantly passivated.",
+        "status": "new",
+        "streak": 0,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-05-02T08:16:42.876Z"
+      },
+      {
+        "id": "1777709802875",
+        "en": "drive-level capacitance profiling (dlcp)",
+        "cn": "驱动级电容分析",
+        "defCn": "通过电容分析表征半导体中载流子和陷阱密度分布的技术。",
+        "defEn": "Technique to profile carrier and trap density distributions via capacitance analysis.",
+        "ex": "**Drive-level capacitance profiling (DLCP)** was used to analyze trap density distribution.",
+        "status": "new",
+        "streak": 0,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-05-02T08:16:42.875Z"
+      },
+      {
+        "id": "1777709802875",
+        "en": "passivator",
+        "cn": "钝化剂",
+        "defCn": "用于钝化材料缺陷，减少非辐射复合的物质。",
+        "defEn": "Substance used to passivate material defects and reduce non-radiative recombination.",
+        "ex": "The **passivator** layer was deposited on top of the perovskite film.",
+        "status": "new",
+        "streak": 0,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-05-02T08:16:42.875Z"
+      },
+      {
+        "id": "1777709802875",
+        "en": "vertical phase segregation",
+        "cn": "垂直相分离",
+        "defCn": "组分在薄膜厚度方向上发生的不均匀分布。",
+        "defEn": "Inhomogeneous distribution of components along the film thickness.",
+        "ex": "**Vertical phase segregation** of chlorine was observed in the control film.",
+        "status": "new",
+        "streak": 0,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-05-02T08:16:42.875Z"
+      },
+      {
+        "id": "1777709802875",
+        "en": "interfacial barrier",
+        "cn": "界面势垒",
+        "defCn": "不同材料界面处阻碍电荷传输的能垒。",
+        "defEn": "An energy barrier at material interfaces hindering charge transport.",
+        "ex": "The HVCD strategy effectively eliminated the **interfacial barrier**.",
+        "status": "new",
+        "streak": 0,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-05-02T08:16:42.875Z"
+      },
+      {
+        "id": "1777273755692",
+        "en": "energy level alignment",
+        "cn": "能级排列/对准",
+        "defCn": "不同材料接触时，其能带边缘（如价带顶、导带底）的相对位置关系。",
+        "defEn": "The relative positions of band edges (e.g., VBM, CBM) when different materials come into contact.",
+        "ex": "The upshifted CBM and VBM eliminated the interfacial barrier and promoted better **energy level alignment**.",
+        "status": "new",
+        "streak": 3,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.692Z",
+        "correctTypes": [
+          1
+        ],
+        "cardShown": true
+      },
+      {
+        "id": "1777273755692",
+        "en": "phase segregation",
+        "cn": "ç¸åç¦»",
+        "defCn": "材料中不同化学成分的区域发生分离的现象。",
+        "defEn": "The phenomenon where regions of different chemical compositions separate in a material.",
+        "ex": "The Cl accumulation induced inhomogeneous crystallization and vertical **phase segregation**.",
+        "status": "new",
+        "streak": 12,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.692Z",
+        "correctTypes": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "cardShown": true
+      },
+      {
+        "id": "1777273755692",
+        "en": "defect density",
+        "cn": "缺陷态密度",
+        "defCn": "单位体积或单位面积内缺陷态的数量。",
+        "defEn": "The number of defect states per unit volume or area.",
+        "ex": "The HVCD film demonstrated a lower **defect density** at the top surface.",
+        "status": "new",
+        "streak": 2,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.692Z",
+        "correctTypes": [
+          1
+        ],
+        "cardShown": true
+      },
+      {
+        "id": "1777273755692",
+        "en": "conduction band minimum (cbm)",
+        "cn": "å¯¼å¸¦åº",
+        "defCn": "半导体导带中最低的电子能量。",
+        "defEn": "The lowest electron energy in the conduction band of a semiconductor.",
+        "ex": "The deeper-lying **conduction band minimum (CBM)** was expected to impede efficient electron extraction.",
+        "status": "new",
+        "streak": 2,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.692Z",
+        "correctTypes": [
+          1
+        ],
+        "cardShown": true
+      },
+      {
+        "id": "1777273755691",
+        "en": "valence band maximum (vbm)",
+        "cn": "价带顶",
+        "defCn": "半导体价带中最高的电子能量。",
+        "defEn": "The highest electron energy in the valence band of a semiconductor.",
+        "ex": "The **valence band maximums (VBM)** were estimated to be -6.06 eV and -5.74 eV, respectively.",
+        "status": "new",
+        "streak": 2,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.691Z",
+        "correctTypes": [
+          1
+        ],
+        "cardShown": true
+      },
+      {
+        "id": "1777273755691",
+        "en": "fill factor (ff)",
+        "cn": "å¡«åå å­",
+        "defCn": "太阳能电池J-V曲线中最大功率与开路电压和短路电流乘积的比值。",
+        "defEn": "The ratio of the maximum power to the product of open-circuit voltage and short-circuit current in a solar cell J-V curve.",
+        "ex": "The enhanced performance primarily originated from improvements in VOC and the **fill factor (FF)**.",
+        "status": "new",
+        "streak": 2,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.691Z",
+        "correctTypes": [
+          1
+        ],
+        "cardShown": true
+      },
+      {
+        "id": "1777273755691",
+        "en": "photoluminescence quantum yield (plqy)",
+        "cn": "光致发光量子产率",
+        "defCn": "发射光子数与吸收光子数的比值，反映材料发光效率。",
+        "defEn": "The ratio of the number of photons emitted to the number of photons absorbed, indicating luminescence efficiency.",
+        "ex": "We measured the **photoluminescence quantum yield (PLQY)** of the perovskite films.",
+        "status": "new",
+        "streak": 2,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.691Z",
+        "correctTypes": [
+          1
+        ],
+        "cardShown": true
+      },
+      {
+        "id": "1777273755691",
+        "en": "time-of-flight secondary-ion mass spectroscopy (tof-sims)",
+        "cn": "飞行时间二次离子质谱",
+        "defCn": "用于分析材料表面及深度方向元素/离子分布的技术。",
+        "defEn": "A technique for analyzing the distribution of elements/ions on and within a material.",
+        "ex": "**Time-of-flight secondary-ion mass spectroscopy (ToF-SIMS)** was utilized to investigate the spatial vertical distribution of Cl anions.",
+        "status": "new",
+        "streak": 2,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.691Z",
+        "correctTypes": [
+          1
+        ],
+        "cardShown": true
+      },
+      {
+        "id": "1777273755691",
+        "en": "x-ray photoelectron spectroscopy (xps)",
+        "cn": "X射线光电子能谱",
+        "defCn": "用于分析材料表面元素组成和化学态的技术。",
+        "defEn": "A technique for analyzing the elemental composition and chemical states of a material's surface.",
+        "ex": "**X-ray photoelectron spectroscopy (XPS)** revealed the chemical changes of the top surfaces.",
+        "status": "new",
+        "streak": 1,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.691Z",
+        "correctTypes": [
+          1
+        ],
+        "cardShown": true
+      },
+      {
+        "id": "1777273755691",
+        "en": "trap-assisted recombination",
+        "cn": "陷阱辅助复合",
+        "defCn": "载流子通过缺陷态（陷阱）发生的非辐射复合过程。",
+        "defEn": "A non-radiative recombination process where charge carriers recombine via defect states (traps).",
+        "ex": "This inhomogeneity promoted **trap-assisted recombination** and misalignment of energy levels.",
+        "status": "new",
+        "streak": 1,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.691Z",
+        "correctTypes": [
+          1
+        ],
+        "cardShown": true
+      },
+      {
+        "id": "1777273755691",
+        "en": "maximum power point tracking (mppt)",
+        "cn": "最大功率点跟踪",
+        "defCn": "使太阳能电池始终工作在最大输出功率点的技术。",
+        "defEn": "A technique to keep a solar cell operating at its maximum power point.",
+        "ex": "Devices retained 86.3% of initial PCE after 1529 hours of continuous **maximum power point tracking (MPPT)**.",
+        "status": "new",
+        "streak": 1,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.691Z",
+        "correctTypes": [
+          1
+        ],
+        "cardShown": true
+      },
+      {
+        "id": "1777273755691",
+        "en": "power conversion efficiency (pce)",
+        "cn": "功率转换效率",
+        "defCn": "太阳能电池将入射光功率转换为输出电功率的效率。",
+        "defEn": "The efficiency of a solar cell in converting incident light power into output electrical power.",
+        "ex": "A certified steady-state **power conversion efficiency (PCE)** of 27.2% was achieved.",
+        "status": "new",
+        "streak": 0,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.691Z"
+      },
+      {
+        "id": "1777273755691",
+        "en": "potassium binoxalate (pb)",
+        "cn": "草酸氢钾",
+        "defCn": "本研究中使用的碱金属草酸盐添加剂，用于实现HVCD。",
+        "defEn": "An alkali metal oxalate additive used in this study to achieve HVCD.",
+        "ex": "We introduced alkali metal oxalates, such as **potassium binoxalate (PB)**, into the perovskite precursors.",
+        "status": "new",
+        "streak": 0,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.691Z"
+      },
+      {
+        "id": "1777273755691",
+        "en": "methylammonium chloride (macl)",
+        "cn": "甲基氯化铵",
+        "defCn": "钙钛矿薄膜制备中常用的添加剂，用于降低成核势垒。",
+        "defEn": "A commonly used additive in perovskite film fabrication to lower the nucleation barrier.",
+        "ex": "The spatial heterogeneity was identified in films with the additive **methylammonium chloride (MACl)**.",
+        "status": "new",
+        "streak": 0,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.691Z"
+      },
+      {
+        "id": "1777273755691",
+        "en": "homogenized vertical chlorine distribution (hvcd)",
+        "cn": "åååçºµåæ°¯åå¸",
+        "defCn": "一种通过添加剂使钙钛矿薄膜中氯离子纵向分布均匀的策略。",
+        "defEn": "A strategy to homogenize the vertical distribution of chlorine ions in perovskite films via additives.",
+        "ex": "The **Homogenized Vertical Chlorine Distribution (HVCD)** strategy significantly improved device performance.",
+        "status": "new",
+        "streak": 0,
+        "wrongCount": 0,
+        "category": "custom",
+        "addedAt": "2026-04-27T07:09:15.691Z"
+      }
+    ],
+    "abstractTranslationData": [
+      {
+        "paperId": "1777709802874",
+        "titleEn": "Homogenized chlorine distribution for>27% power conversion efficiency in perovskite solar cells",
+        "titleCn": "通过均匀化氯分布实现钙钛矿太阳能电池>27%的功率转换效率",
+        "abstractEn": "The spatial heterogeneity of halogen distribution in perovskite thin films represents a critical factor currently limiting both the power conversion efficiency and stability of solar cells. We identified pronounced through-film inhomogeneity in chlorine distribution in formamidinium lead iodide (FAPbI3) films with the generally used additive methylammonium chloride (MACl). We demonstrated that incorporating alkali metal oxalates could effectively homogenize the chlorine distribution. These compounds underwent thermal dissociation, releasing alkali metal cations that selectively bound chloride ions, which considerably suppressed surface defects and eliminated interfacial barriers. A certified steady-state power conversion efficiency (PCE) of 27.2% in perovskite solar cells was achieved, and devices retained 86.3% of their initial PCE after 1529 hours of continuous maximum power point tracking (MPPT) under 1 Sun condition. Moreover, the unpassivated device maintained 82.8% of its original PCE under MPPT at 85°C aging under 1 Sun illumination after 1000 hours.",
+        "abstractCn": "钙钛矿薄膜中卤素分布的空间不均一性是限制其太阳能电池效率和稳定性的关键因素。本研究发现，在甲脒碘化铅（FAPbI3）薄膜中使用常用的添加剂甲基氯化铵（MACl）会导致显著的膜内氯分布不均。研究证明，引入碱金属草酸盐可有效均匀化氯分布。这些化合物在热处理过程中解离，释放出的碱金属阳离子（如K+）可选择性结合氯离子，从而显著抑制表面缺陷并消除界面势垒。该方法实现了经认证的稳态功率转换效率（PCE）为27.2%的钙钛矿太阳能电池，并且在1个太阳光照、连续最大功率点跟踪（MPPT）1529小时后，器件仍保持其初始PCE的86.3%。此外，未额外钝化的器件在85°C、1个太阳光照、MPPT下老化1000小时后，仍保持其原始PCE的82.8%。这项研究为提高钙钛矿太阳能电池的性能和稳定性提供了有效策略。",
+        "keywords": [
+          "perovskite solar cells",
+          "homogenized vertical chlorine distribution (HVCD)",
+          "power conversion efficiency (PCE)",
+          "methylammonium chloride (MACl)",
+          "alkali metal oxalates",
+          "potassium binoxalate (PB)",
+          "interfacial defects",
+          "stability"
+        ],
+        "keywordsCn": [
+          "钙钛矿太阳能电池",
+          "均匀化垂直氯分布（HVCD）",
+          "功率转换效率（PCE）",
+          "甲基氯化铵（MACl）",
+          "碱金属草酸盐",
+          "草酸氢钾（PB）",
+          "界面缺陷",
+          "稳定性"
+        ],
+        "translated": false,
+        "userTranslation": null,
+        "aiComment": null,
+        "addedAt": 1777709802881,
+        "translatedAt": null
+      },
+      {
+        "titleEn": "Homogenized chlorine distribution for>27% power conversion efficiency in perovskite solar cells",
+        "titleCn": "通过均匀化氯分布实现钙钛矿太阳能电池功率转换效率超过27%",
+        "abstractEn": "The spatial heterogeneity of halogen distribution in perovskite thin films represents a critical factor currently limiting both the power conversion efficiency and stability of solar cells. We identified pronounced through-film inhomogeneity in chlorine distribution in formamidinium lead iodide films with the generally used additive methylammonium chloride. We demonstrated that incorporating alkali metal oxalates could effectively homogenize the chlorine distribution. These compounds underwent thermal dissociation, releasing alkali metal cations that selectively bound chloride ions, which considerably suppressed surface defects and eliminated interfacial barriers. A certified steady-state power conversion efficiency (PCE) of 27.2% (device area/measured mask area: 0.108 cm²/0.074 cm²) in perovskite solar cells was achieved, and devices retained 86.3% of their initial PCE after 1529 hours of continuous maximum power point tracking (MPPT) under 1 Sun condition. Moreover, the unpassivated device maintained 82.8% of its original PCE under MPPT at 85°C aging under 1 Sun illumination after 1000 hours.",
+        "abstractCn": "钙钛矿薄膜中卤素分布的空间不均匀性是当前限制太阳能电池功率转换效率和稳定性的关键因素。本研究发现，在使用常用添加剂甲基氯化铵（MACl）的甲脒铅碘（FAPbI₃）薄膜中，氯的分布存在显著的贯穿薄膜不均匀性。研究证明，引入碱金属草酸盐可有效均匀化氯分布。这些化合物在热退火过程中解离，释放出的碱金属阳离子选择性地结合氯离子，从而显著抑制了表面缺陷并消除了界面势垒。最终实现了钙钛矿太阳能电池认证稳态功率转换效率（PCE）27.2%（器件面积/测量掩膜面积：0.108 cm² / 0.074 cm²），并且器件在1 Sun光照条件下连续进行最大功率点跟踪（MPPT）1529小时后，仍能保持初始效率的86.3%。此外，未经钝化处理的器件在85°C、1 Sun光照下进行MPPT老化1000小时后，仍保持了初始效率的82.8%。",
+        "keywords": [
+          "perovskite solar cells",
+          "chlorine distribution",
+          "alkali metal oxalates",
+          "homogenization",
+          "power conversion efficiency",
+          "stability",
+          "defect passivation",
+          "KCl formation"
+        ],
+        "keywordsCn": [
+          "Ã©ÂÂÃ©ÂÂÃ§ÂÂ¿Ã¥Â¤ÂªÃ©ÂÂ³Ã¨ÂÂ½Ã§ÂÂµÃ¦Â±Â ",
+          "Ã¦Â°Â¯Ã¥ÂÂÃ¥Â¸Â",
+          "Ã§Â¢Â±Ã©ÂÂÃ¥Â±ÂÃ¨ÂÂÃ©ÂÂ¸Ã§ÂÂ",
+          "Ã¥ÂÂÃ¥ÂÂÃ¥ÂÂ",
+          "Ã¥ÂÂÃ§ÂÂÃ¨Â½Â¬Ã¦ÂÂ¢Ã¦ÂÂÃ§ÂÂ",
+          "Ã§Â¨Â³Ã¥Â®ÂÃ¦ÂÂ§",
+          "Ã§Â¼ÂºÃ©ÂÂ·Ã©ÂÂÃ¥ÂÂ",
+          "Ã¦Â°Â¯Ã¥ÂÂÃ©ÂÂ¾Ã¥Â½Â¢Ã¦ÂÂ"
+        ],
+        "translated": false,
+        "userTranslation": null,
+        "aiComment": null,
+        "addedAt": 1777273755692,
+        "translatedAt": null
+      }
+    ],
+    "categoriesData": [
+      {
+        "id": "cat_1777356572238",
+        "name": "表征技术",
+        "createdAt": "2026-04-28T06:09:32.238Z"
+      }
+    ],
+    "tagsData": [
+      {
+        "id": "tag_1777709802877",
+        "nameCn": "钙钛矿太阳能电池",
+        "nameEn": "perovskite solar cells",
+        "source": "keyword",
+        "categoryIds": [],
+        "createdAt": "2026-05-02T08:16:42.877Z"
+      },
+      {
+        "id": "tag_1777709802877",
+        "nameCn": "均匀化垂直氯分布（HVCD）",
+        "nameEn": "homogenized vertical chlorine distribution (HVCD)",
+        "source": "keyword",
+        "categoryIds": [],
+        "createdAt": "2026-05-02T08:16:42.877Z"
+      },
+      {
+        "id": "tag_1777709802877",
+        "nameCn": "功率转换效率（PCE）",
+        "nameEn": "power conversion efficiency (PCE)",
+        "source": "keyword",
+        "categoryIds": [],
+        "createdAt": "2026-05-02T08:16:42.877Z"
+      },
+      {
+        "id": "tag_1777709802877",
+        "nameCn": "甲基氯化铵（MACl）",
+        "nameEn": "methylammonium chloride (MACl)",
+        "source": "keyword",
+        "categoryIds": [],
+        "createdAt": "2026-05-02T08:16:42.877Z"
+      },
+      {
+        "id": "tag_1777709802878",
+        "nameCn": "碱金属草酸盐",
+        "nameEn": "alkali metal oxalates",
+        "source": "keyword",
+        "categoryIds": [],
+        "createdAt": "2026-05-02T08:16:42.878Z"
+      },
+      {
+        "id": "tag_1777709802878",
+        "nameCn": "草酸氢钾（PB）",
+        "nameEn": "potassium binoxalate (PB)",
+        "source": "keyword",
+        "categoryIds": [],
+        "createdAt": "2026-05-02T08:16:42.878Z"
+      },
+      {
+        "id": "tag_1777709802878",
+        "nameCn": "界面缺陷",
+        "nameEn": "interfacial defects",
+        "source": "keyword",
+        "categoryIds": [],
+        "createdAt": "2026-05-02T08:16:42.878Z"
+      },
+      {
+        "id": "tag_1777709802878",
+        "nameCn": "稳定性",
+        "nameEn": "stability",
+        "source": "keyword",
+        "categoryIds": [],
+        "createdAt": "2026-05-02T08:16:42.878Z"
+      },
+      {
+        "id": "tag_1777709802878",
+        "nameCn": "X射线光电子能谱（XPS）",
+        "nameEn": "X-ray photoelectron spectroscopy (XPS)",
+        "source": "method",
+        "categoryIds": [
+          "cat_1777356572238"
+        ],
+        "createdAt": "2026-05-02T08:16:42.878Z"
+      },
+      {
+        "id": "tag_1777709802878",
+        "nameCn": "飞行时间二次离子质谱（ToF-SIMS）",
+        "nameEn": "Time-of-flight secondary-ion mass spectroscopy (ToF-SIMS)",
+        "source": "method",
+        "categoryIds": [
+          "cat_1777356572238"
+        ],
+        "createdAt": "2026-05-02T08:16:42.878Z"
+      },
+      {
+        "id": "tag_1777709802878",
+        "nameCn": "掠入射X射线衍射（GIXRD）",
+        "nameEn": "Grazing-incident x-ray diffraction (GIXRD)",
+        "source": "method",
+        "categoryIds": [
+          "cat_1777356572238"
+        ],
+        "createdAt": "2026-05-02T08:16:42.878Z"
+      },
+      {
+        "id": "tag_1777709802879",
+        "nameCn": "扫描电子显微镜（SEM）",
+        "nameEn": "Scanning electron microscopy (SEM)",
+        "source": "method",
+        "categoryIds": [
+          "cat_1777356572238"
+        ],
+        "createdAt": "2026-05-02T08:16:42.879Z"
+      },
+      {
+        "id": "tag_1777709802879",
+        "nameCn": "原子力显微镜（AFM）",
+        "nameEn": "Atomic force microscopy (AFM)",
+        "source": "method",
+        "categoryIds": [
+          "cat_1777356572238"
+        ],
+        "createdAt": "2026-05-02T08:16:42.879Z"
+      },
+      {
+        "id": "tag_1777709802879",
+        "nameCn": "开尔文探针力显微镜（KPFM）",
+        "nameEn": "Kelvin probe force microscopy (KPFM)",
+        "source": "method",
+        "categoryIds": [
+          "cat_1777356572238"
+        ],
+        "createdAt": "2026-05-02T08:16:42.879Z"
+      },
+      {
+        "id": "tag_1777709802879",
+        "nameCn": "稳态/瞬态光致发光光谱（SSPL/TRPL）",
+        "nameEn": "Steady-state/Time-resolved photoluminescence (SSPL/TRPL)",
+        "source": "method",
+        "categoryIds": [
+          "cat_1777356572238"
+        ],
+        "createdAt": "2026-05-02T08:16:42.879Z"
+      },
+      {
+        "id": "tag_1777709802879",
+        "nameCn": "紫外光电子能谱（UPS）",
+        "nameEn": "Ultraviolet photoelectron spectroscopy (UPS)",
+        "source": "method",
+        "categoryIds": [
+          "cat_1777356572238"
+        ],
+        "createdAt": "2026-05-02T08:16:42.879Z"
+      },
+      {
+        "id": "tag_1777709802879",
+        "nameCn": "驱动级电容分析（DLCP）",
+        "nameEn": "Drive-level capacitance profiling (DLCP)",
+        "source": "method",
+        "categoryIds": [
+          "cat_1777356572238"
+        ],
+        "createdAt": "2026-05-02T08:16:42.879Z"
+      },
+      {
+        "id": "tag_1777709802880",
+        "nameCn": "电流密度-电压（J-V）测试",
+        "nameEn": "Current density-voltage (J-V) measurement",
+        "source": "method",
+        "categoryIds": [
+          "cat_1777356572238"
+        ],
+        "createdAt": "2026-05-02T08:16:42.880Z"
+      },
+      {
+        "id": "tag_1777709802880",
+        "nameCn": "最大功率点跟踪（MPPT）",
+        "nameEn": "Maximum power point tracking (MPPT)",
+        "source": "method",
+        "categoryIds": [
+          "cat_1777356572238"
+        ],
+        "createdAt": "2026-05-02T08:16:42.880Z"
+      }
+    ],
+    "trackingConfig": {
+      "selectedJournals": [
+        "Nature",
+        "Science",
+        "Nature Materials",
+        "Nature Energy"
+      ],
+      "keywords": [
+        "perovskite"
+      ],
+      "lastTracking": "2026-04-28T06:14:01.355Z",
+      "autoTracking": false
+    },
+    "globalSettings": {
+      "apiProvider": "siliconflow",
+      "apiKey": "",
+      "model": "Qwen/Qwen2.5-7B-Instruct",
+      "vocabCount": 20
+    }
+  }
+}
