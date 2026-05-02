@@ -5,6 +5,7 @@
 // 状态
 let currentTab = 'library';
 let currentCardId = null;
+let currentLibraryId = null;
 let libraryLangCN = true;
 let libraryDetailMode = false; // false=简, true=详 // 文献库语言，true=中文，false=英文
 
@@ -13,6 +14,26 @@ document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     loadLibrary();
     loadCards();
+    
+    // 处理URL参数，自动打开详情
+    const params = new URLSearchParams(window.location.search);
+    const cardId = params.get('id');
+    const libraryId = params.get('library');
+    const fromFiles = params.has('fromFiles');
+    
+    if (cardId) {
+        openCardDetail(cardId);
+        // 标记来自文件管理页
+        if (fromFiles) {
+            document.body.dataset.fromFiles = 'true';
+        }
+    } else if (libraryId) {
+        openLibraryDetail(libraryId);
+        // 标记来自文件管理页
+        if (fromFiles) {
+            document.body.dataset.fromFiles = 'true';
+        }
+    }
 });
 
 // 初始化事件监听
@@ -415,6 +436,12 @@ function openCardDetail(cardId) {
     
     currentCardId = cardId;
     
+    // 显示/隐藏返回按钮
+    const backBtn = document.getElementById('backToFilesBtn');
+    if (backBtn) {
+        backBtn.style.display = document.body.dataset.fromFiles === 'true' ? 'inline-block' : 'none';
+    }
+    
     // 设置开关状态
     // 使用全局语言设置
     
@@ -636,6 +663,97 @@ function openCardDetail(cardId) {
 }
 
 // 添加词汇到词汇本
+
+// 打开文献库词条详情
+function openLibraryDetail(libraryId) {
+    const paper = LibraryStore.getById(libraryId);
+    if (!paper) {
+        showToast('文献库词条不存在', 'error');
+        return;
+    }
+    
+    currentLibraryId = libraryId;
+    
+    // 显示/隐藏返回按钮
+    const backBtn = document.getElementById('backToFilesBtn');
+    if (backBtn) {
+        backBtn.style.display = document.body.dataset.fromFiles === 'true' ? 'inline-block' : 'none';
+    }
+    
+    // 标题
+    const title = (libraryLang === 'cn') ? (paper.titleCn || paper.title || paper.titleEn) : (paper.titleEn || paper.title || paper.titleCn);
+    document.getElementById('cardDetailTitle').textContent = title || '文献库词条';
+    
+    // 构建内容
+    let html = '';
+    
+    // 元信息
+    html += `
+        <div class="card-meta">
+            ${paper.journal ? `<span>📖 ${escapeHtml(paper.journal)}</span>` : ''}
+            ${paper.publishDate ? `<span>📅 ${escapeHtml(paper.publishDate)}</span>` : ''}
+            ${paper.doi ? `<span>🔗 <a href="https://doi.org/${escapeHtml(paper.doi)}" target="_blank" style="color:var(--primary);">${escapeHtml(paper.doi)}</a></span>` : ''}
+        </div>
+    `;
+    
+    // 作者
+    if (paper.authors) {
+        html += `
+            <div class="card-section">
+                <h4>👥 ${(libraryLang === 'cn') ? '作者' : 'Authors'}</h4>
+                <p style="font-size:13px;">${escapeHtml(paper.authors)}</p>
+            </div>
+        `;
+    }
+    
+    // 摘要
+    const abstract = (libraryLang === 'cn') ? paper.abstractCn : paper.abstractEn;
+    if (abstract) {
+        html += `
+            <div class="card-section">
+                <h4>📝 ${(libraryLang === 'cn') ? '摘要' : 'Abstract'}</h4>
+                <p style="font-size:13px; line-height: 1.6;">${escapeHtml(abstract)}</p>
+            </div>
+        `;
+    }
+    
+    // 关键词
+    if (paper.keywords) {
+        html += `
+            <div class="card-section">
+                <h4>🔑 ${(libraryLang === 'cn') ? '关键词' : 'Keywords'}</h4>
+                <p style="font-size:13px;">${escapeHtml(paper.keywords)}</p>
+            </div>
+        `;
+    }
+    
+    // 标签
+    const uniqueTagIds = [...new Set(paper.tagIds || [])];
+    const tags = uniqueTagIds.map(id => TagsStore.getById(id)).filter(Boolean);
+    if (tags.length > 0) {
+        const seenTags = new Set();
+        const tagHtml = tags.filter(t => {
+            const key = t.nameCn || t.nameEn;
+            if (seenTags.has(key)) return false;
+            seenTags.add(key);
+            return true;
+        }).map(t => {
+            const name = (libraryLang === 'cn') ? (t.nameCn || t.nameEn) : (t.nameEn || t.nameCn);
+            return `<span class="data-tag">${escapeHtml(name)}</span>`;
+        }).join('');
+        
+        html += `
+            <div class="card-section">
+                <h4>🏷️ ${(libraryLang === 'cn') ? '标签' : 'Tags'}</h4>
+                <div>${tagHtml}</div>
+            </div>
+        `;
+    }
+    
+    document.getElementById('cardDetailBody').innerHTML = html;
+    document.getElementById('cardDetailModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
 function addVocabToStudy(vocabJson) {
     try {
         const vocab = JSON.parse(vocabJson);
@@ -655,6 +773,12 @@ function addVocabToStudy(vocabJson) {
 function closeCardDetailModal() {
     document.getElementById('cardDetailModal').classList.add('hidden');
     currentCardId = null;
+}
+
+// 返回文件管理页
+function goBackToFiles() {
+    closeCardDetail();
+    window.location.href = 'files.html';
 }
 
 // 删除当前卡片
