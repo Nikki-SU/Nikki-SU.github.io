@@ -422,6 +422,117 @@ function saveGitHubConfig() {
         showToast('请输入 Token', 'error');
         return;
     }
+
+
+// 扫描GitHub仓库
+async function scanGitHubRepos() {
+    const token = document.getElementById('githubToken').value.trim();
+    if (!token) {
+        showToast('请先输入Token', 'error');
+        return;
+    }
+    
+    const resultsDiv = document.getElementById('repoScanResults');
+    const repoListDiv = document.getElementById('repoList');
+    const manualInput = document.getElementById('manualRepoInput');
+    
+    resultsDiv.style.display = 'block';
+    repoListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">🔄 正在扫描仓库...</div>';
+    manualInput.style.display = 'none';
+    
+    try {
+        // 获取用户的所有仓库
+        let allRepos = [];
+        let page = 1;
+        while (true) {
+            const response = await fetch(
+                `https://api.github.com/user/repos?per_page=100&page=${page}&affiliation=owner,collaborator`,
+                { headers: { 'Authorization': `token ${token}` } }
+            );
+            
+            if (!response.ok) {
+                throw new Error('Token无效或无权限');
+            }
+            
+            const repos = await response.json();
+            if (repos.length === 0) break;
+            allRepos = allRepos.concat(repos);
+            page++;
+        }
+        
+        if (allRepos.length === 0) {
+            repoListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">未找到可访问的仓库</div>';
+            return;
+        }
+        
+        // 检查每个仓库是否有数据文件（并行请求，最多10个）
+        const repoStatuses = [];
+        const batchSize = 10;
+        
+        for (let i = 0; i < allRepos.length; i += batchSize) {
+            const batch = allRepos.slice(i, i + batchSize);
+            const promises = batch.map(async (repo) => {
+                try {
+                    const checkResponse = await fetch(
+                        `https://api.github.com/repos/${repo.full_name}/contents/academic-data.json`,
+                        { headers: { 'Authorization': `token ${token}` } }
+                    );
+                    return {
+                        ...repo,
+                        hasData: checkResponse.ok
+                    };
+                } catch (e) {
+                    return { ...repo, hasData: false };
+                }
+            });
+            
+            const results = await Promise.all(promises);
+            repoStatuses.push(...results);
+        }
+        
+        // 排序：有数据的仓库排在前面
+        repoStatuses.sort((a, b) => {
+            if (a.hasData !== b.hasData) return b.hasData ? 1 : -1;
+            return b.updated_at.localeCompare(a.updated_at);
+        });
+        
+        // 生成仓库列表
+        repoListDiv.innerHTML = repoStatuses.map(repo => `
+            <div class="repo-item" onclick="selectRepo('${repo.owner.login}', '${repo.name}')" 
+                 style="padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;"
+                 onmouseover="this.style.background='var(--bg)'" 
+                 onmouseout="this.style.background='transparent'">
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-weight: 500;">${repo.full_name}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                            ${repo.description || '无描述'}
+                        </div>
+                    </div>
+                    <div>${repo.hasData ? '✅ 有数据' : '📁 空仓库'}</div>
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (e) {
+        repoListDiv.innerHTML = `<div style="padding: 20px; text-align: center; color: #dc3545;">扫描失败: ${e.message}</div>`;
+    }
+}
+
+// 选择仓库
+function selectRepo(owner, repo) {
+    document.getElementById('githubOwner').value = owner;
+    document.getElementById('githubRepo').value = repo;
+    showToast(`已选择: ${owner}/${repo}`, 'success');
+}
+
+// 切换到手动输入模式
+function selectManualRepo() {
+    document.getElementById('repoScanResults').style.display = 'none';
+    document.getElementById('manualRepoInput').style.display = 'block';
+    document.getElementById('githubOwner').value = '';
+    document.getElementById('githubRepo').value = '';
+}
     if (!owner || !repo) {
         showToast('请输入用户名和仓库名', 'error');
         return;
