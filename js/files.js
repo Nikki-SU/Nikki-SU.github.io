@@ -103,7 +103,7 @@ function renderTagItem(tag) {
         <div class="tag-item ${currentTag === tag.id ? 'active' : ''}" 
              onclick="selectTag('${tag.id}')" 
              oncontextmenu="openEditTagModal('${tag.id}', event)">
-            <span class="tag-name">${escapeHtml(displayName)}</span>
+            <span class="tag-name">${escapeHtml(typeof displayName === 'object' ? (displayName.cn || displayName.en || JSON.stringify(displayName)) : displayName)}</span>
             <span class="tag-source">${sourceLabel}</span>
         </div>
     `;
@@ -160,7 +160,8 @@ function renderDataByTag(tagId) {
     
     const displayName = currentLang === 'cn' ? (tag.nameCn || tag.nameEn) : (tag.nameEn || tag.nameCn);
     
-    let html = `<h3 style="margin-bottom: 16px; color: var(--primary);">标签: ${escapeHtml(displayName)} (${papers.length + library.length}条)</h3>`;
+    const tagDisplayName = typeof displayName === 'object' ? (displayName.cn || displayName.en || JSON.stringify(displayName)) : displayName;
+    let html = `<h3 style="margin-bottom: 16px; color: var(--primary);">标签: ${escapeHtml(tagDisplayName)} (${papers.length + library.length}条)</h3>`;
     
     if (papers.length === 0 && library.length === 0) {
         html += '<div class="empty-state"><p>暂无数据</p></div>';
