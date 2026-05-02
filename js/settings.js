@@ -396,15 +396,12 @@ function exportData(type, name) {
 
 // ===== GitHub 同步功能 =====
 
-// GitHub 同步配置（从用户设置读取）
-function getGitHubConfig() {
-    return {
-        owner: Storage.get('githubOwner', ''),
-        repo: Storage.get('githubRepo', ''),
-        branch: 'main',
-        path: 'academic-data.json'
-    };
-}
+const GITHUB_CONFIG = {
+    owner: 'Nikki-SU',
+    repo: 'Nikki-SU.github.io',
+    branch: 'main',
+    path: 'data/backup.json'
+};
 
 // 获取 GitHub Token
 function getGitHubToken() {
@@ -412,154 +409,28 @@ function getGitHubToken() {
 }
 
 // 保存 GitHub Token
-// 保存GitHub配置（Token + 仓库）
-function saveGitHubConfig() {
+function saveGitHubToken() {
     const token = document.getElementById('githubToken').value.trim();
-    const owner = document.getElementById('githubOwner').value.trim();
-    const repo = document.getElementById('githubRepo').value.trim();
-    
     if (!token) {
         showToast('请输入 Token', 'error');
         return;
     }
-
-
-// 扫描GitHub仓库
-async function scanGitHubRepos() {
-    const token = document.getElementById('githubToken').value.trim();
-    if (!token) {
-        showToast('请先输入Token', 'error');
-        return;
-    }
     
-    const resultsDiv = document.getElementById('repoScanResults');
-    const repoListDiv = document.getElementById('repoList');
-    const manualInput = document.getElementById('manualRepoInput');
-    
-    resultsDiv.style.display = 'block';
-    repoListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">🔄 正在扫描仓库...</div>';
-    manualInput.style.display = 'none';
-    
-    try {
-        // 获取用户的所有仓库
-        let allRepos = [];
-        let page = 1;
-        while (true) {
-            const response = await fetch(
-                `https://api.github.com/user/repos?per_page=100&page=${page}&affiliation=owner,collaborator`,
-                { headers: { 'Authorization': `token ${token}` } }
-            );
-            
-            if (!response.ok) {
-                throw new Error('Token无效或无权限');
-            }
-            
-            const repos = await response.json();
-            if (repos.length === 0) break;
-            allRepos = allRepos.concat(repos);
-            page++;
-        }
-        
-        if (allRepos.length === 0) {
-            repoListDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">未找到可访问的仓库</div>';
-            return;
-        }
-        
-        // 检查每个仓库是否有数据文件（并行请求，最多10个）
-        const repoStatuses = [];
-        const batchSize = 10;
-        
-        for (let i = 0; i < allRepos.length; i += batchSize) {
-            const batch = allRepos.slice(i, i + batchSize);
-            const promises = batch.map(async (repo) => {
-                try {
-                    const checkResponse = await fetch(
-                        `https://api.github.com/repos/${repo.full_name}/contents/academic-data.json`,
-                        { headers: { 'Authorization': `token ${token}` } }
-                    );
-                    return {
-                        ...repo,
-                        hasData: checkResponse.ok
-                    };
-                } catch (e) {
-                    return { ...repo, hasData: false };
-                }
-            });
-            
-            const results = await Promise.all(promises);
-            repoStatuses.push(...results);
-        }
-        
-        // 排序：有数据的仓库排在前面
-        repoStatuses.sort((a, b) => {
-            if (a.hasData !== b.hasData) return b.hasData ? 1 : -1;
-            return b.updated_at.localeCompare(a.updated_at);
-        });
-        
-        // 生成仓库列表
-        repoListDiv.innerHTML = repoStatuses.map(repo => `
-            <div class="repo-item" onclick="selectRepo('${repo.owner.login}', '${repo.name}')" 
-                 style="padding: 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s;"
-                 onmouseover="this.style.background='var(--bg)'" 
-                 onmouseout="this.style.background='transparent'">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div>
-                        <div style="font-weight: 500;">${repo.full_name}</div>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                            ${repo.description || '无描述'}
-                        </div>
-                    </div>
-                    <div>${repo.hasData ? '✅ 有数据' : '📁 空仓库'}</div>
-                </div>
-            </div>
-        `).join('');
-        
-    } catch (e) {
-        repoListDiv.innerHTML = `<div style="padding: 20px; text-align: center; color: #dc3545;">扫描失败: ${e.message}</div>`;
-    }
-}
-
-// 选择仓库
-function selectRepo(owner, repo) {
-    document.getElementById('githubOwner').value = owner;
-    document.getElementById('githubRepo').value = repo;
-    showToast(`已选择: ${owner}/${repo}`, 'success');
-}
-
-// 切换到手动输入模式
-function selectManualRepo() {
-    document.getElementById('repoScanResults').style.display = 'none';
-    document.getElementById('manualRepoInput').style.display = 'block';
-    document.getElementById('githubOwner').value = '';
-    document.getElementById('githubRepo').value = '';
-}
-    if (!owner || !repo) {
-        showToast('请输入用户名和仓库名', 'error');
-        return;
-    }
-    
-    // 验证 Token 和仓库访问权限
-    fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+    // 验证 Token
+    fetch('https://api.github.com/user', {
         headers: { 'Authorization': `token ${token}` }
     })
     .then(res => {
         if (res.ok) {
             Storage.set('githubToken', token);
-            Storage.set('githubOwner', owner);
-            Storage.set('githubRepo', repo);
-            showToast('配置保存成功', 'success');
+            showToast('Token 保存成功', 'success');
             updateGitHubStatus(true);
-        } else if (res.status === 404) {
-            showToast('仓库不存在或无访问权限', 'error');
+            document.getElementById('githubToken').value = '';
         } else {
-            showToast('Token 无效或权限不足', 'error');
+            showToast('Token 无效', 'error');
         }
     })
     .catch(() => showToast('验证失败，请检查网络', 'error'));
-}
-
-function saveGitHubToken() {
-    saveGitHubConfig();
 }
 
 // 更新 GitHub 状态显示
@@ -581,14 +452,8 @@ function updateGitHubStatus(configured) {
 // 同步到 GitHub
 async function syncToGitHub() {
     const token = getGitHubToken();
-    const config = getGitHubConfig();
-    
     if (!token) {
         showToast('请先配置 GitHub Token', 'error');
-        return;
-    }
-    if (!config.owner || !config.repo) {
-        showToast('请配置私有仓库信息', 'error');
         return;
     }
     
@@ -615,7 +480,7 @@ async function syncToGitHub() {
         // 获取当前文件的 SHA（如果存在）
         let sha = null;
         const getResponse = await fetch(
-            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
             { headers: { 'Authorization': `token ${token}` } }
         );
         
@@ -628,13 +493,13 @@ async function syncToGitHub() {
         const body = {
             message: `backup: ${new Date().toISOString()}`,
             content: btoa(unescape(encodeURIComponent(JSON.stringify(backupData, null, 2)))),
-            branch: config.branch
+            branch: GITHUB_CONFIG.branch
         };
         
         if (sha) body.sha = sha;
         
         const putResponse = await fetch(
-            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
             {
                 method: 'PUT',
                 headers: {
@@ -661,14 +526,8 @@ async function syncToGitHub() {
 // 从 GitHub 下载
 async function syncFromGitHub() {
     const token = getGitHubToken();
-    const config = getGitHubConfig();
-    
     if (!token) {
         showToast('请先配置 GitHub Token', 'error');
-        return;
-    }
-    if (!config.owner || !config.repo) {
-        showToast('请配置私有仓库信息', 'error');
         return;
     }
     
@@ -677,7 +536,7 @@ async function syncFromGitHub() {
     
     try {
         const response = await fetch(
-            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+            `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`,
             { headers: { 'Authorization': `token ${token}` } }
         );
         
@@ -805,183 +664,4 @@ async function migrateData() {
 document.addEventListener('DOMContentLoaded', () => {
     const token = getGitHubToken();
     updateGitHubStatus(!!token);
-    
-    // 初始化自动同步
-    updateAutoSyncStatus();
-    const config = getAutoSyncConfig();
-    if (config.enabled && token) {
-        startAutoSync();
-    }
-});
-
-
-// ===== 自动同步功能 =====
-const AUTO_SYNC_KEY = 'autoSyncConfig';
-let autoSyncTimer = null;
-
-function getAutoSyncConfig() {
-    return Storage.get(AUTO_SYNC_KEY, {
-        enabled: false,
-        interval: 30,
-        lastSync: null
-    });
-}
-
-function saveAutoSyncConfig(config) {
-    Storage.set(AUTO_SYNC_KEY, config);
-}
-
-function toggleAutoSync() {
-    const toggle = document.getElementById('autoSyncToggle');
-    const config = getAutoSyncConfig();
-    config.enabled = toggle.checked;
-    saveAutoSyncConfig(config);
-    
-    if (config.enabled) {
-        startAutoSync();
-        showToast('自动同步已开启', 'success');
-    } else {
-        stopAutoSync();
-        showToast('自动同步已关闭', 'info');
-    }
-    updateAutoSyncStatus();
-}
-
-function saveAutoSyncInterval() {
-    const interval = parseInt(document.getElementById('autoSyncInterval').value);
-    const config = getAutoSyncConfig();
-    config.interval = interval;
-    saveAutoSyncConfig(config);
-    
-    if (config.enabled) {
-        stopAutoSync();
-        startAutoSync();
-        showToast(`同步间隔已更新为 ${interval} 分钟`, 'success');
-    }
-}
-
-function startAutoSync() {
-    const config = getAutoSyncConfig();
-    if (!config.enabled) return;
-    
-    const intervalMs = config.interval * 60 * 1000;
-    
-    if (autoSyncTimer) {
-        clearInterval(autoSyncTimer);
-    }
-    
-    autoSyncTimer = setInterval(() => {
-        console.log('自动同步触发...');
-        doAutoSync();
-    }, intervalMs);
-    
-    updateAutoSyncStatus();
-}
-
-async function doAutoSync() {
-    const token = getGitHubToken();
-    const config = getGitHubConfig();
-    
-    if (!token || !config.owner || !config.repo) {
-        console.warn('未配置GitHub同步，跳过自动同步');
-        return;
-    }
-    
-    try {
-        const backupData = {
-            version: '1.0',
-            lastSync: new Date().toISOString(),
-            data: {
-                libraryPapers: LibraryStore.getAll(),
-                papersData: PapersStore.getAll(),
-                vocabularyData: VocabularyStore.getAll(),
-                abstractTranslationData: AbstractTranslationStore.getAll(),
-                categoriesData: CategoriesStore.getAll(),
-                tagsData: TagsStore.getAll(),
-                trackingConfig: TrackingConfig.get(),
-                globalSettings: GlobalSettings.get()
-            }
-        };
-        
-        let sha = null;
-        const getResponse = await fetch(
-            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
-            { headers: { 'Authorization': `token ${token}` } }
-        );
-        
-        if (getResponse.ok) {
-            const fileData = await getResponse.json();
-            sha = fileData.sha;
-        }
-        
-        const body = {
-            message: `auto-sync: ${new Date().toISOString()}`,
-            content: btoa(unescape(encodeURIComponent(JSON.stringify(backupData, null, 2)))),
-            branch: config.branch
-        };
-        
-        if (sha) body.sha = sha;
-        
-        const putResponse = await fetch(
-            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
-            {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `token ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(body)
-            }
-        );
-        
-        if (putResponse.ok) {
-            console.log('自动同步成功');
-            const syncConfig = getAutoSyncConfig();
-            syncConfig.lastSync = lastSync = new Date().toISOString();
-            saveAutoSyncConfig(syncConfig);
-            updateAutoSyncStatus();
-        }
-    } catch (error) {
-        console.error('自动同步失败:', error);
-    }
-}
-
-function stopAutoSync() {
-    if (autoSyncTimer) {
-        clearInterval(autoSyncTimer);
-        autoSyncTimer = null;
-    }
-}
-
-function updateAutoSyncStatus() {
-    const config = getAutoSyncConfig();
-    const statusEl = document.getElementById('autoSyncStatus');
-    const toggle = document.getElementById('autoSyncToggle');
-    const intervalSelect = document.getElementById('autoSyncInterval');
-    
-    if (!statusEl) return;
-    
-    if (toggle) toggle.checked = config.enabled;
-    if (intervalSelect) intervalSelect.value = config.interval.toString();
-    
-    if (config.enabled) {
-        const nextSync = config.lastSync 
-            ? new Date(new Date(config.lastSync).getTime() + config.interval * 60 * 1000)
-            : new Date(Date.now() + config.interval * 60 * 1000);
-        statusEl.textContent = `✅ 已开启 · 下次同步: ${nextSync.toLocaleTimeString()}`;
-        statusEl.style.color = 'var(--primary)';
-    } else {
-        statusEl.textContent = '未开启';
-        statusEl.style.color = 'var(--text-secondary)';
-    }
-}
-
-// 初始化自动同步
-document.addEventListener('DOMContentLoaded', () => {
-    const config = getAutoSyncConfig();
-    const token = getGitHubToken();
-    updateAutoSyncStatus();
-    if (config.enabled && token) {
-        startAutoSync();
-    }
 });
