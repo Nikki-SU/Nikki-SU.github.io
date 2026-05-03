@@ -1,6 +1,127 @@
 {
-  "last_update": "2026-04-27",
+  "last_update": "2026-05-04",
   "vocabulary": [
+    {
+      "id": "v2026050401",
+      "english": "Graded Doping",
+      "chinese": "梯度掺杂",
+      "definition": "Spatially varying doping concentration in a material layer, creating built-in electric fields that facilitate charge transport",
+      "example": "Continuously graded n+/n-doped SnO2 creates built-in electric field reducing energy losses at interface.",
+      "category": "material_engineering"
+    },
+    {
+      "id": "v2026050402",
+      "english": "Built-in Electric Field",
+      "chinese": "内置电场",
+      "definition": "Electric field generated within a material or at interfaces, typically from doping gradients or work function differences, that drives charge separation and extraction",
+      "example": "Graded doping creates built-in electric field that accelerates electron extraction and suppresses recombination.",
+      "category": "solar_cell_physics"
+    },
+    {
+      "id": "v2026050403",
+      "english": "Atomic Layer Deposition (ALD)",
+      "chinese": "原子层沉积",
+      "definition": "Thin film deposition technique using sequential self-limiting surface reactions to deposit materials one atomic layer at a time",
+      "example": "HfOx interlayers prepared by ALD enable atomic-scale precise interface control.",
+      "category": "deposition_technique"
+    },
+    {
+      "id": "v2026050404",
+      "english": "Tridentate Coordination",
+      "chinese": "三齿配位",
+      "definition": "Coordination mode where a ligand binds to a metal center through three donor atoms simultaneously",
+      "example": "Hydroxyl-rich HfOx forms tridentate coordination with self-assembled molecules at the interface.",
+      "category": "coordination_chemistry"
+    },
+    {
+      "id": "v2026050405",
+      "english": "Hard-Soft Acid-Base (HSAB) Theory",
+      "chinese": "硬软酸碱理论",
+      "definition": "Theory predicting that hard acids prefer to bind to hard bases, and soft acids to soft bases; used to design Lewis acid-base modulators",
+      "example": "Carboxylate modulators were designed guided by HSAB theory to harmonize WBG and NBG crystallization.",
+      "category": "coordination_chemistry"
+    },
+    {
+      "id": "v2026050406",
+      "english": "Carboxylate Modulator",
+      "chinese": "羧酸盐调节剂",
+      "definition": "Lewis base molecules containing carboxylate groups (-COO⁻) used to modulate crystallization and passivate defects in perovskites",
+      "example": "Tartrate and citrate carboxylate modulators achieve dual-function passivation in all-perovskite tandems.",
+      "category": "perovskite_synthesis"
+    },
+    {
+      "id": "v2026050407",
+      "english": "Hot Injection",
+      "chinese": "热注射法",
+      "definition": "Synthesis method where reagents are rapidly injected into a hot solution to initiate nucleation and control nanocrystal growth",
+      "example": "FAPbI3 nanoparticles synthesized by hot injection method exhibit improved phase stability.",
+      "category": "nanocrystal_synthesis"
+    },
+    {
+      "id": "v2026050408",
+      "english": "Dichroic Mirror",
+      "chinese": "二向色镜",
+      "chinese_alternate": "分光镜",
+      "definition": "Optical filter that reflects certain wavelengths while transmitting others; used in spectral splitting tandem cells",
+      "example": "Dichroic mirrors separate light at 775nm, directing different wavelengths to optimized subcells.",
+      "category": "optical_components"
+    },
+    {
+      "id": "v2026050409",
+      "english": "Compressive Strain",
+      "chinese": "压缩应变",
+      "definition": "Mechanical stress that compresses the crystal lattice, often used to stabilize metastable phases in perovskites",
+      "example": "Co-additives induce compressive strain driving black phase formation and stabilization.",
+      "category": "perovskite_stability"
+    },
+    {
+      "id": "v2026050410",
+      "english": "Degradation Pathway",
+      "chinese": "降解路径",
+      "definition": "The specific chemical and structural changes a material undergoes when it degrades; can be modified to improve stability",
+      "example": "Chlorine incorporation changes degradation pathway, bypassing yellow phase via higher-energy route.",
+      "category": "perovskite_stability"
+    },
+    {
+      "id": "v2026050411",
+      "english": "Band Bending",
+      "chinese": "能带弯曲",
+      "definition": "Gradual shift in energy levels near a semiconductor interface due to built-in electric fields or interface dipoles",
+      "example": "Band bending at HCM/perovskite interface critically affects hole collection efficiency.",
+      "category": "solar_cell_physics"
+    },
+    {
+      "id": "v2026050412",
+      "english": "Interface Dipole",
+      "chinese": "界面偶极子",
+      "definition": "Electric dipole formed at material interfaces due to charge redistribution or molecular orientation",
+      "example": "Interface dipole formed by oriented HCM molecules governs electrode/HCM boundary behavior.",
+      "category": "interface_physics"
+    },
+    {
+      "id": "v2026050413",
+      "english": "D-π-A Structure",
+      "chinese": "D-π-A结构",
+      "definition": "Donor-π-Acceptor molecular architecture used in organic semiconductors and ligands for tailored electronic properties",
+      "example": "Bifunctional TPA-FCA ligand with D-π-A structure integrates anchoring and passivation functions.",
+      "category": "molecular_design"
+    },
+    {
+      "id": "v2026050414",
+      "english": "Photoluminescence Quantum Yield (PLQY)",
+      "chinese": "光致发光量子产率",
+      "definition": "Ratio of photons emitted to photons absorbed; indicates material quality and defect density",
+      "example": "FASnI3 nanocrystals achieved record 42.4% PLQY via dual-defect suppression strategy.",
+      "category": "characterization_technique"
+    },
+    {
+      "id": "v2026050415",
+      "english": "T90 Lifetime",
+      "chinese": "T90寿命",
+      "definition": "Time for device efficiency to degrade to 90% of initial value; key stability metric",
+      "example": "HfOx-stabilized devices show T90 lifetime 25x longer than control devices.",
+      "category": "stability_metrics"
+    },
     {
       "id": "v2026042001",
       "english": "TOPCon",

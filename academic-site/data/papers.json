@@ -1,6 +1,277 @@
 {
-  "last_update": "2026-04-27",
+  "last_update": "2026-05-04",
   "papers": [
+    {
+      "id": "2026050401",
+      "title": "Graded Doping in SnO2 Electron Transport Layer Enables 27.17% Certified Efficiency in n-i-p Perovskite Solar Cells",
+      "title_cn": "SnO2电子传输层梯度掺杂实现n-i-p钙钛矿太阳能电池27.17%认证效率",
+      "authors": "Nankai University",
+      "journal": "Nature",
+      "doi": "10.1038/s41586-026-10587-4",
+      "published_date": "2026-04-30",
+      "category": "efficiency",
+      "efficiency": "27.17%",
+      "keywords": [
+        "graded doping",
+        "SnO2 electron transport layer",
+        "built-in electric field",
+        "band alignment",
+        "non-radiative recombination"
+      ],
+      "abstract": "Nankai University researchers developed a continuously graded n+/n-doped SnO2 electron transport layer using ligand-competitive binding strategy. This creates a built-in electric field that reduces energy band offset and accelerates electron extraction at the buried interface. Achieved certified steady-state PCE of 27.17% (reverse scan 27.50%), the highest for n-i-p architecture. Scaled to 1 cm² devices at 25.79% and 16.02 cm² modules at 23.33%.",
+      "synthesis_method": "Continuously graded n+/n-doped SnO2 ETL via ligand-competitive binding strategy; creates spatially defined doping gradient",
+      "characterization": [
+        "certified efficiency measurement",
+        "band alignment analysis",
+        "electron extraction kinetics"
+      ],
+      "stability": "Scaled successfully to module level (16.02 cm² at 23.33%)",
+      "significance": "Breaks n-i-p efficiency barrier; establishes generalizable framework for metal-oxide transport layer engineering"
+    },
+    {
+      "id": "2026050402",
+      "title": "Hafnium Oxide Interface Stabilization for Efficient, Photothermally Stable Perovskite Solar Cells",
+      "title_cn": "氧化铪界面稳定策略实现高效光热稳定钙钛矿太阳能电池",
+      "authors": "Wuhan University",
+      "journal": "Science",
+      "doi": "10.1126/science.aea3339",
+      "published_date": "2026-02-27",
+      "category": "stability",
+      "efficiency": "27.1%",
+      "keywords": [
+        "hafnium oxide",
+        "atomic layer deposition",
+        "interface bonding",
+        "thermal stability",
+        "photothermal stability"
+      ],
+      "abstract": "Wuhan University team developed atomic-scale interface bonding technology using annealed n-type HfOx interlayers prepared by atomic layer deposition. The hydroxyl-rich Lewis acidic layer forms tridentate coordination with self-assembled molecules, achieving robust interfacial bonding. p-i-n cells achieved 27.1% PCE (certified 26.6%), retaining >90% after 5,000h at 85°C under 1-sun illumination. T90 lifetime is 25x longer than control devices.",
+      "synthesis_method": "Atomic layer deposition of annealed HfOx interlayers at hole transport layer interface; p-type HfOx at ETL side anchors passivating molecules via Hf···F bonding",
+      "characterization": [
+        "atomic layer deposition",
+        "thermal stability testing",
+        "photothermal aging"
+      ],
+      "stability": ">90% retention after 5,000h at 85°C under 1-sun; T90 is 25x control; blocks iodide ion migration to electrodes",
+      "significance": "Demonstrates atomic-level precise interface bonding compatible with large-area manufacturing; enables efficiency-stability synergy"
+    },
+    {
+      "id": "2026050403",
+      "title": "Unified Carboxylate-Based Colloidal Chemistry Strategy for All-Perovskite Tandem Solar Cells Approaching 30% Efficiency",
+      "title_cn": "统一羧酸盐胶体化学策略实现接近30%效率的全钙钛矿叠层电池",
+      "authors": "Ningbo Institute of Materials Technology and Engineering, Fudan University",
+      "journal": "Joule",
+      "doi": "10.1016/j.joule.2026.03.xxx",
+      "published_date": "2026-03-29",
+      "category": "tandem",
+      "efficiency": "29.76%",
+      "keywords": [
+        "all-perovskite tandem",
+        "colloidal chemistry",
+        "carboxylate modulator",
+        "crystallization harmonization",
+        "wide-bandgap",
+        "narrow-bandgap"
+      ],
+      "abstract": "NIMTE and Fudan researchers developed unified carboxylate-based Lewis modulator system (tartrate and citrate anions) guided by HSAB theory. Tartrate stabilizes Pb²⁺ in WBG colloids; citrate passivates Sn²⁺ in NBG colloids. Choline cations synergize at crystal-colloid interfaces. Tandem achieved 29.76% PCE (certified 29.22%), with 28.87% on 1 cm² devices. Retained >90.2% after 700h MPP tracking.",
+      "synthesis_method": "Unified carboxylate-based Lewis modulator system via hard-soft acid-base theory; dual carboxylate anions (tartrate/citrate) with choline cations",
+      "characterization": [
+        "DFT calculations",
+        "morphological analysis",
+        "operational stability tracking"
+      ],
+      "stability": ">90.2% retention after 700h MPP tracking; demonstrates durable operation",
+      "significance": "Universal route to harmonize multi-junction crystallization; carboxylate coordination chemistry as versatile platform for scalable all-perovskite tandems"
+    },
+    {
+      "id": "2026050404",
+      "title": "All-Perovskite Four-Terminal Spectral Splitting Solar Cells of 30% PCE with FAPbI3 Wide-Bandgap Perovskite",
+      "title_cn": "基于FAPbI3宽带隙钙钛矿的全钙钛矿四端光谱分束叠层电池实现30%效率",
+      "authors": "University of Tokyo",
+      "journal": "ACS Omega",
+      "doi": "10.1021/acsomega.2026.xxxxx",
+      "published_date": "2026-04-24",
+      "category": "tandem",
+      "efficiency": "30.2%",
+      "keywords": [
+        "all-perovskite tandem",
+        "FAPbI3 nanoparticles",
+        "spectral splitting",
+        "four-terminal",
+        "hot injection synthesis"
+      ],
+      "abstract": "University of Tokyo researchers fabricated all-perovskite 4T tandem cells using FAPbI3 nanoparticles synthesized by hot injection. Top WBG cell achieves 24.4%, bottom NBG cell 21.5%, combined 30.2% efficiency. Dichroic mirrors enable optimal wavelength separation at 775nm. FAPbI3 α-phase stabilized via nanoparticle approach.",
+      "synthesis_method": "FAPbI3 nanoparticles via hot injection method; two-step spin-coating; spectral splitting 4T configuration with dichroic mirrors",
+      "characterization": [
+        "spectral splitting optimization",
+        "wavelength-dependent performance",
+        "efficiency certification"
+      ],
+      "stability": "FAPbI3 phase stability addressed via nanoparticle synthesis",
+      "significance": "Demonstrates viable pathway for all-perovskite tandems with simplified architecture flexibility; removes current matching constraint in 4T design"
+    },
+    {
+      "id": "2026050405",
+      "title": "Crystal-Solvate Pre-Seeded Synthesis for Scalable Perovskite Solar Cell Fabrication",
+      "title_cn": "晶体溶剂化物预成核策略实现可扩展钙钛矿太阳能电池制备",
+      "authors": "Hong Kong University of Science and Technology, Chinese Academy of Sciences",
+      "journal": "Nature Synthesis",
+      "doi": "10.1038/s41563-026-0xxxx",
+      "published_date": "2026-04-24",
+      "category": "synthesis",
+      "efficiency": "26.13%",
+      "keywords": [
+        "crystal-solvate seeding",
+        "slow-release solvent",
+        "buried interface",
+        "scalable manufacturing",
+        "interface reconstruction"
+      ],
+      "abstract": "HKUST team developed CSV seeding strategy with slow-release solvent function. Solvent molecules encapsulated in crystal lattice are gradually released during annealing, enabling gentle interfacial crystallization control. Achieved 26.13% PCE with 86.75% fill factor. Scaled to 49.91 cm² devices at 23.15%, demonstrating minimal trans-scale efficiency loss.",
+      "synthesis_method": "Crystal-solvate seeding with low-dimensional CSV materials as buried-interface nucleation layers; slow-release solvent regulation during annealing",
+      "characterization": [
+        "grazing incidence X-ray diffraction",
+        "nuclear magnetic resonance",
+        "operando characterization"
+      ],
+      "stability": "Enhanced operational stability under light and heat stress vs control devices",
+      "significance": "Provides scalable manufacturing pathway by controlling buried interfacial microstructure from crystallization origin; featured as journal cover article"
+    },
+    {
+      "id": "2026050406",
+      "title": "Computationally Guided Dual-Defect Suppression Creates High-Efficiency Tin Halide Perovskite Nanocrystals",
+      "title_cn": "计算指导双缺陷抑制策略实现高效锡卤钙钛矿纳米晶",
+      "authors": "The Hong Kong Polytechnic University",
+      "journal": "Nature Synthesis",
+      "doi": "10.1038/s41563-026-0xxxx",
+      "published_date": "2026-04-24",
+      "category": "lead_free",
+      "efficiency": "N/A (42.4% PLQY)",
+      "keywords": [
+        "tin halide perovskite",
+        "lead-free",
+        "computational guidance",
+        "dual-defect suppression",
+        "photoluminescence quantum yield"
+      ],
+      "abstract": "PolyU researchers achieved record-breaking 42.4% PLQY in FASnI3 nanocrystals via computationally guided dual-defect suppression strategy. Combines tin-rich reaction conditions with monovalent cation incorporation to suppress both bulk and surface defects. >80x higher than previous reports, opening new possibilities for lead-free optoelectronics.",
+      "synthesis_method": "Computationally guided synthesis with dual-defect suppression: tin-rich conditions + monovalent cation incorporation",
+      "characterization": [
+        "computational modeling",
+        "photoluminescence quantum yield measurement",
+        "defect analysis"
+      ],
+      "stability": "Addresses both PLQY and stability challenges in tin perovskites",
+      "significance": "Deepens understanding of defect chemistry; provides practical pathway for high-performance lead-free quantum materials"
+    },
+    {
+      "id": "2026050407",
+      "title": "Photoswitchable Isomers to Improve Grain Boundary Resilience and Perovskite Solar Cells Stability Under Light Cycling",
+      "title_cn": "光开关异构体提升晶界韧性和光照循环稳定性",
+      "authors": "University of Stuttgart, Southeast University, Helmholtz-Zentrum Berlin",
+      "journal": "Nature Energy",
+      "doi": "10.1038/s41560-026-01993-z",
+      "published_date": "2026-02-25",
+      "category": "stability",
+      "efficiency": "27.2%",
+      "keywords": [
+        "photoswitchable molecules",
+        "azobenzene",
+        "grain boundary resilience",
+        "light cycling",
+        "molecular spring"
+      ],
+      "abstract": "Stuttgart team introduced photoswitchable azobenzene derivative Ca-Abz at grain boundaries, acting as 'molecular spring' to dynamically dissipate stress from lattice expansion/contraction during light cycling. Achieved 27.2% PCE (certified 26.7%), with >95% retention after 2,000h under UV-containing light cycling at 65°C. Survived 500 thermal cycles from -40°C to +85°C.",
+      "synthesis_method": "Ca-Abz photoswitchable molecule integration at grain boundaries via carboxyl-Pb coordination",
+      "characterization": [
+        "light cycling tests",
+        "thermal cycling tests",
+        "stress dissipation analysis"
+      ],
+      "stability": ">95% retention after 2,000h light cycling (65°C with UV); 95.7% after 500 thermal cycles (-40°C to +85°C)",
+      "significance": "Introduces new material design concept for addressing dynamic stress damage under real-world outdoor conditions"
+    },
+    {
+      "id": "2026050408",
+      "title": "Two-Dimensional Perovskite and Formamidinium Chloride Co-Additives Enable Stable Black-Phase FAPbI3",
+      "title_cn": "二维钙钛矿和甲脒盐酸盐共添加剂实现稳定黑相FAPbI3",
+      "authors": "Rice University",
+      "journal": "Science",
+      "doi": "10.1126/science.adsxxxx",
+      "published_date": "2026-04-30",
+      "category": "stability",
+      "efficiency": "N/A",
+      "keywords": [
+        "2D perovskite template",
+        "formamidinium chloride",
+        "compressive strain",
+        "black phase stabilization",
+        "degradation pathway"
+      ],
+      "abstract": "Rice University developed co-additive approach using 2D perovskite as structural template and formamidinium chloride to regulate crystallization. Creates compressive strain driving black phase formation and stabilizes it. Films retain 98% initial efficiency after 1,200h at 90°C. Chloride incorporation changes degradation pathway, bypassing yellow phase via higher-energy route.",
+      "synthesis_method": "2D perovskite template + formamidinium chloride co-additives in precursor solution; stepwise crystallization pathway",
+      "characterization": [
+        "crystal structure analysis",
+        "thermal aging tests",
+        "degradation pathway study"
+      ],
+      "stability": "98% retention after 1,200h at 90°C under open circuit; degradation bypasses yellow phase",
+      "significance": "Addresses fundamental stability question; shows chlorine changes degradation mechanism not just crystallization"
+    },
+    {
+      "id": "2026050409",
+      "title": "A Universal Model for Energy Level Alignment at Interfaces of Hole-Collecting Monolayers in p-i-n Perovskite Solar Cells",
+      "title_cn": "空穴收集单分子层界面能级对齐通用模型",
+      "authors": "Chiba University, Kyoto University, University of Electro-Communications",
+      "journal": "Journal of Materials Chemistry A",
+      "doi": "10.1039/D5TA04749H",
+      "published_date": "2026-03-14",
+      "category": "fundamental",
+      "efficiency": "N/A",
+      "keywords": [
+        "energy level alignment",
+        "hole-collecting monolayer",
+        "band bending",
+        "interface dipole",
+        "universal model"
+      ],
+      "abstract": "Chiba University developed first universal model for energy level alignment at electrode/HCM/perovskite interfaces. Identifies two critical factors: band bending at HCM/perovskite junction and interfacial energy barrier height. Model successfully explains diverse HCM performance using only electrode work function, HCM work function/ionization energy, and perovskite ionization energy.",
+      "synthesis_method": "N/A - theoretical/experimental model study using UPS and low-energy IPES measurements",
+      "characterization": [
+        "ultraviolet photoelectron spectroscopy (UPS)",
+        "inverse photoelectron spectroscopy (IPES)",
+        "energy level measurement"
+      ],
+      "stability": "N/A - fundamental understanding study",
+      "significance": "Provides practical design guidelines for HCM materials; reduces trial-and-error in interface engineering"
+    },
+    {
+      "id": "2026050410",
+      "title": "Bifunctional D-π-A Ligand Directs Self-Organized Interface Passivation for Efficient Perovskite Photovoltaics",
+      "title_cn": "双功能D-π-A配体引导自组织界面钝化实现高效钙钛矿光伏",
+      "authors": "Shanghai Jiao Tong University, Southern University of Science and Technology",
+      "journal": "JACS",
+      "doi": "10.1021/jacs.6c02548",
+      "published_date": "2026-03-17",
+      "category": "interface_engineering",
+      "efficiency": "N/A",
+      "keywords": [
+        "bifunctional ligand",
+        "D-π-A structure",
+        "self-organized passivation",
+        "triphenylamine",
+        "interface engineering"
+      ],
+      "abstract": "SJTU and SUSTech developed bifunctional D-π-A passivating ligand TPA-FCA integrating hydrophilic anchoring with bulky hydrophobic donor-π scaffold. Self-organizes within as-crystallized perovskite films to simultaneously passivate bulk and surface/buried interface defects. Addresses depth-dependent limitation of conventional post-treatment passivation.",
+      "synthesis_method": "Bifunctional TPA-FCA ligand (triphenylamine-furan-cyanoacrylic acid) integrating anchoring and passivation functions",
+      "characterization": [
+        "self-organization analysis",
+        "depth-dependent passivation study",
+        "device performance characterization"
+      ],
+      "stability": "Demonstrates improved stability via comprehensive passivation",
+      "significance": "Solves depth-dependency problem in passivation; enables large-scale fabrication compatibility"
+    },
     {
       "id": "2026042707",
       "title": "Photoswitchable Isomers for Grain Boundary Resilience and Light Cycling Stability",
